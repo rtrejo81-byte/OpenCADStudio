@@ -2623,7 +2623,7 @@ pub enum Message {
     /// Completion of the clipboard-image read the paste fallback starts when
     /// no text was found — `Some((name, bytes))` attaches the image, `None`
     /// reports the usual unsupported-content error.
-    SystemClipboardPasteImage(Option<(String, Vec<u8>)>),
+    SystemClipboardPasteImage(Result<(String, Vec<u8>), String>),
     /// Ctrl/Cmd+A — select all layer rows when the Layer Manager is open, or all
     /// drawing objects otherwise (#236).
     SelectAllShortcut,

@@ -2221,18 +2221,20 @@ impl lgbcadstudio {
     pub(in crate::app) fn read_system_clipboard_image(&self) -> Task<Message> {
         #[cfg(target_arch = "wasm32")]
         {
-            Task::perform(
-                crate::sys::read_clipboard_image(),
-                Message::SystemClipboardPasteImage,
-            )
+            Task::perform(crate::sys::read_clipboard_image(), |image| {
+                Message::SystemClipboardPasteImage(match image {
+                    Some((name, bytes)) => Ok((name, bytes)),
+                    None => Err("El portapapeles no contiene una imagen.".to_string()),
+                })
+            })
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
             // El PNG se escribe junto al dibujo para que el DWG lo referencie
-            // con una ruta relativa. Una carpeta sincronizada (Synology, OneDrive)
-            // o de solo lectura puede denegar la escritura — el mismo permiso que
-            // impide crear el `.ocs.lock` — así que se reintenta en la carpeta de
-            // datos antes de darse por vencido.
+            // con una ruta relativa. Una carpeta sincronizada (Synology,
+            // OneDrive) o de solo lectura puede denegar la escritura — el
+            // mismo permiso que impide crear el `.ocs.lock` — así que se
+            // reintenta en la carpeta de datos antes de darse por vencido.
             let folders: Vec<std::path::PathBuf> = self.tabs[self.active_tab]
                 .current_path
                 .as_ref()
@@ -2241,58 +2243,22 @@ impl lgbcadstudio {
                 .into_iter()
                 .chain(crate::config::config_dir().map(|dir| dir.join("pasted")))
                 .collect();
-            iced::clipboard::read_image().map(move |image| {
-                // La capa de iced puede no devolver nada aunque el portapapeles
-                // sí traiga el recorte (Excel y Visio copian un DIB): en ese
-                // caso se lee directamente de la API de Windows.
-                let decoded = match image {
-                    Ok(image) => image::RgbaImage::from_raw(
-                        image.size.width,
-                        image.size.height,
-                        image.rgba.to_vec(),
-                    ),
-                    Err(_) => None,
-                }
-                .or_else(|| {
+            // Se lee el portapapeles por la API de Windows sin pasar por iced:
+            // esa capa devolvía vacío tanto para el CF_BITMAP de Excel como
+            // para el CF_DIB de Visio.
+            Task::perform(
+                async move {
                     #[cfg(target_os = "windows")]
                     {
                         crate::sys::clipboard_dib::read_rgba()
-                            .and_then(|(width, height, rgba)| {
-                                image::RgbaImage::from_raw(width, height, rgba)
-                            })
                     }
                     #[cfg(not(target_os = "windows"))]
                     {
-                        None
+                        None::<(u32, u32, Vec<u8>)>
                     }
-                });
-                let saved = decoded.and_then(|pixels| {
-                    let mut png = std::io::Cursor::new(Vec::new());
-                    pixels.write_to(&mut png, image::ImageFormat::Png).ok()?;
-                    let stamp = std::time::SystemTime::now()
-                        .duration_since(std::time::UNIX_EPOCH)
-                        .map_or(0, |elapsed| elapsed.as_millis());
-                    for folder in &folders {
-                        if std::fs::create_dir_all(folder).is_err() {
-                            continue;
-                        }
-                        let name = crate::sys::unique_pasted_image_name(
-                            &format!("pasted-{stamp}"),
-                            "png",
-                            |name| folder.join(name).exists(),
-                        );
-                        let path = folder.join(name);
-                        if std::fs::write(&path, png.get_ref()).is_ok() {
-                            return Some((
-                                path.to_string_lossy().into_owned(),
-                                png.into_inner(),
-                            ));
-                        }
-                    }
-                    None
-                });
-                Message::SystemClipboardPasteImage(saved)
-            })
+                },
+                move |rgba| Message::SystemClipboardPasteImage(save_pasted_image(rgba, folders)),
+            )
         }
     }
 
@@ -5596,4 +5562,47 @@ mod tab_close_tests {
         assert!(app.pending_close.is_none(), "pending target consumed");
         assert!(app.active_tab < app.tabs.len(), "active tab stays valid");
     }
+}
+
+/// Codifica la imagen del portapapeles como PNG y la deja en la primera
+/// carpeta donde se pueda escribir. El error nombra el paso que falló, para
+/// que el mensaje del comando sirva aunque el problema sea de permisos.
+fn save_pasted_image(
+    rgba: Option<(u32, u32, Vec<u8>)>,
+    folders: Vec<std::path::PathBuf>,
+) -> Result<(String, Vec<u8>), String> {
+    let Some((width, height, pixels)) = rgba else {
+        return Err(
+            "El portapapeles no contiene una imagen (ni Bitmap ni DIB). Copia el rango como imagen o usa una captura de pantalla."
+                .to_string(),
+        );
+    };
+    let Some(image) = image::RgbaImage::from_raw(width, height, pixels) else {
+        return Err("La imagen del portapapeles tiene un tamaño inválido.".to_string());
+    };
+    let mut png = std::io::Cursor::new(Vec::new());
+    if image.write_to(&mut png, image::ImageFormat::Png).is_err() {
+        return Err("No se pudo codificar la imagen como PNG.".to_string());
+    }
+    let stamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |elapsed| elapsed.as_millis());
+    let mut last = String::from("No hay ninguna carpeta donde guardar la imagen.");
+    for folder in &folders {
+        if let Err(error) = std::fs::create_dir_all(folder) {
+            last = format!("No se pudo crear {}: {error}", folder.display());
+            continue;
+        }
+        let name = crate::sys::unique_pasted_image_name(
+            &format!("pasted-{stamp}"),
+            "png",
+            |name| folder.join(name).exists(),
+        );
+        let path = folder.join(name);
+        match std::fs::write(&path, png.get_ref()) {
+            Ok(()) => return Ok((path.to_string_lossy().into_owned(), png.into_inner())),
+            Err(error) => last = format!("No se pudo escribir {}: {error}", path.display()),
+        }
+    }
+    Err(last)
 }

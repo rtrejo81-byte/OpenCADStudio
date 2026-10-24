@@ -7346,10 +7346,9 @@ impl lgbcadstudio {
             // attaches the image or falls back to the same error the text
             // path reports when nothing readable was on the clipboard.
             Message::SystemClipboardPasteImage(image) => match image {
-                Some((name, bytes)) => self.paste_clipboard_image(name, bytes),
-                None => {
-                    self.command_line
-                        .push_error(crate::tr!("clipboard", "no-supported-content").as_ref());
+                Ok((name, bytes)) => self.paste_clipboard_image(name, bytes),
+                Err(reason) => {
+                    self.command_line.push_error(&reason);
                     Task::none()
                 }
             },

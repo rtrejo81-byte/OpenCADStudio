@@ -1731,6 +1731,9 @@ pub enum CmdResult {
     },
     /// Open the PDF Import Settings dialog; the command keeps its prompt.
     OpenPdfImportSettings,
+    /// Open `INSERTAR_RED`'s block picker; the command keeps its prompt and
+    /// receives the chosen block as command-line input.
+    OpenInsertarRedDialog,
     /// Ask for the password of an encrypted PDF typed at a file prompt; the
     /// command keeps its prompt and gets `input` again once the file is
     /// unlocked.

@@ -290,7 +290,10 @@ impl CadCommand for InsertarRedCommand {
         match self.step {
             Step::Mode => {
                 match token.as_str() {
-                    "" | "C" | "CERO" => self.step = Step::Block,
+                    "" | "C" | "CERO" => {
+                        self.step = Step::Block;
+                        return Some(CmdResult::OpenInsertarRedDialog);
+                    }
                     "E" | "EXISTENTE" => self.step = Step::PickStart,
                     "U" | "UNIR" => self.step = Step::PickFirst,
                     _ => return None,
@@ -339,7 +342,10 @@ impl CadCommand for InsertarRedCommand {
             Step::Next => {
                 match token.as_str() {
                     "" | "M" | "MISMO" => self.step = Step::Distance,
-                    "C" | "CAMBIAR" => self.step = Step::Block,
+                    "C" | "CAMBIAR" => {
+                        self.step = Step::Block;
+                        return Some(CmdResult::OpenInsertarRedDialog);
+                    }
                     "T" | "TERMINAR" => self.step = Step::PickStart,
                     _ => return None,
                 }
@@ -359,10 +365,10 @@ impl CadCommand for InsertarRedCommand {
 
     fn on_enter(&mut self) -> CmdResult {
         match self.step {
-            // Enter en un punto elige el modo por defecto.
+            // Enter en un punto elige el modo por defecto y abre la ventana.
             Step::Mode => {
                 self.step = Step::Block;
-                CmdResult::NeedPoint
+                CmdResult::OpenInsertarRedDialog
             }
             // Enter acepta la distancia anterior.
             Step::Distance => {
@@ -532,3 +538,11 @@ impl CadCommand for InsertarRedCommand {
 inventory::submit!(crate::command::CommandRegistration {
     names: &["INSERTAR_RED"]
 });
+
+impl crate::app::lgbcadstudio {
+    /// Abre la ventana de tipos de bloque encima del comando en curso. La
+    /// elección vuelve al comando como si se hubiera escrito el número.
+    pub(in crate::app) fn open_insertar_red_dialog(&mut self) {
+        self.active_modal = Some(crate::app::ModalKind::InsertarRed);
+    }
+}

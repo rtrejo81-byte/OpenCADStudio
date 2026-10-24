@@ -446,6 +446,7 @@ impl lgbcadstudio {
                 self.finish_qselect_sample(*state, tab_id, handle);
             }
             CmdResult::OpenTxt2MtxtSettings => self.open_txt2mtxt_settings(),
+            CmdResult::OpenInsertarRedDialog => self.open_insertar_red_dialog(),
             CmdResult::OpenAutoConstrainSettings => {
                 self.handle_open_auto_constrain_settings();
             }

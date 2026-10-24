@@ -16,6 +16,7 @@ impl lgbcadstudio {
             Some(K::NamedParameters) => crate::t!("Named Parameters").into_owned(),
             Some(K::BlockEditorSettings) => crate::t!("Block Editor Settings").into_owned(),
             Some(K::BlockCycleOrder) => crate::t!("Grip Cycle Order").into_owned(),
+            Some(K::InsertarRed) => crate::t!("INSERTAR_RED · Tipo de bloque").into_owned(),
             Some(K::Options) => crate::tr!("action", "options"),
             Some(K::FindReplace) => crate::tr!("modal", "find-replace"),
             Some(K::PluginManager) => crate::tr!("modal", "plugin-manager"),
@@ -149,6 +150,16 @@ impl lgbcadstudio {
             }
             super::super::ModalKind::BlockCycleOrder => {
                 crate::ui::window::block_cycle_order::view_window(self.block_cycle_order.as_ref()?)
+            }
+            super::super::ModalKind::InsertarRed => {
+                let available: Vec<String> = self.tabs[self.active_tab]
+                    .scene
+                    .document
+                    .block_records
+                    .iter()
+                    .map(|record| record.name.to_uppercase())
+                    .collect();
+                crate::ui::window::insertar_red::view_window(&available)
             }
             super::super::ModalKind::Options => {
                 let dirty = self.options_dirty();

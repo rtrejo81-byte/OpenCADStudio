@@ -9041,6 +9041,18 @@ impl lgbcadstudio {
                 }
                 Task::none()
             }
+            Message::InsertarRedChoose(index) => {
+                // La ventana solo es un selector: la elección entra al comando
+                // activo por la misma vía que un número tecleado.
+                self.active_modal = None;
+                let token = if (index as usize) >= crate::app::commands::insertar_red::BLOCKS.len()
+                {
+                    "T".to_string()
+                } else {
+                    (index + 1).to_string()
+                };
+                self.feed_active_cmd(&token)
+            }
             Message::BlockCycleEnable(index, enabled) => {
                 if let Some(state)=self.block_cycle_order.as_mut() {
                     if let Some(row)=state.rows.get_mut(index) { row.enabled=enabled; state.selected=Some(index); }

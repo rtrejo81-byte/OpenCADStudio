@@ -2418,6 +2418,8 @@ pub enum ModalKind {
     SheetSet,
     /// IMPORT's Import File window.
     ImportFile,
+    /// INSERTAR_RED's block picker, over the running command.
+    InsertarRed,
     /// DGNIMPORT's DGN Import window.
     DgnImport,
     /// IMPORT's 3D Studio Import window.
@@ -2550,6 +2552,9 @@ pub enum PasteFocus {
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    /// INSERTAR_RED's ventana de bloques: índice elegido (99 = terminar en un
+    /// bloque existente).
+    InsertarRedChoose(u8),
     GraphicAttributes(crate::ui::window::graphic_attributes::GraphicAttributesMsg),
     SpaceMouseWake,
     SpaceMouseFrame(iced::time::Instant),

@@ -2275,6 +2275,14 @@ impl lgbcadstudio {
             return Task::none();
         }
         crate::scene::model::image_model::register_source(&name, std::sync::Arc::new(bytes));
+        if !std::path::Path::new(&name).exists() {
+            // Ninguna carpeta dejó escribir el PNG; la imagen se dibuja desde
+            // lo registrado en memoria, pero el DWG no tendrá archivo al que
+            // apuntar cuando se vuelva a abrir.
+            self.command_line.push_info(
+                "La imagen no se pudo guardar en disco: se pegó desde memoria. Guárdala como archivo si vas a cerrar y reabrir el plano.",
+            );
+        }
         let Some(decoded) = crate::scene::model::image_model::resolve_image(&name) else {
             self.command_line.push_error(
                 crate::tr!("clipboard", "image-unsupported", name = name.clone()).as_ref(),
@@ -5587,8 +5595,12 @@ fn save_pasted_image(
     let stamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |elapsed| elapsed.as_millis());
+    // Además del dibujo y de los datos, el temporal del sistema: es la ruta
+    // que menos bloquean los antivirus y las políticas de carpetas.
+    let mut candidates = folders;
+    candidates.push(std::env::temp_dir());
     let mut last = String::from("No hay ninguna carpeta donde guardar la imagen.");
-    for folder in &folders {
+    for folder in &candidates {
         if let Err(error) = std::fs::create_dir_all(folder) {
             last = format!("No se pudo crear {}: {error}", folder.display());
             continue;
@@ -5604,5 +5616,9 @@ fn save_pasted_image(
             Err(error) => last = format!("No se pudo escribir {}: {error}", path.display()),
         }
     }
-    Err(last)
+    // Ninguna carpeta deja escribir. La imagen se pega igual: el comando la
+    // registra en memoria y se dibuja desde ahí. El aviso de que no quedó en
+    // disco lo da `paste_clipboard_image`.
+    let _ = last;
+    Ok((format!("pasted-{stamp}.png"), png.into_inner()))
 }

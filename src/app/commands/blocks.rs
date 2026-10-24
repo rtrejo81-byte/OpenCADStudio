@@ -412,6 +412,14 @@ impl lgbcadstudio {
                 return Some(Task::batch([started, read]));
             }
 
+            // PASTEIMAGE — pega la imagen del portapapeles aunque el
+            // portapapeles también traiga texto: Excel, Visio y las capturas
+            // de pantalla copian ambos formatos, y el Ctrl+V normal se queda
+            // con el texto y nunca llega al mapa de bits.
+            "PASTEIMAGE" | "PASTEBITMAP" | "PEGARIMAGEN" | "PEGAIMG" => {
+                return Some(self.read_system_clipboard_image());
+            }
+
             // PASTEORIG — paste at the entities' original coordinates (no pick).
             "PASTEORIG" => {
                 if self.clipboard.is_empty() {

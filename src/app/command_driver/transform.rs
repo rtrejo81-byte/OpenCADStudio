@@ -55,11 +55,15 @@ impl lgbcadstudio {
             return Some(Task::none());
         }
         let label = self.history_label_from_active_cmd(i, "COPY");
-        // Copying a dimension clones a *D block record, so gate delta on
-        // the selection being dimension-free. Annotative objects also bring
-        // scale-context objects with them (see `delta_transform_safe`).
+        // Copiar una cota clona un bloque `*D`, y un objeto anotativo arrastra
+        // contextos o su diccionario de extensión: nada de eso cabe en el
+        // delta de entidades. `copy_entities` expande la selección con las
+        // anotaciones de leader, así que la comprobación usa esa misma lista.
+        let expanded = self.tabs[i]
+            .scene
+            .handles_expanded_for_leader_annotations(&handles);
         let delta_safe =
-            self.delta_copy_safe(i, &handles) && self.delta_transform_safe(i, &handles);
+            self.delta_copy_safe(i, &expanded) && self.delta_transform_safe(i, &expanded);
         let pending = self.begin_undo(i, label, handles.len(), delta_safe);
         let new_handles = self.tabs[i].scene.copy_entities(&handles, &transform);
         self.tabs[i].dirty = true;

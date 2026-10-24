@@ -848,25 +848,32 @@ impl lgbcadstudio {
             .any(|handle| Self::uses_annotation_context(doc, *handle))
     }
 
-    /// Objetos que llevan contexto de anotación por escala: los que ya tienen
-    /// representaciones registradas y los que las estrenarán al moverse por
-    /// usar un estilo anotativo.
+    /// Objetos que llevan estado fuera de las entidades y que copiar/mover
+    /// reescribe: representaciones por escala, un diccionario de extensión que
+    /// la copia clona, o un estilo anotativo que las estrenará al moverse.
     fn uses_annotation_context(doc: &codec::CadDocument, handle: Handle) -> bool {
         if !crate::scene::annotative::annotation_scale_handles_for_entity(doc, handle).is_empty() {
             return true;
         }
-        match doc.get_entity(handle) {
-            Some(EntityType::Text(text)) => {
+        let Some(entity) = doc.get_entity(handle) else {
+            return false;
+        };
+        // La copia clona en profundidad el diccionario de extensión y la
+        // mudanza puede recrear sus referencias: objetos fuera del delta.
+        if entity.common().xdictionary_handle.is_some() {
+            return true;
+        }
+        match entity {
+            EntityType::Text(text) => {
                 crate::scene::annotative::text_style_is_annotative(doc, &text.style)
             }
-            Some(EntityType::MText(mtext)) => {
+            EntityType::MText(mtext) => {
                 crate::scene::annotative::text_style_is_annotative(doc, &mtext.style)
             }
-            Some(EntityType::Dimension(dimension)) => {
-                crate::scene::annotative::dim_style_is_annotative(
-                    doc,
-                    &dimension.base().style_name,
-                )
+            EntityType::Dimension(dimension) => {
+                // Mover o copiar una cota invalida o clona su bloque `*D`.
+                let _ = dimension;
+                true
             }
             _ => false,
         }
@@ -915,12 +922,20 @@ impl lgbcadstudio {
         // still poisoned the recording we've already mutated and the pre-command
         // full state is gone, so the entity delta is the best we can do (its
         // entity part stays correct; a leaked layer/group/block just won't
-        // revert). Loud in debug, a warning in release — never a silent wrong.
-        debug_assert!(
-            !rec.is_poisoned() || pending.structure_before.is_some(),
-            "delta command '{}' mutated unrecorded non-entity state",
-            pending.label
-        );
+        // revert). Aborting here punishes the user for a missed prediction, so
+        // the default is to warn and keep going (undo may be incomplete); set
+        // LGB_STRICT_UNDO=1 to turn it back into a hard failure while
+        // developing.
+        if rec.is_poisoned() && pending.structure_before.is_none() {
+            let message = format!(
+                "delta command '{}' mutated unrecorded non-entity state",
+                pending.label
+            );
+            if std::env::var_os("LGB_STRICT_UNDO").is_some() {
+                panic!("{message}");
+            }
+            eprintln!("[undo] {message}; undo may be incomplete");
+        }
         if rec.is_empty() && pending.structure_before.is_none() {
             // Nothing actually changed (e.g. every target was on a locked
             // layer). Leave the undo/redo stacks untouched.

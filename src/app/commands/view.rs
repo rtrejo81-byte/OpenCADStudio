@@ -403,6 +403,22 @@ impl lgbcadstudio {
                     .push_output("--- POWERED BY ROBERTO TREJO ---");
                 return Some(Task::none());
             }
+            // ── INSERTAR_RED — tramo de red con bloques conectados ───────
+            "INSERTAR_RED" => {
+                use super::insertar_red::InsertarRedCommand;
+                // Los bloques y las capas vienen en el plano: el comando solo
+                // comprueba que el bloque elegido exista.
+                let available: Vec<String> = self.tabs[i]
+                    .scene
+                    .document
+                    .block_records
+                    .iter()
+                    .map(|record| record.name.to_uppercase())
+                    .collect();
+                let command = InsertarRedCommand::new(available);
+                self.command_line.push_info(&command.prompt());
+                self.tabs[i].active_cmd = Some(Box::new(command));
+            }
             "ABOUT" => {
                 return Some(Task::done(Message::AboutOpen));
             }

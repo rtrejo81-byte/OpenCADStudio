@@ -350,6 +350,55 @@ impl lgbcadstudio {
                 self.command_line.push_info(&command.prompt());
                 self.tabs[i].active_cmd = Some(Box::new(command));
             }
+            // ── NAPAKML — NAPs y polígonos a KML (Google Earth) ──────────
+            "NAPAKML" | "NAPKML" => {
+                let cmd = super::napakml::NapaKmlCommand::new();
+                self.command_line.push_info(&cmd.prompt());
+                self.tabs[i].active_cmd = Some(Box::new(cmd));
+            }
+            "NAPAKML_EXEC" => {
+                let handles: Vec<codec::Handle> = self.tabs[i]
+                    .scene
+                    .selected_entities()
+                    .iter()
+                    .map(|(handle, _)| *handle)
+                    .collect();
+                let (kml, naps, poligonos) =
+                    super::napakml::exportar(&self.tabs[i].scene.document, &handles);
+                if naps == 0 && poligonos == 0 {
+                    self.command_line.push_error(
+                        "NAPAKML  No hay bloques ni polígonos cerrados en la selección.",
+                    );
+                    return Some(Task::none());
+                }
+                // El KML va junto al dibujo, como hacía la rutina original.
+                let destino = self.tabs[i]
+                    .current_path
+                    .as_ref()
+                    .and_then(|path| path.parent().map(std::path::Path::to_path_buf))
+                    .filter(|folder| !folder.as_os_str().is_empty())
+                    .or_else(|| crate::config::config_dir())
+                    .map(|folder| folder.join("Exportacion_TREJO.kml"));
+                match destino {
+                    Some(path) => match std::fs::write(&path, kml) {
+                        Ok(()) => {
+                            self.command_line.push_output(
+                                &crate::tf!("NAPAKML  {} NAP(s) y {} polígono(s).", naps, poligonos),
+                            );
+                            self.command_line
+                                .push_output(&crate::tf!("Archivo: {}", path.display()));
+                        }
+                        Err(error) => self.command_line.push_error(&format!(
+                            "NAPAKML no pudo escribir {}: {error}",
+                            path.display()
+                        )),
+                    },
+                    None => self.command_line.push_error(
+                        "NAPAKML  No hay ninguna carpeta donde guardar el KML.",
+                    ),
+                }
+                return Some(Task::none());
+            }
             // ── SUMANUM — suma de números en textos ──────────────────────
             "SUMANUM" => {
                 let cmd = super::sumanum::SumaNumCommand::new();

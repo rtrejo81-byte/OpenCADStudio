@@ -138,18 +138,13 @@ fn nombre_desde_atributos(atributos: &[(String, String)], bloque: &str) -> Strin
     primero.cloned().unwrap_or_else(|| bloque.to_string())
 }
 
-/// Atributos (tag, valor) de un bloque insertado: son entidades aparte que
-/// apuntan al INSERT como dueño.
-fn atributos_de(doc: &CadDocument, insert: Handle) -> Vec<(String, String)> {
-    doc.entities()
-        .filter_map(|entity| match entity {
-            EntityType::AttributeEntity(attribute)
-                if attribute.common.owner_handle == insert =>
-            {
-                Some((attribute.tag.clone(), attribute.value.clone()))
-            }
-            _ => None,
-        })
+/// Atributos (tag, valor) de un bloque insertado. El motor los guarda dentro
+/// del propio INSERT (`insert.attributes`), no como entidades sueltas.
+fn atributos_de(insert: &codec::entities::Insert) -> Vec<(String, String)> {
+    insert
+        .attributes
+        .iter()
+        .map(|attribute| (attribute.tag.clone(), attribute.value.clone()))
         .collect()
 }
 
@@ -180,7 +175,7 @@ pub(crate) fn exportar(doc: &CadDocument, handles: &[Handle]) -> (String, usize,
             Some(EntityType::Insert(insert)) => {
                 let (lat, lon) =
                     utm16n_a_latlon(insert.insert_point.x, insert.insert_point.y);
-                let atributos = atributos_de(doc, *handle);
+                let atributos = atributos_de(insert);
                 let nombre = nombre_desde_atributos(&atributos, &insert.block_name);
                 kml.push_str("  <Placemark>\n");
                 kml.push_str(&format!("    <name>{}</name>\n", xml_escape(&nombre)));

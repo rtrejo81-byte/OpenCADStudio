@@ -1418,3 +1418,272 @@ pub fn documents_dir() -> Option<std::path::PathBuf> {
     let documents = home.join("Documents");
     Some(if documents.is_dir() { documents } else { home })
 }
+
+/// Lectura del mapa de bits del portapapeles directamente por la API de
+/// Windows, sin pasar por la capa de iced.
+///
+/// Excel copia el recorte como `CF_BITMAP` (un HBITMAP de GDI) y Visio como
+/// `CF_DIB`; se atienden los dos porque la lectura de iced puede devolver
+/// vacío con cualquiera de ellos.
+#[cfg(target_os = "windows")]
+pub mod clipboard_dib {
+    use std::ffi::c_void;
+
+    const CF_BITMAP: u32 = 2;
+    const CF_DIB: u32 = 8;
+    const CF_DIBV5: u32 = 17;
+
+    #[link(name = "user32")]
+    extern "system" {
+        fn OpenClipboard(hwnd: *mut c_void) -> i32;
+        fn CloseClipboard() -> i32;
+        fn GetClipboardData(format: u32) -> *mut c_void;
+        fn IsClipboardFormatAvailable(format: u32) -> i32;
+    }
+
+    #[link(name = "kernel32")]
+    extern "system" {
+        fn GlobalLock(mem: *mut c_void) -> *mut c_void;
+        fn GlobalUnlock(mem: *mut c_void) -> i32;
+        fn GlobalSize(mem: *mut c_void) -> usize;
+    }
+
+    #[link(name = "gdi32")]
+    extern "system" {
+        fn CreateCompatibleDC(hdc: *mut c_void) -> *mut c_void;
+        fn DeleteDC(hdc: *mut c_void) -> i32;
+        fn GetDIBits(
+            hdc: *mut c_void,
+            bitmap: *mut c_void,
+            start: u32,
+            lines: u32,
+            bits: *mut c_void,
+            info: *mut c_void,
+            usage: u32,
+        ) -> i32;
+        fn GetObjectW(obj: *mut c_void, size: i32, out: *mut c_void) -> i32;
+        fn DeleteObject(obj: *mut c_void) -> i32;
+    }
+
+    #[repr(C)]
+    struct BitmapGdi {
+        kind: i32,
+        width: i32,
+        height: i32,
+        width_bytes: i32,
+        planes: u16,
+        bits_pixel: u16,
+        bits: *mut c_void,
+    }
+
+    #[repr(C)]
+    struct BitmapInfoHeader {
+        size: u32,
+        width: i32,
+        height: i32,
+        planes: u16,
+        bit_count: u16,
+        compression: u32,
+        size_image: u32,
+        x_pels: i32,
+        y_pels: i32,
+        clr_used: u32,
+        clr_important: u32,
+    }
+
+    #[repr(C)]
+    struct BitmapInfo {
+        header: BitmapInfoHeader,
+        masks: [u32; 3],
+    }
+
+    /// La imagen del portapapeles como RGBA de 8 bits, si la hay.
+    pub fn read_rgba() -> Option<(u32, u32, Vec<u8>)> {
+        unsafe {
+            let has_dib =
+                IsClipboardFormatAvailable(CF_DIB) != 0 || IsClipboardFormatAvailable(CF_DIBV5) != 0;
+            let has_bitmap = IsClipboardFormatAvailable(CF_BITMAP) != 0;
+            if !has_dib && !has_bitmap {
+                return None;
+            }
+            if OpenClipboard(std::ptr::null_mut()) == 0 {
+                return None;
+            }
+            let out = read_open_clipboard(has_dib, has_bitmap);
+            CloseClipboard();
+            out
+        }
+    }
+
+    unsafe fn read_open_clipboard(has_dib: bool, has_bitmap: bool) -> Option<(u32, u32, Vec<u8>)> {
+        if has_dib {
+            let handle = {
+                let dib = GetClipboardData(CF_DIB);
+                if dib.is_null() {
+                    GetClipboardData(CF_DIBV5)
+                } else {
+                    dib
+                }
+            };
+            if !handle.is_null() {
+                let size = GlobalSize(handle);
+                if size >= 40 {
+                    let base = GlobalLock(handle) as *const u8;
+                    if !base.is_null() {
+                        let bytes = std::slice::from_raw_parts(base, size);
+                        let parsed = parse_dib(bytes);
+                        GlobalUnlock(handle);
+                        if parsed.is_some() {
+                            return parsed;
+                        }
+                    }
+                }
+            }
+        }
+        if has_bitmap {
+            let handle = GetClipboardData(CF_BITMAP);
+            if !handle.is_null() {
+                let parsed = parse_hbitmap(handle);
+                DeleteObject(handle);
+                return parsed;
+            }
+        }
+        None
+    }
+
+    /// Interpreta un `BITMAPINFOHEADER` + píxeles (24 y 32 bpp sin compresión).
+    fn parse_dib(bytes: &[u8]) -> Option<(u32, u32, Vec<u8>)> {
+        let u32_at = |offset: usize| -> Option<u32> {
+            bytes
+                .get(offset..offset + 4)
+                .map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]]))
+        };
+        let u16_at = |offset: usize| -> Option<u16> {
+            bytes
+                .get(offset..offset + 2)
+                .map(|b| u16::from_le_bytes([b[0], b[1]]))
+        };
+        let header = u32_at(0)? as usize;
+        if header < 40 {
+            return None;
+        }
+        let width = u32_at(4)? as i32;
+        let height = u32_at(8)? as i32;
+        let bit_count = u16_at(14)?;
+        let compression = u32_at(16)?;
+        if compression != 0 && compression != 3 {
+            return None;
+        }
+        if bit_count != 24 && bit_count != 32 {
+            return None;
+        }
+        let width = width.unsigned_abs();
+        let top_down = height < 0;
+        let height = height.unsigned_abs();
+        if width == 0 || height == 0 || width > 20000 || height > 20000 {
+            return None;
+        }
+        let pixels_start = header + if compression == 3 { 12 } else { 0 };
+        let stride = (((width as usize) * (bit_count as usize) + 31) / 32) * 4;
+        if pixels_start + stride * height as usize > bytes.len() {
+            return None;
+        }
+        let mut rgba = vec![0u8; width as usize * height as usize * 4];
+        let mut any_alpha = false;
+        for row in 0..height as usize {
+            let src_row = if top_down {
+                row
+            } else {
+                height as usize - 1 - row
+            };
+            let src = &bytes[pixels_start + src_row * stride..];
+            let dst = &mut rgba[row * width as usize * 4..(row + 1) * width as usize * 4];
+            for column in 0..width as usize {
+                let pixel = &src[column * (bit_count as usize / 8)..];
+                let alpha = if bit_count == 32 {
+                    any_alpha |= pixel[3] != 0;
+                    pixel[3]
+                } else {
+                    255
+                };
+                let d = &mut dst[column * 4..column * 4 + 4];
+                d[0] = pixel[2];
+                d[1] = pixel[1];
+                d[2] = pixel[0];
+                d[3] = alpha;
+            }
+        }
+        if !any_alpha {
+            for pixel in rgba.chunks_exact_mut(4) {
+                pixel[3] = 255;
+            }
+        }
+        Some((width, height, rgba))
+    }
+
+    /// Convierte un HBITMAP de GDI (lo que copia Excel) a RGBA.
+    unsafe fn parse_hbitmap(handle: *mut c_void) -> Option<(u32, u32, Vec<u8>)> {
+        let mut gdi = BitmapGdi {
+            kind: 0,
+            width: 0,
+            height: 0,
+            width_bytes: 0,
+            planes: 0,
+            bits_pixel: 0,
+            bits: std::ptr::null_mut(),
+        };
+        let read = GetObjectW(
+            handle,
+            std::mem::size_of::<BitmapGdi>() as i32,
+            &mut gdi as *mut BitmapGdi as *mut c_void,
+        );
+        if read == 0 || gdi.width <= 0 || gdi.height <= 0 {
+            return None;
+        }
+        let width = gdi.width as u32;
+        let height = gdi.height as u32;
+        if width > 20000 || height > 20000 {
+            return None;
+        }
+        let mut info = BitmapInfo {
+            header: BitmapInfoHeader {
+                size: std::mem::size_of::<BitmapInfoHeader>() as u32,
+                // Altura negativa: filas de arriba abajo, como las pide RGBA.
+                width: width as i32,
+                height: -(height as i32),
+                planes: 1,
+                bit_count: 32,
+                compression: 0,
+                size_image: 0,
+                x_pels: 0,
+                y_pels: 0,
+                clr_used: 0,
+                clr_important: 0,
+            },
+            masks: [0; 3],
+        };
+        let mut pixels = vec![0u8; width as usize * height as usize * 4];
+        let dc = CreateCompatibleDC(std::ptr::null_mut());
+        if dc.is_null() {
+            return None;
+        }
+        let lines = GetDIBits(
+            dc,
+            handle,
+            0,
+            height,
+            pixels.as_mut_ptr() as *mut c_void,
+            &mut info as *mut BitmapInfo as *mut c_void,
+            0,
+        );
+        DeleteDC(dc);
+        if lines == 0 {
+            return None;
+        }
+        for pixel in pixels.chunks_exact_mut(4) {
+            pixel.swap(0, 2);
+            pixel[3] = 255;
+        }
+        Some((width, height, pixels))
+    }
+}

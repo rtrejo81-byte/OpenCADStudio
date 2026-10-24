@@ -2242,12 +2242,31 @@ impl lgbcadstudio {
                 .chain(crate::config::config_dir().map(|dir| dir.join("pasted")))
                 .collect();
             iced::clipboard::read_image().map(move |image| {
-                let saved = image.ok().and_then(|image| {
-                    let pixels = image::RgbaImage::from_raw(
+                // La capa de iced puede no devolver nada aunque el portapapeles
+                // sí traiga el recorte (Excel y Visio copian un DIB): en ese
+                // caso se lee directamente de la API de Windows.
+                let decoded = match image {
+                    Ok(image) => image::RgbaImage::from_raw(
                         image.size.width,
                         image.size.height,
                         image.rgba.to_vec(),
-                    )?;
+                    ),
+                    Err(_) => None,
+                }
+                .or_else(|| {
+                    #[cfg(target_os = "windows")]
+                    {
+                        crate::sys::clipboard_dib::read_rgba()
+                            .and_then(|(width, height, rgba)| {
+                                image::RgbaImage::from_raw(width, height, rgba)
+                            })
+                    }
+                    #[cfg(not(target_os = "windows"))]
+                    {
+                        None
+                    }
+                });
+                let saved = decoded.and_then(|pixels| {
                     let mut png = std::io::Cursor::new(Vec::new());
                     pixels.write_to(&mut png, image::ImageFormat::Png).ok()?;
                     let stamp = std::time::SystemTime::now()

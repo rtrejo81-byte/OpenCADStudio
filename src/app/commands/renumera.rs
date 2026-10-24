@@ -171,7 +171,8 @@ impl CadCommand for RenumeraCommand {
             Paso::Inicio => "RENUMERA  Número de inicio (1-64) <1>:".to_string(),
             Paso::Bloques => match &self.ultimo {
                 Some(ultimo) => format!(
-                    "RENUMERA  {ultimo} · siguiente #{} · seleccione el bloque:",
+                    "RENUMERA  {} en cola ({ultimo}) · Enter para APLICAR · siguiente #{}:",
+                    self.cola.len(),
                     self.siguiente
                 ),
                 None => format!(
@@ -265,7 +266,13 @@ impl CadCommand for RenumeraCommand {
     }
 
     fn on_escape(&mut self) -> CmdResult {
-        CmdResult::Cancel
+        // Esc también aplica lo encolado: perder veinte clics por salir no
+        // es aceptable, y el comando ya no tiene nada más que hacer.
+        if self.cola.is_empty() {
+            CmdResult::Cancel
+        } else {
+            self.aplicar_cola()
+        }
     }
 
     fn needs_entity_pick(&self) -> bool {

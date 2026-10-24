@@ -65,6 +65,7 @@ const TAGS_PRIORITARIOS: [&str; 40] = [
 /// original (`utm-to-latlon-precise`).
 pub(crate) fn utm16n_a_latlon(x: f64, y: f64) -> (f64, f64) {
     const A: f64 = 6_378_137.0;
+    #[allow(non_upper_case_globals)]
     const b: f64 = 6_356_752.314_245_18;
     const EP2: f64 = 0.006_739_496_7;
     const C: f64 = 6_399_593.625_758_49;

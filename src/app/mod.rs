@@ -4904,7 +4904,7 @@ impl lgbcadstudio {
             zoom_factor: 60,
             zoom_factor_input: 60.to_string(),
             cursor_size: 3,
-            pick_box: 3,
+            pick_box: 2,
             hatch_associative: true,
             show_menu_bar: false,
             ribbon_closed: false,

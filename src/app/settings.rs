@@ -1103,7 +1103,7 @@ impl Default for UserSettings {
             ui_scale_percent: 100,
             zoom_factor: 60,
             cursor_size: 3,
-            pick_box: 3,
+            pick_box: 2,
             aperture: crate::snap::DEFAULT_OSNAP_RADIUS_PX,
             hatch_associative: true,
             show_menu_bar: false,

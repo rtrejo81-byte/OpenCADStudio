@@ -74,8 +74,10 @@ pub(crate) struct RenumeraCommand {
     disponibles: Vec<String>,
     /// Entidad que el host inyecta justo antes del pick.
     recogido: Option<EntityType>,
-    aplicados: u32,
-    /// Resumen del último bloque renumerado, para mostrarlo en el prompt.
+    /// Bloques ya elegidos, con el número que les toca. Se aplican todos al
+    /// final: una sola instantánea de undo en vez de una por clic.
+    cola: Vec<(Handle, EntityType, u32)>,
+    /// Resumen del último bloque elegido, para mostrarlo en el prompt.
     ultimo: Option<String>,
 }
 
@@ -88,7 +90,7 @@ impl RenumeraCommand {
             siguiente: 1,
             disponibles,
             recogido: None,
-            aplicados: 0,
+            cola: Vec::new(),
             ultimo: None,
         }
     }
@@ -99,17 +101,20 @@ impl RenumeraCommand {
             .any(|bloque| bloque.eq_ignore_ascii_case(nombre))
     }
 
-    /// Aplica el número actual al bloque recogido.
+    /// Encola el bloque recogido con su número. La mutación del dibujo se
+    /// difiere al final: cada clic aquí no guarda nada en el undo.
     fn aplicar(&mut self, handle: Handle) -> CmdResult {
         let Some(entity) = self.recogido.take() else {
             return CmdResult::ReportError("Seleccione un bloque.".to_string());
         };
-        let EntityType::Insert(mut insert) = entity else {
+        if !matches!(entity, EntityType::Insert(_)) {
             return CmdResult::ReportError("Ese objeto no es un bloque.".to_string());
-        };
+        }
         let numero = self.siguiente;
         if numero > MAX_NAP {
-            return CmdResult::Cancel;
+            return CmdResult::ReportError(
+                "Ya se alcanzó el NAP 64. Presione Enter para aplicar.".to_string(),
+            );
         }
         let destino = bloque_destino(self.huawei, numero);
         if !self.tiene_bloque(destino) {
@@ -117,26 +122,37 @@ impl RenumeraCommand {
                 "El bloque '{destino}' no existe en el dibujo."
             ));
         }
-        insert.block_name = destino.to_string();
-        let nombre = nombre_nap(&self.distrito, numero);
-        let mut actualizado = false;
-        for attribute in &mut insert.attributes {
-            if attribute.tag.eq_ignore_ascii_case("NOMBRE") {
-                attribute.value = nombre.clone();
-                actualizado = true;
-            }
-        }
-        self.ultimo = Some(if actualizado {
-            format!("NAP{numero:02} · {destino} · {nombre}")
-        } else {
-            format!("NAP{numero:02} · {destino} · sin atributo NOMBRE")
-        });
+        self.ultimo = Some(format!(
+            "en cola NAP{numero:02} → {destino} · {}",
+            nombre_nap(&self.distrito, numero)
+        ));
+        self.cola.push((handle, entity, numero));
         self.siguiente += 1;
-        self.aplicados += 1;
-        CmdResult::ReplaceManyContinue(vec![(handle, vec![EntityType::Insert(insert)])])
+        CmdResult::NeedPoint
+    }
+
+    /// Aplica la cola completa en un solo paso de undo.
+    fn aplicar_cola(&mut self) -> CmdResult {
+        if self.cola.is_empty() {
+            return CmdResult::Cancel;
+        }
+        let mut reemplazos = Vec::with_capacity(self.cola.len());
+        for (handle, entity, numero) in std::mem::take(&mut self.cola) {
+            let EntityType::Insert(mut insert) = entity else {
+                continue;
+            };
+            insert.block_name = bloque_destino(self.huawei, numero).to_string();
+            let nombre = nombre_nap(&self.distrito, numero);
+            for attribute in &mut insert.attributes {
+                if attribute.tag.eq_ignore_ascii_case("NOMBRE") {
+                    attribute.value = nombre.clone();
+                }
+            }
+            reemplazos.push((handle, vec![EntityType::Insert(insert)]));
+        }
+        CmdResult::ReplaceMany(reemplazos, Vec::new())
     }
 }
-
 impl CadCommand for RenumeraCommand {
     fn name(&self) -> &'static str {
         "RENUMERA"
@@ -244,7 +260,7 @@ impl CadCommand for RenumeraCommand {
                 self.paso = Paso::Bloques;
                 CmdResult::NeedPoint
             }
-            Paso::Bloques => CmdResult::Cancel,
+            Paso::Bloques => self.aplicar_cola(),
         }
     }
 

@@ -516,12 +516,6 @@ pub(crate) fn delobj_deletes_auxiliary(value: i16, creates_surface: bool) -> boo
 }
 
 pub(super) struct lgbcadstudio {
-// --- ESTADO PARA EL COMANDO NUMERA ---
-            pub(crate) numera_contador: f64,
-    pub(crate) numera_prefijo: String,
-    pub(crate) numera_sufijo: String,
-    pub(crate) numera_altura: f64,
-    pub(crate) awaiting_numera_point: bool,
     start: Instant,
     control: control::State,
     tabs: Vec<DocumentTab>,
@@ -4790,12 +4784,6 @@ impl lgbcadstudio {
         // explicitly (File → New); we never auto-spawn Drawing1.
         let start_tab = DocumentTab::new_start();
         let mut app = Self {
-             numera_contador: 1.0,
-    numera_prefijo: String::new(),
-    numera_sufijo: String::new(),
-    numera_altura: 2.5,
-    
-            awaiting_numera_point: false,
             control: control::State::new(),
             start: Instant::now(),
             tabs: vec![start_tab],

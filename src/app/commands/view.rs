@@ -340,111 +340,67 @@ impl lgbcadstudio {
                 return Some(crate::sys::open_url(&url, self.main_window));
             }
                                         
-                                            // ── NUMERA — Numeración secuencial ──────────────────────────
+            // ── NUMERA — numeración secuencial de rótulos ────────────────
             "NUMERA" => {
-                // En lugar de un comando propio, usamos el TEXT nativo.
-                // Pero como el TEXT pide el punto y el texto por separado,
-                // vamos a hacerlo de forma interactiva: pedimos el punto,
-                // y luego lanzamos el TEXT.
-                self.command_line.push_info(
-                    crate::tf!("NUMERA  Punto para el número {}{}:", self.numera_prefijo, self.numera_contador).as_ref()
+                use super::numera::NumeraCommand;
+                let defaults = crate::scene::creation_style::current_text_defaults(
+                    &self.tabs[i].scene.document,
                 );
-                self.awaiting_numera_point = true;
-                return Some(self.focus_cmd_input());
+                let command = NumeraCommand::new(defaults.height, defaults.style_name);
+                self.command_line.push_info(&command.prompt());
+                self.tabs[i].active_cmd = Some(Box::new(command));
             }
-            // Los comandos de configuración
-            cmd if cmd.starts_with("NUMERA_PREFIJO ") => {
-                let nuevo = cmd.trim_start_matches("NUMERA_PREFIJO ").trim().to_string();
-                self.numera_prefijo = nuevo;
-                self.command_line.push_output(
-                    crate::tf!("Prefijo establecido: '{}'", self.numera_prefijo).as_ref()
-                );
-                return Some(Task::none());
-            }
-            cmd if cmd.starts_with("NUMERA_SUFIJO ") => {
-                let nuevo = cmd.trim_start_matches("NUMERA_SUFIJO ").trim().to_string();
-                self.numera_sufijo = nuevo;
-                self.command_line.push_output(
-                    crate::tf!("Sufijo establecido: '{}'", self.numera_sufijo).as_ref()
-                );
-                return Some(Task::none());
-            }
-            cmd if cmd.starts_with("NUMERA_ALTURA ") => {
-                if let Ok(nueva) = cmd.trim_start_matches("NUMERA_ALTURA ").trim().parse::<f64>() {
-                    self.numera_altura = nueva;
-                    self.command_line.push_output(
-                        crate::tf!("Altura establecida: {}", self.numera_altura).as_ref()
-                    );
-                }
-                return Some(Task::none());
-            }
-            "NUMERA_RESET" => {
-                self.numera_contador = 1.0;
-                self.command_line.push_output("Contador reiniciado a 1.");
-                return Some(Task::none());
-            }
-            // Cuando el usuario hace clic, lanzamos el comando TEXT con el número
-            "NUMERA_POINT" => {
-                let texto_rotulo = format!("{}{}{}", self.numera_prefijo, self.numera_contador, self.numera_sufijo);
-                
-                // Lanzamos el TEXT nativo. El CAD pedirá el punto y el texto.
-                // Pero como queremos que el texto sea el número, lo hacemos así:
-                let cmd_str = format!("TEXT {} {}", texto_rotulo, self.numera_altura);
-                self.numera_contador += 1.0;
-                
-                return Some(self.dispatch_command(&cmd_str));
-            }
-                                   // ── SUMANUM — Suma de números en textos ──────────────────────
+            // ── SUMANUM — suma de números en textos ──────────────────────
             "SUMANUM" => {
-                let cmd = crate::app::commands::sumanum::SumaNumCommand::new();
+                let cmd = super::sumanum::SumaNumCommand::new();
                 self.command_line.push_info(&cmd.prompt());
                 self.tabs[i].active_cmd = Some(Box::new(cmd));
             }
-            // ── SUMANUM_EXECUTE — Procesar la suma real ─────────────────
-            cmd if cmd.starts_with("SUMANUM_EXECUTE") => {
-                let selected_handles: Vec<codec::Handle> = self.tabs[i]
+            // ── SUMANUM_EXECUTE — procesar la suma real ──────────────────
+            "SUMANUM_EXECUTE" => {
+                let handles: Vec<codec::Handle> = self.tabs[i]
                     .scene
                     .selected_entities()
                     .iter()
-                    .map(|(h, _)| *h)
+                    .map(|(handle, _)| *handle)
                     .collect();
-
-                if selected_handles.is_empty() {
-                    self.command_line.push_info("No hay textos seleccionados.");
+                if handles.is_empty() {
+                    self.command_line
+                        .push_info("SUMANUM  No hay textos seleccionados.");
                     return Some(Task::none());
                 }
 
-                let mut suma_total = 0.0;
-                let mut contador = 0;
-
                 self.command_line.push_output("--- VALORES ENCONTRADOS ---");
-
-                for handle in selected_handles {
-                    if let Some(codec::EntityType::Text(text_entity)) = self.tabs[i].scene.document.get_entity(handle) {
-                       let contenido = &text_entity.value;
-                        if let Some(numero) = extraer_numero_simple(contenido) {
-                            suma_total += numero;
-                            contador += 1;
-                            self.command_line.push_output(&crate::tf!("  {} = {:.2}", contenido, numero));
-                        } else {
-                            self.command_line.push_output(&crate::tf!("  {} = (sin número)", contenido));
+                let mut total = 0.0;
+                let mut counted = 0usize;
+                for handle in handles {
+                    let Some(entity) = self.tabs[i].scene.document.get_entity(handle) else {
+                        continue;
+                    };
+                    let Some((value, _field)) =
+                        crate::app::text_inline::read_text_field(entity)
+                    else {
+                        continue;
+                    };
+                    match super::sumanum::parse_number(&value) {
+                        Some(number) => {
+                            total += number;
+                            counted += 1;
+                            self.command_line
+                                .push_output(&crate::tf!("  {} = {:.2}", value, number));
                         }
-                    } else if let Some(codec::EntityType::MText(mtext_entity)) = self.tabs[i].scene.document.get_entity(handle) {
-                       let contenido = &mtext_entity.value;
-                        if let Some(numero) = extraer_numero_simple(contenido) {
-                            suma_total += numero;
-                            contador += 1;
-                            self.command_line.push_output(&crate::tf!("  {} = {:.2}", contenido, numero));
-                        } else {
-                            self.command_line.push_output(&crate::tf!("  {} = (sin número)", contenido));
-                        }
+                        None => self.command_line
+                            .push_output(&crate::tf!("  {} = (sin número)", value)),
                     }
                 }
 
                 self.command_line.push_output("---------------------------");
-                self.command_line.push_output(&crate::tf!("TEXTOS PROCESADOS: {}", contador));
-                self.command_line.push_output(&crate::tf!("SUMA TOTAL: {:.2}", suma_total));
-                self.command_line.push_output("--- POWERED BY ROBERTO TREJO ---");
+                self.command_line
+                    .push_output(&crate::tf!("TEXTOS PROCESADOS: {}", counted));
+                self.command_line
+                    .push_output(&crate::tf!("SUMA TOTAL: {:.2}", total));
+                self.command_line
+                    .push_output("--- POWERED BY ROBERTO TREJO ---");
                 return Some(Task::none());
             }
             "ABOUT" => {
@@ -3334,50 +3290,4 @@ mod tests {
                 |command| command.name() == "DRAWORDER" && command.is_selection_gathering()
             ));
     }
-}
-fn extraer_numero_simple(texto: &str) -> Option<f64> {
-    let mut num_str = String::new();
-    let mut punto_encontrado = false;
-    let mut encontrado = false;
-    let mut en_codigo = false; // Bandera para saber si estamos dentro de un código \...;
-
-    for c in texto.chars() {
-        // Detectar inicio de código de formato
-        if c == '\\' {
-            en_codigo = true;
-            continue;
-        }
-        // Detectar fin de código de formato
-        if c == ';' && en_codigo {
-            en_codigo = false;
-            continue;
-        }
-        // Si estamos dentro de un código, ignorar todo
-        if en_codigo {
-            continue;
-        }
-
-        // Si es un dígito, lo guardamos
-        if c.is_ascii_digit() {
-            num_str.push(c);
-            encontrado = true;
-        } 
-        // Si es un punto y no hemos encontrado uno antes, lo guardamos
-        else if c == '.' && !punto_encontrado {
-            num_str.push(c);
-            punto_encontrado = true;
-            encontrado = true;
-        } 
-        // Si ya encontramos un número y aparece otro carácter, paramos
-        else if encontrado {
-            break;
-        }
-    }
-    
-    // Si no encontramos nada, devolvemos None
-    if num_str.is_empty() {
-        return None;
-    }
-    
-    num_str.parse::<f64>().ok()
 }

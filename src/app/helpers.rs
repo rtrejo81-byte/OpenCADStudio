@@ -600,21 +600,13 @@ pub(super) fn title_case_word(value: &str) -> String {
 #[cfg(not(target_arch = "wasm32"))]
 pub(super) fn build_window_icon() -> Option<Vec<u8>> {
     const W: u32 = 32;
-    static LOGO: &[u8] = include_bytes!("../../assets/logo.svg");
+    static LOGO: &[u8] = include_bytes!("../../assets/branding/lgbcadstudio.jpg");
 
-    let tree = resvg::usvg::Tree::from_data(LOGO, &resvg::usvg::Options::default()).ok()?;
-    let mut pixmap = resvg::tiny_skia::Pixmap::new(W, W)?;
-    let size = tree.size();
-    // Fit the artwork to the square without distorting it, whatever aspect the
-    // logo happens to have.
-    let scale = (W as f32 / size.width()).min(W as f32 / size.height());
-    let transform = resvg::tiny_skia::Transform::from_translate(
-        (W as f32 - size.width() * scale) / 2.0,
-        (W as f32 - size.height() * scale) / 2.0,
-    )
-    .pre_scale(scale, scale);
-    resvg::render(&tree, transform, &mut pixmap.as_mut());
-    Some(pixmap.take())
+    // El emblema de la casa es una imagen raster (1024×1024); se reduce al
+    // tamaño que pide el icono de la ventana conservando el cuadrado.
+    let decoded = image::load_from_memory(LOGO).ok()?.to_rgba8();
+    let square = image::imageops::resize(&decoded, W, W, image::imageops::FilterType::Lanczos3);
+    Some(square.into_raw())
 }
 
 #[cfg(test)]

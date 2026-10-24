@@ -3730,6 +3730,16 @@ pub(super) fn doc_tab_bar<'a>(
 // fixed Start tab (`DocumentTab::is_start`). English-only by design — this
 // is the public welcome screen and stays consistent across locales.
 //
+/// Emblema de LGBCADStudio para la pantalla de inicio, decodificado una sola
+/// vez por proceso (la vista se reconstruye en cada frame).
+fn brand_logo() -> iced::widget::image::Handle {
+    const BRAND: &[u8] = include_bytes!("../../../assets/branding/lgbcadstudio.jpg");
+    static HANDLE: std::sync::OnceLock<iced::widget::image::Handle> = std::sync::OnceLock::new();
+    HANDLE
+        .get_or_init(|| iced::widget::image::Handle::from_bytes(BRAND))
+        .clone()
+}
+
 fn start_muted_style(theme: &Theme) -> iced::widget::text::Style {
     iced::widget::text::Style {
         color: Some(theme.palette().background.base.text.scale_alpha(0.68)),
@@ -3821,7 +3831,21 @@ fn start_page_content<'a>(
     action_width_out: std::sync::Arc<std::sync::atomic::AtomicU32>,
     active: super::StartSection,
 ) -> Element<'a, Message> {
-    let headline = text("Open CAD Studio").size(40).style(start_primary_style);
+    // Emblema de la casa para la pantalla de inicio. El `Handle` se crea una
+    // sola vez: esta vista se reconstruye en cada frame y volver a decodificar
+    // el JPEG ahí costaría milisegundos por fotograma.
+    let brand = container(
+        iced::widget::image(brand_logo())
+            .width(230)
+            .height(230)
+            .content_fit(iced::ContentFit::Contain),
+    )
+    .center_x(Fill);
+
+    let headline = text("LGBCADStudio").size(40).style(start_primary_style);
+    let tagline = text("Diseño de redes · by Trejo")
+        .size(14)
+        .style(start_muted_style);
 
     // Plain outlined button (Open / New / Help / Contribute).
     let outline_btn = |label: String, msg: Message| {
@@ -3983,9 +4007,12 @@ fn start_page_content<'a>(
     .width(Fill);
 
     let content = column![
-        Space::new().height(iced::Length::Fixed(28.0)),
+        Space::new().height(iced::Length::Fixed(16.0)),
+        brand,
+        Space::new().height(iced::Length::Fixed(4.0)),
         container(headline).center_x(Fill),
-        Space::new().height(iced::Length::Fixed(22.0)),
+        container(tagline).center_x(Fill),
+        Space::new().height(iced::Length::Fixed(18.0)),
         container(primary_row).center_x(Fill),
         Space::new().height(iced::Length::Fixed(10.0)),
         container(secondary_row).center_x(Fill),

@@ -143,3 +143,5 @@ fn git_output(args: &[&str]) -> Option<String> {
         .map(|value| value.trim().to_string())
         .filter(|value| !value.is_empty())
 }
+
+// El icono vive en packaging/windows/AppIcon.ico; tocado para forzar el rerun.

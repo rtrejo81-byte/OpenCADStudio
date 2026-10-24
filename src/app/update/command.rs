@@ -2228,14 +2228,21 @@ impl lgbcadstudio {
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            let folder = self.tabs[self.active_tab]
+            // El PNG se escribe junto al dibujo para que el DWG lo referencie
+            // con una ruta relativa. Una carpeta sincronizada (Synology, OneDrive)
+            // o de solo lectura puede denegar la escritura — el mismo permiso que
+            // impide crear el `.ocs.lock` — así que se reintenta en la carpeta de
+            // datos antes de darse por vencido.
+            let folders: Vec<std::path::PathBuf> = self.tabs[self.active_tab]
                 .current_path
                 .as_ref()
                 .and_then(|path| path.parent().map(std::path::Path::to_path_buf))
                 .filter(|folder| !folder.as_os_str().is_empty())
-                .or_else(|| crate::config::config_dir().map(|dir| dir.join("pasted")));
+                .into_iter()
+                .chain(crate::config::config_dir().map(|dir| dir.join("pasted")))
+                .collect();
             iced::clipboard::read_image().map(move |image| {
-                let saved = image.ok().zip(folder.clone()).and_then(|(image, folder)| {
+                let saved = image.ok().and_then(|image| {
                     let pixels = image::RgbaImage::from_raw(
                         image.size.width,
                         image.size.height,
@@ -2246,15 +2253,24 @@ impl lgbcadstudio {
                     let stamp = std::time::SystemTime::now()
                         .duration_since(std::time::UNIX_EPOCH)
                         .map_or(0, |elapsed| elapsed.as_millis());
-                    let name = crate::sys::unique_pasted_image_name(
-                        &format!("pasted-{stamp}"),
-                        "png",
-                        |name| folder.join(name).exists(),
-                    );
-                    let path = folder.join(name);
-                    std::fs::create_dir_all(&folder).ok()?;
-                    std::fs::write(&path, png.get_ref()).ok()?;
-                    Some((path.to_string_lossy().into_owned(), png.into_inner()))
+                    for folder in &folders {
+                        if std::fs::create_dir_all(folder).is_err() {
+                            continue;
+                        }
+                        let name = crate::sys::unique_pasted_image_name(
+                            &format!("pasted-{stamp}"),
+                            "png",
+                            |name| folder.join(name).exists(),
+                        );
+                        let path = folder.join(name);
+                        if std::fs::write(&path, png.get_ref()).is_ok() {
+                            return Some((
+                                path.to_string_lossy().into_owned(),
+                                png.into_inner(),
+                            ));
+                        }
+                    }
+                    None
                 });
                 Message::SystemClipboardPasteImage(saved)
             })

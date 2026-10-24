@@ -67,6 +67,9 @@ pub(super) fn default_bindings() -> BTreeMap<String, String> {
         (format!("{ACCEL}+X"), "CUTCLIP"),
         (format!("{ACCEL}+V"), "PASTECLIP"),
         (format!("{ACCEL}+SHIFT+V"), "PASTEBLOCK"),
+        // Pegar la imagen del portapapeles aunque también traiga texto
+        // (Excel, Visio, capturas): Ctrl+V se queda con el texto.
+        (format!("{ACCEL}+ALT+V"), "PASTEIMAGE"),
         ("ENTER".to_string(), "FINALIZE"),
         ("SPACE".to_string(), "COMMANDSPACE"),
         ("ESCAPE".to_string(), "CANCEL"),

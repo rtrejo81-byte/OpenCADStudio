@@ -131,26 +131,26 @@ impl RenumeraCommand {
         CmdResult::NeedPoint
     }
 
-    /// Aplica la cola completa en un solo paso de undo.
+    /// Entrega la cola al manejador, que escribe los cambios directamente en
+    /// el documento en un solo paso de undo. Se codifica el estado en el
+    /// propio comando para no perderlo al cerrar este comando interactivo.
     fn aplicar_cola(&mut self) -> CmdResult {
         if self.cola.is_empty() {
             return CmdResult::Cancel;
         }
-        let mut reemplazos = Vec::with_capacity(self.cola.len());
-        for (handle, entity, numero) in std::mem::take(&mut self.cola) {
-            let EntityType::Insert(mut insert) = entity else {
-                continue;
-            };
-            insert.block_name = bloque_destino(self.huawei, numero).to_string();
-            let nombre = nombre_nap(&self.distrito, numero);
-            for attribute in &mut insert.attributes {
-                if attribute.tag.eq_ignore_ascii_case("NOMBRE") {
-                    attribute.value = nombre.clone();
-                }
-            }
-            reemplazos.push((handle, vec![EntityType::Insert(insert)]));
-        }
-        CmdResult::ReplaceMany(reemplazos, Vec::new())
+        let handles: Vec<String> = self
+            .cola
+            .iter()
+            .map(|(handle, _, _)| format!("{:X}", handle.value()))
+            .collect();
+        let tecnologia = if self.huawei { "H" } else { "C" };
+        CmdResult::Dispatch(format!(
+            "RENUMERA_APPLY {} {} {} {}",
+            self.distrito,
+            tecnologia,
+            self.siguiente.saturating_sub(self.cola.len() as u32),
+            handles.join(",")
+        ))
     }
 }
 impl CadCommand for RenumeraCommand {

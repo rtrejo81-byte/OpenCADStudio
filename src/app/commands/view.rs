@@ -350,7 +350,70 @@ impl lgbcadstudio {
                 self.command_line.push_info(&command.prompt());
                 self.tabs[i].active_cmd = Some(Box::new(command));
             }
-            // ── RENUMERA — renumeración de NAPs ──────────────────────────
+            // ── RENUMERA_APPLY — escribe la renumeración en el dibujo ────
+            cmd if cmd.starts_with("RENUMERA_APPLY ") => {
+                let resto = &cmd["RENUMERA_APPLY ".len()..];
+                let mut partes = resto.split_whitespace();
+                let distrito = partes.next().unwrap_or("SYP01").to_string();
+                let huawei = !partes
+                    .next()
+                    .unwrap_or("H")
+                    .eq_ignore_ascii_case("C");
+                let inicio: u32 = partes
+                    .next()
+                    .and_then(|valor| valor.parse().ok())
+                    .unwrap_or(1);
+                let handles: Vec<codec::Handle> = partes
+                    .next()
+                    .unwrap_or("")
+                    .split(',')
+                    .filter_map(|texto| u64::from_str_radix(texto, 16).ok())
+                    .map(codec::Handle::new)
+                    .collect();
+                if handles.is_empty() {
+                    self.command_line
+                        .push_error("RENUMERA  No hay bloques que renumerar.");
+                    return Some(Task::none());
+                }
+                let pending = self.begin_undo(i, "RENUMERA", handles.len(), true);
+                let mut aplicados = 0usize;
+                for (indice, handle) in handles.iter().enumerate() {
+                    let numero = inicio + indice as u32;
+                    let destino = super::renumera::bloque_destino(huawei, numero);
+                    let nombre = super::renumera::nombre_nap(&distrito, numero);
+                    let Some(codec::EntityType::Insert(insert)) =
+                        self.tabs[i].scene.document.get_entity_mut(*handle)
+                    else {
+                        continue;
+                    };
+                    insert.block_name = destino.to_string();
+                    for attribute in &mut insert.attributes {
+                        if attribute.tag.eq_ignore_ascii_case("NOMBRE") {
+                            attribute.value = nombre.clone();
+                        }
+                    }
+                    aplicados += 1;
+                }
+                let cambios: Vec<_> = handles
+                    .iter()
+                    .map(|handle| (*handle, crate::scene::ChangeKind::Modified))
+                    .collect();
+                self.tabs[i].scene.bump_entities(&cambios);
+                self.tabs[i].dirty = true;
+                self.refresh_properties();
+                if let Some(pd) = pending {
+                    self.commit_undo_delta(i, pd);
+                }
+                self.command_line.push_output(
+                    &crate::tf!(
+                        "RENUMERA  {} bloque(s) renumerado(s) · distrito {} · desde {}.",
+                        aplicados,
+                        distrito,
+                        inicio
+                    ),
+                );
+                return Some(Task::none());
+            }            // ── RENUMERA — renumeración de NAPs ──────────────────────────
             "RENUMERA" | "FTTH_RENUMERA_NAP" => {
                 // Los bloques destino tienen que existir en el dibujo.
                 let disponibles: Vec<String> = self.tabs[i]

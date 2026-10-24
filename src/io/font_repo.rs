@@ -40,7 +40,19 @@ pub fn set_fonts_folder(folder: Option<PathBuf>) {
 /// resolution searches here after the drawing folder.
 #[cfg(not(target_arch = "wasm32"))]
 pub fn fonts_dir() -> Option<PathBuf> {
-    fonts_folder().or_else(|| crate::config::config_dir().map(|dir| dir.join("fonts")))
+    fonts_folder()
+        .or_else(portable_fonts_dir)
+        .or_else(|| crate::config::config_dir().map(|dir| dir.join("fonts")))
+}
+
+/// Carpeta `fonts` junto al ejecutable. El paquete portable la lleva consigo,
+/// así encuentra sus `.shx` sin depender de escribir en el perfil del usuario
+/// (que en algunas máquinas un antivirus bloquea).
+#[cfg(not(target_arch = "wasm32"))]
+fn portable_fonts_dir() -> Option<PathBuf> {
+    let exe = std::env::current_exe().ok()?;
+    let dir = exe.parent()?.join("fonts");
+    dir.is_dir().then_some(dir)
 }
 
 /// Web builds have no filesystem to cache fonts into.

@@ -838,6 +838,40 @@ impl lgbcadstudio {
         true
     }
 
+    /// Move / copy also rewrite the annotation-scale context objects of every
+    /// annotative object, and an entity delta cannot record those: such a
+    /// transaction needs the structure snapshot.
+    pub(super) fn delta_transform_safe(&self, i: usize, handles: &[Handle]) -> bool {
+        let doc = &self.tabs[i].scene.document;
+        !handles
+            .iter()
+            .any(|handle| Self::uses_annotation_context(doc, *handle))
+    }
+
+    /// Objetos que llevan contexto de anotación por escala: los que ya tienen
+    /// representaciones registradas y los que las estrenarán al moverse por
+    /// usar un estilo anotativo.
+    fn uses_annotation_context(doc: &codec::CadDocument, handle: Handle) -> bool {
+        if !crate::scene::annotative::annotation_scale_handles_for_entity(doc, handle).is_empty() {
+            return true;
+        }
+        match doc.get_entity(handle) {
+            Some(EntityType::Text(text)) => {
+                crate::scene::annotative::text_style_is_annotative(doc, &text.style)
+            }
+            Some(EntityType::MText(mtext)) => {
+                crate::scene::annotative::text_style_is_annotative(doc, &mtext.style)
+            }
+            Some(EntityType::Dimension(dimension)) => {
+                crate::scene::annotative::dim_style_is_annotative(
+                    doc,
+                    &dimension.base().style_name,
+                )
+            }
+            _ => false,
+        }
+    }
+
     /// Add is delta-safe when its layer and XData application IDs already exist
     /// and it creates no block records.
     pub(super) fn delta_add_safe(&self, i: usize, entity: &EntityType) -> bool {

@@ -23,7 +23,10 @@ impl lgbcadstudio {
         // A translation carries its complete connected constraint
         // component so each member keeps its own dimensions. Other
         // transforms retain their selected-object behavior.
-        let pending = self.begin_undo(i, label, handles.len(), true);
+        // Annotative objects also rewrite their scale-context objects, which
+        // an entity delta cannot undo: those need the structure snapshot.
+        let delta_safe = self.delta_transform_safe(i, &handles);
+        let pending = self.begin_undo(i, label, handles.len(), delta_safe);
         let handles = self.tabs[i]
             .scene
             .transform_picked_segments(&handles, &transform);
@@ -53,8 +56,10 @@ impl lgbcadstudio {
         }
         let label = self.history_label_from_active_cmd(i, "COPY");
         // Copying a dimension clones a *D block record, so gate delta on
-        // the selection being dimension-free.
-        let delta_safe = self.delta_copy_safe(i, &handles);
+        // the selection being dimension-free. Annotative objects also bring
+        // scale-context objects with them (see `delta_transform_safe`).
+        let delta_safe =
+            self.delta_copy_safe(i, &handles) && self.delta_transform_safe(i, &handles);
         let pending = self.begin_undo(i, label, handles.len(), delta_safe);
         let new_handles = self.tabs[i].scene.copy_entities(&handles, &transform);
         self.tabs[i].dirty = true;
@@ -96,8 +101,10 @@ impl lgbcadstudio {
             let label = self.history_label_from_active_cmd(i, "ALIGN");
             // A chain of transform_entities on the same handles — the
             // recording keeps each entity's first (pre-align) image, so
-            // it's delta-safe like a single transform.
-            let pending = self.begin_undo(i, label, handles.len(), true);
+            // it's delta-safe like a single transform, except for annotative
+            // objects, whose scale contexts need the structure snapshot.
+            let delta_safe = self.delta_transform_safe(i, &handles);
+            let pending = self.begin_undo(i, label, handles.len(), delta_safe);
             // Step 1: translate so src1 is at origin
             self.tabs[i]
                 .scene

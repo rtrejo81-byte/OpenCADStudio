@@ -45,8 +45,9 @@ impl lgbcadstudio {
         let label = self.history_label_from_active_cmd(i, "ARRAY");
         let count = transforms.len();
         // Same gate as COPY (dimension-free), sized by the total number
-        // of copies the array will add.
-        let delta_safe = self.delta_copy_safe(i, &handles);
+        // of copies the array will add, plus the annotation-context gate.
+        let delta_safe =
+            self.delta_copy_safe(i, &handles) && self.delta_transform_safe(i, &handles);
         let pending = self.begin_undo(i, label.clone(), handles.len() * count, delta_safe);
         for t in &transforms {
             self.tabs[i].scene.copy_entities(&handles, t);

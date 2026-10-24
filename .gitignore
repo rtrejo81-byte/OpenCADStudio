@@ -44,3 +44,6 @@ __pycache__/
 
 # macOS Finder metadata
 .DS_Store
+
+# Salida del lanzador de diagnostico (diagnostico_log.cmd)
+salida.log

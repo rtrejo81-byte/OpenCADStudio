@@ -540,6 +540,13 @@ pub fn crashed_backends() -> Vec<String> {
             false => Vec::new(),
         };
     }
+    // Died before the proof delay. That still only names a suspect when the
+    // run's own crash report points at the device: an ordinary panic (a
+    // command bug) used to cost the user their fastest backend on every
+    // later launch, warning them about a driver that was never at fault.
+    if crash_report_for(&text).is_some() && !crash_report_blames_the_device(&text) {
+        return Vec::new();
+    }
     named()
 }
 
@@ -549,20 +556,23 @@ pub fn crashed_backends() -> Vec<String> {
 /// named for the process that wrote them, so the two join exactly: this asks
 /// about that run and not whichever report happens to be newest.
 fn crash_report_blames_the_device(sentinel: &str) -> bool {
-    let Some(pid) = sentinel
+    crash_report_for(sentinel)
+        .is_some_and(|report| crate::sys::crash_log::is_device_failure(&report))
+}
+
+/// The crash report the sentinel's run left behind, joined by process id and
+/// armed time so a reused pid cannot hand back an unrelated report.
+fn crash_report_for(sentinel: &str) -> Option<String> {
+    let pid = sentinel
         .lines()
         .find_map(|line| line.strip_prefix("pid="))
-        .and_then(|value| value.trim().parse::<u32>().ok())
-    else {
-        return false;
-    };
+        .and_then(|value| value.trim().parse::<u32>().ok())?;
     let armed = sentinel
         .lines()
         .find_map(|line| line.strip_prefix("t="))
         .and_then(|value| value.trim().parse::<u64>().ok())
         .unwrap_or(0);
     crate::sys::crash_log::report_for_pid(pid, armed)
-        .is_some_and(|report| crate::sys::crash_log::is_device_failure(&report))
 }
 
 /// Record that the armed backend has kept the app alive long enough to be

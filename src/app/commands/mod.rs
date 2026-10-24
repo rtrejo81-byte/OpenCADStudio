@@ -5,6 +5,7 @@ use iced::Task;
 use std::path::PathBuf;
 pub(crate) mod insertar_red;
 pub(crate) mod napakml;
+pub(crate) mod renumera;
 pub(crate) mod numera;
 pub(crate) mod sumanum;
 mod attdef;

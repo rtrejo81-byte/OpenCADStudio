@@ -350,7 +350,25 @@ impl lgbcadstudio {
                 self.command_line.push_info(&command.prompt());
                 self.tabs[i].active_cmd = Some(Box::new(command));
             }
-            // ── NAPAKML — NAPs y polígonos a KML (Google Earth) ──────────
+            // ── RENUMERA — renumeración de NAPs ──────────────────────────
+            "RENUMERA" | "FTTH_RENUMERA_NAP" => {
+                // Los bloques destino tienen que existir en el dibujo.
+                let disponibles: Vec<String> = self.tabs[i]
+                    .scene
+                    .document
+                    .block_records
+                    .iter()
+                    .map(|record| record.name.to_uppercase())
+                    .collect();
+                let cmd = super::renumera::RenumeraCommand::new(disponibles);
+                self.command_line.push_info(&cmd.prompt());
+                self.tabs[i].active_cmd = Some(Box::new(cmd));
+            }
+            "RENUMERA_DISTRITO" | "FTTH_NAP_DISTRITO" => {
+                let cmd = super::renumera::RenumeraDistritoCommand::new();
+                self.command_line.push_info(&cmd.prompt());
+                self.tabs[i].active_cmd = Some(Box::new(cmd));
+            }            // ── NAPAKML — NAPs y polígonos a KML (Google Earth) ──────────
             "NAPAKML" | "NAPKML" => {
                 let cmd = super::napakml::NapaKmlCommand::new();
                 self.command_line.push_info(&cmd.prompt());

@@ -1102,7 +1102,7 @@ impl Default for UserSettings {
             touchpad_pan: false,
             ui_scale_percent: 100,
             zoom_factor: 60,
-            cursor_size: 5,
+            cursor_size: 3,
             pick_box: 3,
             aperture: crate::snap::DEFAULT_OSNAP_RADIUS_PX,
             hatch_associative: true,

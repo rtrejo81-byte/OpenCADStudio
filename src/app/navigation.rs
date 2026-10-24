@@ -1,6 +1,6 @@
 //! Application policy for device navigation. All scene writes run on the UI
 //! thread, preserving active commands and the scene's viewport locks.
-use super::{Message, ModalKind, OpenCADStudio};
+use super::{Message, ModalKind, lgbcadstudio};
 use crate::input::spacemouse::{Action, NavigationMode, Target, View};
 use crate::scene::view::camera::Projection;
 use iced::Task;
@@ -46,7 +46,7 @@ inventory::submit!(crate::command::CommandRegistration {
     ],
 });
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     fn navigation_target(&self) -> Target {
         let tab = &self.tabs[self.active_tab];
         Target {
@@ -360,8 +360,8 @@ mod tests {
     use super::*;
     use glam::DVec3;
 
-    fn app() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn app() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.tabs[app.active_tab]
             .scene

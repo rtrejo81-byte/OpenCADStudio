@@ -118,7 +118,7 @@ fn route(path: &str, format: Option<usize>) -> Result<Route, String> {
     })
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// IMPORT, DGNIMPORT and -DGNIMPORT; `None` defers to the other
     /// families.
     pub(super) fn dispatch_import(&mut self, cmd: &str, i: usize) -> Option<Task<Message>> {

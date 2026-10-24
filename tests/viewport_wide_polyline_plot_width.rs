@@ -9,14 +9,14 @@
 use codec::entities::{LwPolyline, LwVertex, Viewport};
 use codec::types::{Vector2, Vector3};
 use codec::EntityType;
-use OpenCADStudio::scene::Scene;
+use lgbcadstudio::scene::Scene;
 
 #[test]
 fn viewport_projection_scales_wide_polyline_band_width() {
     // A fresh `Scene::new()` has no paper layout block yet; reuse the small
     // fixture the image-export test plots through, which defines `Layout1`.
     let mut scene = Scene::new();
-    scene.document = OpenCADStudio::io::load_bytes(
+    scene.document = lgbcadstudio::io::load_bytes(
         "embedded-image-print.dxf",
         include_bytes!("fixtures/embedded-image-print.dxf").to_vec(),
     )

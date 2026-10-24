@@ -141,7 +141,7 @@ fn resample(colors: &[[u8; 3]], count: usize) -> Vec<[u8; 3]> {
         .collect()
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// POINTCLOUDCOLORMAP after the prompt: the dialog for `cloud`, or for
     /// the drawing's default schemes.
     pub(in crate::app) fn open_point_cloud_color_map(&mut self, i: usize, cloud: Option<Handle>) {

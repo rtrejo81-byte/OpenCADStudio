@@ -1,6 +1,6 @@
 // Line tool — ribbon definition + interactive command.
 //
-// Command:  LINE — OpenCADStudio behaviour:
+// Command:  LINE — lgbcadstudio behaviour:
 //   1. First click  → stores start point, prompts for next point
 //   2. Each further click → immediately commits an codec::Line entity
 //      (start→end) to the document; end becomes the new start point

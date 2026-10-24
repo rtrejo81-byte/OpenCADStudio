@@ -32,11 +32,11 @@ use ocs_plugin_api::host::{
     CustomGripEvent, CustomGripPhase, CustomGripResponse, PluginGrip, PluginGripShape, PreviewWire,
 };
 
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use crate::plugin::grip_points::{self, PluginGripHover};
 
-fn app() -> OpenCADStudio {
-    let mut app = OpenCADStudio::new_for_test();
+fn app() -> lgbcadstudio {
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     // A real canvas size (the projection round-trip the grip ops drive has
     // the viewport's resolution; the test default is a stub-sized pane).
@@ -45,11 +45,11 @@ fn app() -> OpenCADStudio {
     app
 }
 
-fn tab(app: &OpenCADStudio) -> usize {
+fn tab(app: &lgbcadstudio) -> usize {
     app.active_tab
 }
 
-fn add(app: &mut OpenCADStudio, entity: EntityType) -> Handle {
+fn add(app: &mut lgbcadstudio, entity: EntityType) -> Handle {
     let i = tab(app);
     let mut host = crate::app::plugin_host::HostSession::new(app, i);
     host.add_entity(entity)
@@ -68,20 +68,20 @@ fn arc(center: [f64; 3], radius: f64, start: f64, end: f64) -> EntityType {
     ))
 }
 
-fn entity_grips(app: &mut OpenCADStudio, handle: Handle) -> Vec<ocs_plugin_api::host::GripInfo> {
+fn entity_grips(app: &mut lgbcadstudio, handle: Handle) -> Vec<ocs_plugin_api::host::GripInfo> {
     let i = tab(app);
     let host = crate::app::plugin_host::HostSession::new(app, i);
     host.entity_grips(handle).expect("grip read")
 }
 
-fn select(app: &mut OpenCADStudio, handle: Handle) {
+fn select(app: &mut lgbcadstudio, handle: Handle) {
     let i = tab(app);
     app.tabs[i].scene.deselect_all();
     app.tabs[i].scene.select_entity(handle, false);
     app.refresh_selected_grips();
 }
 
-fn control(app: &mut OpenCADStudio, mut op: serde_json::Value) -> serde_json::Value {
+fn control(app: &mut lgbcadstudio, mut op: serde_json::Value) -> serde_json::Value {
     // The protocol envelope the automation bridges supply: document_id,
     // revision, client_id and a unique request_id, with running states
     // drained (the block-ops test helper's shape).
@@ -106,17 +106,17 @@ fn control(app: &mut OpenCADStudio, mut op: serde_json::Value) -> serde_json::Va
     }
 }
 
-fn undo_entry_count(app: &OpenCADStudio) -> usize {
+fn undo_entry_count(app: &lgbcadstudio) -> usize {
     let history = &app.tabs[tab(app)].history;
     history.undo_stack.len() + usize::from(history.pending.is_some())
 }
 
-fn last_undo_label(app: &OpenCADStudio) -> Option<String> {
+fn last_undo_label(app: &lgbcadstudio) -> Option<String> {
     let history = &app.tabs[tab(app)].history;
     history.undo_stack.last().map(|s| s.label().to_string())
 }
 
-fn serialized(app: &OpenCADStudio, handle: Handle) -> Vec<u8> {
+fn serialized(app: &lgbcadstudio, handle: Handle) -> Vec<u8> {
     let entity = app.tabs[tab(app)]
         .scene
         .document
@@ -126,7 +126,7 @@ fn serialized(app: &OpenCADStudio, handle: Handle) -> Vec<u8> {
     bincode::serialize(&entity).expect("entity serializes")
 }
 
-fn radius_of(app: &OpenCADStudio, handle: Handle) -> f64 {
+fn radius_of(app: &lgbcadstudio, handle: Handle) -> f64 {
     match app.tabs[tab(app)]
         .scene
         .document
@@ -140,7 +140,7 @@ fn radius_of(app: &OpenCADStudio, handle: Handle) -> f64 {
 
 /// Screen point (tile-relative) of a world point through the active tile's
 /// camera — the same projection the grips overlay uses.
-fn screen_of(app: &OpenCADStudio, world: [f64; 3]) -> iced::Point {
+fn screen_of(app: &lgbcadstudio, world: [f64; 3]) -> iced::Point {
     let i = tab(app);
     let (vw, vh) = app.tabs[i].scene.selection.borrow().view.vp_size;
     let tile = app.tabs[i].scene.active_model_tile_bounds(vw, vh);
@@ -158,7 +158,7 @@ fn screen_of(app: &OpenCADStudio, world: [f64; 3]) -> iced::Point {
         .expect("world point is in view")
 }
 
-fn declare(app: &mut OpenCADStudio, plugin: &str, grips: Vec<PluginGrip>) {
+fn declare(app: &mut lgbcadstudio, plugin: &str, grips: Vec<PluginGrip>) {
     let i = tab(app);
     let mut host = crate::app::plugin_host::HostSession::new(app, i);
     host.set_plugin_grips(plugin, grips)
@@ -975,7 +975,7 @@ fn hover_hits_through_two_thousand_declared_grips() {
     grip_points::remove_in_process_sink(TEST_PLUGIN);
 }
 
-fn live_arc(anchor: Handle, radius: f64, app: &OpenCADStudio) -> codec::EntityType {
+fn live_arc(anchor: Handle, radius: f64, app: &lgbcadstudio) -> codec::EntityType {
     match app.tabs[tab(app)]
         .scene
         .document
@@ -1277,7 +1277,7 @@ mod notification_attach {
 
         const FRESH_BOOTS: usize = 3;
         for boot in 1..=FRESH_BOOTS {
-            let mut app = OpenCADStudio::new_for_test();
+            let mut app = lgbcadstudio::new_for_test();
             let _ = app.automation_op(r#"{"op":"new"}"#);
             let baseline_epoch = app.tabs[0].scene.geometry_epoch;
             let mut host = crate::app::plugin_host::HostSession::new(&mut app, 0);

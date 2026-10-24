@@ -1,4 +1,4 @@
-use super::{document::DocumentTab, Message, OpenCADStudio};
+use super::{document::DocumentTab, Message, lgbcadstudio};
 use codec::entities::{AttributeEntity, Entity, Insert};
 use codec::EntityType;
 use iced::Task;
@@ -10,7 +10,7 @@ pub(super) struct BlockTestSession {
     pub baseline: std::sync::Arc<codec::CadDocument>,
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn refuse_block_test_save(&mut self, i: usize) -> bool {
         if self.tabs[i].block_test.is_none() {
             return false;

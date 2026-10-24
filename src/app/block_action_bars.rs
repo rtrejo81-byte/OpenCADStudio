@@ -1,4 +1,4 @@
-use super::{Message, OpenCADStudio};
+use super::{Message, lgbcadstudio};
 use crate::scene::block_action_bars::{self as bars, EntryKind, Group};
 use codec::Handle;
 use iced::{Point, Rectangle, Task, Vector};
@@ -10,7 +10,7 @@ pub(super) struct ViewState {
     pub offsets: HashMap<Handle, Vector>,
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(in crate::app) fn action_bar_error(&self) -> Option<&'static str> {
         let tab = &self.tabs[self.active_tab];
         if tab.active_block_edit_session().is_none() {

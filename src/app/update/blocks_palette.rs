@@ -5,7 +5,7 @@
 use std::path::{Path, PathBuf};
 
 use crate::app::settings::PaletteBlockRef;
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use crate::modules::insert::insert_block::{BlockCatalog, InsertBlockCommand};
 use crate::ui::window::block_palette::{
     BlockEntry, BlockPaletteMsg, Item, LibraryEntry, MenuAction, OptionMsg, Tab,
@@ -41,7 +41,7 @@ fn is_drawing(path: &Path) -> bool {
         .is_some_and(|e| e.eq_ignore_ascii_case("dwg") || e.eq_ignore_ascii_case("dxf"))
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn on_block_palette(&mut self, m: BlockPaletteMsg) -> Task<Message> {
         match m {
             BlockPaletteMsg::Search(s) => self.block_palette.search = s,

@@ -1,4 +1,4 @@
-//! OpenCADStudio-style grip editing.
+//! lgbcadstudio-style grip editing.
 
 use codec::Handle;
 use glam::{DVec3, Mat4, Vec2};
@@ -105,7 +105,7 @@ fn marker_distance(shape: GripShape, screen: Vec2, dir: Option<[f32; 2]>, cursor
 
 // ── Active drag state ─────────────────────────────────────────────────────
 
-/// Stored on `OpenCADStudio` while a grip is being dragged.
+/// Stored on `lgbcadstudio` while a grip is being dragged.
 #[derive(Clone, Debug)]
 pub struct GripEdit {
     /// Handle of the entity being edited.

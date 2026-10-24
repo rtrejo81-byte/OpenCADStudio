@@ -4,7 +4,7 @@ use super::{
         ParametricConstraintsEntryDelta, PendingHistorySnapshot, ReferenceDesignationDelta,
         StructureSnapshot, TableEntryDelta,
     },
-    OpenCADStudio,
+    lgbcadstudio,
 };
 use crate::scene::ObjectIsolationState;
 use codec::{EntityType, Handle};
@@ -65,8 +65,8 @@ fn defer_history_drop(entries: Vec<HistorySnapshot>) {
     drop(entries);
 }
 
-/// Pre-command state captured by [`OpenCADStudio::begin_undo`] and handed back to
-/// [`OpenCADStudio::commit_undo_delta`] to close a delta entry. Lives on the
+/// Pre-command state captured by [`lgbcadstudio::begin_undo`] and handed back to
+/// [`lgbcadstudio::commit_undo_delta`] to close a delta entry. Lives on the
 /// stack across the (synchronous) command body — no per-tab field needed.
 pub(super) struct PendingDelta {
     label: String,
@@ -108,7 +108,7 @@ pub(super) struct PendingObjectDelta {
     before: FxHashMap<Handle, codec::objects::ObjectType>,
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn history_label_from_active_cmd(&self, i: usize, fallback: &'static str) -> String {
         self.tabs[i]
             .active_cmd
@@ -499,7 +499,7 @@ impl OpenCADStudio {
 
     /// Begin undo capture for an entity edit that will touch `touched` entities.
     /// Starts a cheap Scene delta recording and returns the pre-command state to
-    /// pass to [`OpenCADStudio::commit_undo_delta`] after the mutation. A command
+    /// pass to [`lgbcadstudio::commit_undo_delta`] after the mutation. A command
     /// that may touch layers/objects/block records also retains a structure-only
     /// document image; the O(N) entity store is excluded.
     pub(super) fn begin_undo(
@@ -867,7 +867,7 @@ impl OpenCADStudio {
         layer_exists && app_ids_exist
     }
 
-    /// Close the delta transaction opened by [`OpenCADStudio::begin_undo`]:
+    /// Close the delta transaction opened by [`lgbcadstudio::begin_undo`]:
     /// harvests the recorded before-images, pairs each with the entity's current
     /// (after) state, and pushes a symmetric [`DeltaSnapshot`] onto the undo
     /// stack. Called after the command's mutations (and after `dirty`/selection

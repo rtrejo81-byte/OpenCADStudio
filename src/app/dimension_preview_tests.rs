@@ -4,15 +4,15 @@
 //! in model space, style inheritance, batches, and degenerate stages.
 
 use super::viewport_dimension_tests::preview_text as text;
-use super::OpenCADStudio;
+use super::lgbcadstudio;
 use crate::command::StepInput;
 use codec::entities::{Arc, Circle, Line};
 use codec::types::{Handle, Vector3};
 use codec::EntityType;
 use glam::DVec3;
 
-fn app() -> (OpenCADStudio, usize) {
-    let mut app = OpenCADStudio::new_for_test();
+fn app() -> (lgbcadstudio, usize) {
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let i = app.active_tab;
     (app, i)
@@ -25,7 +25,7 @@ fn style_name(entity: &EntityType) -> String {
     dimension.base().style_name.clone()
 }
 
-fn committed(app: &OpenCADStudio) -> Vec<EntityType> {
+fn committed(app: &lgbcadstudio) -> Vec<EntityType> {
     app.tabs[app.active_tab]
         .scene
         .document
@@ -36,14 +36,14 @@ fn committed(app: &OpenCADStudio) -> Vec<EntityType> {
 }
 
 /// Styled preview entities at `cursor`, asserting they also tessellate.
-fn preview(app: &OpenCADStudio, i: usize, cursor: DVec3) -> Vec<EntityType> {
+fn preview(app: &lgbcadstudio, i: usize, cursor: DVec3) -> Vec<EntityType> {
     let entities = app.dimension_preview_entities(i, cursor).unwrap();
     assert!(!entities.is_empty(), "no styled preview at {cursor}");
     assert!(!app.dimension_preview_wires(i, cursor).unwrap().is_empty());
     entities
 }
 
-fn commit_and_compare(app: &mut OpenCADStudio, i: usize, cursor: DVec3) -> EntityType {
+fn commit_and_compare(app: &mut lgbcadstudio, i: usize, cursor: DVec3) -> EntityType {
     let previewed = preview(app, i, cursor);
     assert_eq!(previewed.len(), 1);
     let before = committed(app).len();
@@ -134,7 +134,7 @@ fn angular_three_point_preview_matches_commit() {
     assert_eq!(text(&app, &entity), "90°");
 }
 
-fn place_linear(app: &mut OpenCADStudio, first: DVec3, second: DVec3, line: DVec3) -> Handle {
+fn place_linear(app: &mut lgbcadstudio, first: DVec3, second: DVec3, line: DVec3) -> Handle {
     let _ = app.dispatch_command("DIMLINEAR");
     let _ = app.feed_command(StepInput::Point(first));
     let _ = app.feed_command(StepInput::Point(second));
@@ -227,7 +227,7 @@ fn degenerate_linear_preview_defers_to_plain_rubber_band() {
 }
 
 /// The vertical extent of a dimension's rendered text.
-fn rendered_text_height(app: &OpenCADStudio, handle: Handle) -> f32 {
+fn rendered_text_height(app: &lgbcadstudio, handle: Handle) -> f32 {
     let name = handle.value().to_string();
     let wires = app.tabs[app.active_tab].scene.entity_wires();
     let (low, high) = wires

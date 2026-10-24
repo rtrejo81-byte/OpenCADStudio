@@ -4,7 +4,7 @@
 //! name; `BLOCKSTATE` is read-only. Each answers to its bare name (prompting
 //! for the value) and to `SETVAR NAME value`, with the reference's messages.
 
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use iced::Task;
 
 /// The variables this family answers for, for the command registry and the
@@ -33,7 +33,7 @@ pub(crate) fn explmode(document: &codec::CadDocument) -> i16 {
         .unwrap_or(1)
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn dispatch_blockvars(&mut self, cmd: &str, i: usize) -> Option<Task<Message>> {
         let rest = cmd.strip_prefix("SETVAR ").map(str::trim).unwrap_or(cmd);
         let mut parts = rest.splitn(2, char::is_whitespace);

@@ -14,7 +14,7 @@ use codec::CadDocument;
 
 /// The community folder's GitHub contents API (lists name + download URL).
 #[cfg(not(target_arch = "wasm32"))]
-const REPO_API_URL: &str = "https://api.github.com/repos/HakanSeven12/OpenCADStudio/contents/fonts";
+const REPO_API_URL: &str = "https://api.github.com/repos/HakanSeven12/lgbcadstudio/contents/fonts";
 #[cfg(not(target_arch = "wasm32"))]
 const MAX_FONT_BYTES: u64 = 16 * 1024 * 1024;
 
@@ -145,7 +145,7 @@ fn fetch_repo_fonts() -> Result<Vec<RepoFont>, String> {
         .get(REPO_API_URL)
         .header(
             "User-Agent",
-            concat!("OpenCADStudio/", env!("OCS_APP_VERSION")),
+            concat!("lgbcadstudio/", env!("OCS_APP_VERSION")),
         )
         .header("Accept", "application/vnd.github+json")
         .call()
@@ -219,7 +219,7 @@ pub fn download_fonts(
             .get(&url)
             .header(
                 "User-Agent",
-                concat!("OpenCADStudio/", env!("OCS_APP_VERSION")),
+                concat!("lgbcadstudio/", env!("OCS_APP_VERSION")),
             )
             .call()
             .map_err(|e| format!("Could not download {file}: {e}"))?;

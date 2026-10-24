@@ -6,7 +6,7 @@ mod command_replacement_tests {
 
     #[test]
     fn one_to_one_edits_keep_identity_but_type_changes_do_not() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let tab = app.active_tab;
         let handle = app.tabs[tab]
@@ -50,7 +50,7 @@ mod command_replacement_tests {
 
     #[test]
     fn live_geometry_updates_keep_document_identity_and_display_properties() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let tab = app.active_tab;
         let handle = app.tabs[tab]
@@ -93,7 +93,7 @@ mod trim_extend_history_tests {
     use codec::entities::Line;
     use codec::types::Vector3;
 
-    fn add_line(app: &mut OpenCADStudio, a: [f64; 2], b: [f64; 2]) -> Handle {
+    fn add_line(app: &mut lgbcadstudio, a: [f64; 2], b: [f64; 2]) -> Handle {
         app.tabs[app.active_tab]
             .scene
             .add_entity(codec::EntityType::Line(Line::from_points(
@@ -102,7 +102,7 @@ mod trim_extend_history_tests {
             )))
     }
 
-    fn assert_line_exists(app: &OpenCADStudio, a: [f64; 2], b: [f64; 2]) {
+    fn assert_line_exists(app: &lgbcadstudio, a: [f64; 2], b: [f64; 2]) {
         assert!(
             app.tabs[app.active_tab]
                 .scene
@@ -121,7 +121,7 @@ mod trim_extend_history_tests {
 
     #[test]
     fn trim_replacement_survives_undo_and_redo() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let target = add_line(&mut app, [0.0, 0.0], [10.0, 0.0]);
         let _boundary = add_line(&mut app, [6.0, -2.0], [6.0, 2.0]);
@@ -148,7 +148,7 @@ mod trim_extend_history_tests {
 
     #[test]
     fn extend_replacement_survives_undo_and_redo() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let target = add_line(&mut app, [0.0, 0.0], [4.0, 0.0]);
         let _boundary = add_line(&mut app, [8.0, -2.0], [8.0, 2.0]);
@@ -179,7 +179,7 @@ mod parametric_constraint_undo_tests {
     use super::super::*;
     use crate::scene::parametric_constraints::{ConstraintKind, ParametricRef, ParametricScope};
 
-    fn add_line(app: &mut OpenCADStudio, x1: f64, y1: f64, x2: f64, y2: f64) -> Handle {
+    fn add_line(app: &mut lgbcadstudio, x1: f64, y1: f64, x2: f64, y2: f64) -> Handle {
         app.tabs[app.active_tab]
             .scene
             .add_entity(codec::EntityType::Line(codec::entities::Line::from_points(
@@ -188,7 +188,7 @@ mod parametric_constraint_undo_tests {
             )))
     }
 
-    fn line_angle_deg(app: &OpenCADStudio, handle: Handle) -> f64 {
+    fn line_angle_deg(app: &lgbcadstudio, handle: Handle) -> f64 {
         match app.tabs[app.active_tab].scene.document.get_entity(handle) {
             Some(codec::EntityType::Line(l)) => (l.end.y - l.start.y)
                 .atan2(l.end.x - l.start.x)
@@ -200,7 +200,7 @@ mod parametric_constraint_undo_tests {
     /// Constraint state and solved geometry share one undo/redo transaction.
     #[test]
     fn adding_a_constraint_is_undoable_and_redoable_atomically() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let line = add_line(&mut app, 0.0, 0.0, 10.0, 3.0);
         let original_angle = line_angle_deg(&app, line);
@@ -260,7 +260,7 @@ mod parametric_constraint_undo_tests {
 
     #[test]
     fn perpendicular_initial_solve_rotates_parallel_second_line_in_kernel() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let first = add_line(&mut app, 0.0, 0.0, 10.0, 0.0);
         let second = add_line(&mut app, 20.0, 0.0, 30.0, 0.0);
@@ -294,7 +294,7 @@ mod parametric_constraint_undo_tests {
 
     #[test]
     fn horizontal_initial_solve_uses_the_captured_axis_in_kernel() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let handle = add_line(&mut app, 0.0, 0.0, 5.0, 2.0);
         let (original_start, original_end, original_length) =
@@ -358,7 +358,7 @@ mod parametric_constraint_undo_tests {
 
     #[test]
     fn horizontal_two_point_solve_keeps_the_first_point_fixed() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let first = add_line(&mut app, 0.0, 0.0, 0.0, 5.0);
         let second = add_line(&mut app, 8.0, 3.0, 8.0, 7.0);
@@ -388,7 +388,7 @@ mod parametric_constraint_undo_tests {
 
     #[test]
     fn horizontal_minor_axis_rotates_an_ellipse_around_its_center() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let mut ellipse = codec::entities::Ellipse::default();
         ellipse.center = codec::types::Vector3::new(3.0, 7.0, 0.0);
@@ -420,7 +420,7 @@ mod parametric_constraint_undo_tests {
     /// Drawing commands must not create parametric constraints implicitly.
     #[test]
     fn drawing_a_line_onto_an_existing_endpoint_does_not_add_a_constraint() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let _existing = add_line(&mut app, 0.0, 0.0, 5.0, 0.0);
 
@@ -447,7 +447,7 @@ mod parametric_constraint_undo_tests {
     /// Conflict resolution removes one flagged constraint and is undoable.
     #[test]
     fn resolve_one_parametric_conflict_removes_a_flagged_constraint_and_is_undoable() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let line = add_line(&mut app, 0.0, 0.0, 10.0, 3.0);
 
@@ -503,7 +503,7 @@ mod parametric_constraint_undo_tests {
 
     #[test]
     fn deleting_one_parametric_constraint_is_undoable() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let line = add_line(&mut app, 0.0, 0.0, 10.0, 3.0);
         let _ = app.apply_cmd_result(CmdResult::AddParametricConstraint {
@@ -547,7 +547,7 @@ mod parametric_constraint_undo_tests {
     /// *named* parameter, not just data plumbing.
     #[test]
     fn applying_named_parameter_rows_defines_and_resolves_referencing_constraints() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let line = add_line(&mut app, 0.0, 0.0, 10.0, 0.0);
 
@@ -627,7 +627,7 @@ mod parametric_constraint_undo_tests {
     /// The no-selection page must expose the active drawing's named parameters.
     #[test]
     fn no_selection_properties_exposes_named_parameters() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         app.tabs[app.active_tab]
             .scene
@@ -668,7 +668,7 @@ mod parametric_constraint_undo_tests {
     fn properties_panel_parameter_row_add_rename_redefine_and_delete() {
         use crate::ui::window::named_parameters::ParamField;
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let line = add_line(&mut app, 0.0, 0.0, 10.0, 0.0);
         let _ = app.apply_cmd_result(CmdResult::AddParametricConstraint {
@@ -760,7 +760,7 @@ mod parametric_constraint_undo_tests {
     /// references, replacing whatever was selected before.
     #[test]
     fn properties_panel_constraint_link_click_selects_its_entities() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let a = add_line(&mut app, 0.0, 0.0, 10.0, 0.0);
         let b = add_line(&mut app, 0.0, 5.0, 10.0, 5.0);
@@ -793,7 +793,7 @@ mod parametric_constraint_undo_tests {
     /// `ParameterTable::resolve_all` already gives a bad reference.
     #[test]
     fn applying_a_row_with_a_malformed_formula_reports_an_error_and_keeps_the_good_row() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
 
         app.named_parameter_editor_rows = vec![
@@ -836,7 +836,7 @@ mod parametric_constraint_undo_tests {
     /// unrelated row still commits normally.
     #[test]
     fn applying_rows_with_a_duplicate_name_refuses_both_and_keeps_the_unrelated_row() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
 
         app.named_parameter_editor_rows = vec![
@@ -879,7 +879,7 @@ mod parametric_constraint_undo_tests {
     /// Two endpoint picks resolve to a Coincident constraint.
     #[test]
     fn coincident_command_resolves_two_picked_points_into_a_constraint() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let a = add_line(&mut app, 0.0, 0.0, 5.0, 0.0);
         let b = add_line(&mut app, 20.0, 0.0, 20.0, 5.0); // deliberately far from `a`, so the two picks are unambiguous
@@ -931,7 +931,7 @@ mod parametric_constraint_undo_tests {
     /// scope untouched rather than silently constraining the wrong thing.
     #[test]
     fn coincident_command_reports_an_error_when_a_pick_misses() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let _a = add_line(&mut app, 0.0, 0.0, 5.0, 0.0);
 
@@ -968,7 +968,7 @@ mod delobj_tests {
     use codec::types::Vector3;
 
     fn sweep_source_presence(value: i16, mode: crate::command::ExtrudeMode) -> (bool, bool) {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         let mut circle = codec::Circle::new();
@@ -1044,7 +1044,7 @@ mod thicken_tests {
 
     #[test]
     fn thicken_preserves_sources_and_round_trips_results_with_one_undo() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let body = kernel::brep::planar_region(
             Plane::XY,
@@ -1137,7 +1137,7 @@ mod thicken_tests {
 
     #[test]
     fn thicken_creates_a_solid_from_a_free_form_surface() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let profile = NurbsCurve::interpolate(
             &[[0.0, 0.0], [0.7, 0.15], [1.3, -0.1], [2.0, 0.0]],
@@ -1193,7 +1193,7 @@ mod dispatched_command_task_tests {
     /// by a message that Task carries.
     #[test]
     fn dispatch_and_relaunch_keep_the_task_the_command_returns() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
 
@@ -1237,7 +1237,7 @@ mod bedit_characterization_tests {
     /// Fresh document with one block definition `BLK` (one line) and one
     /// model-space INSERT referencing it. Returns the INSERT handle and the
     /// definition's member handles.
-    fn setup_block_and_insert(app: &mut OpenCADStudio) -> (Handle, Vec<Handle>) {
+    fn setup_block_and_insert(app: &mut lgbcadstudio) -> (Handle, Vec<Handle>) {
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let tab = app.active_tab;
         app.tabs[tab].scene.define_block_raw(
@@ -1260,7 +1260,7 @@ mod bedit_characterization_tests {
         (insert, members)
     }
 
-    fn block_members(app: &OpenCADStudio, name: &str) -> Vec<Handle> {
+    fn block_members(app: &lgbcadstudio, name: &str) -> Vec<Handle> {
         app.tabs[app.active_tab]
             .scene
             .document
@@ -1272,7 +1272,7 @@ mod bedit_characterization_tests {
 
     /// Definition state as (handle, Debug form) in member order. The Debug
     /// form stands in for PartialEq, which EntityType does not provide.
-    fn definition_state(app: &OpenCADStudio, name: &str) -> Vec<(Handle, String)> {
+    fn definition_state(app: &lgbcadstudio, name: &str) -> Vec<(Handle, String)> {
         let tab = app.active_tab;
         block_members(app, name)
             .into_iter()
@@ -1283,11 +1283,11 @@ mod bedit_characterization_tests {
             .collect()
     }
 
-    fn undo_depth(app: &OpenCADStudio) -> usize {
+    fn undo_depth(app: &lgbcadstudio) -> usize {
         app.tabs[app.active_tab].history.undo_stack.len()
     }
 
-    fn begin_bedit(app: &mut OpenCADStudio, insert: Handle) {
+    fn begin_bedit(app: &mut lgbcadstudio, insert: Handle) {
         let _ = app.dispatch_command(&format!("BEDIT_BEGIN:{}", insert.value()));
         assert!(
             app.tabs[app.active_tab].active_block_edit.is_some(),
@@ -1295,7 +1295,7 @@ mod bedit_characterization_tests {
         );
     }
 
-    fn add_circle_in_bedit(app: &mut OpenCADStudio) -> Handle {
+    fn add_circle_in_bedit(app: &mut lgbcadstudio) -> Handle {
         let tab = app.active_tab;
         app.tabs[tab]
             .scene
@@ -1307,7 +1307,7 @@ mod bedit_characterization_tests {
     /// Locked: save keeps the entity added inside the session.
     #[test]
     fn locked_save_keeps_entity_added_in_session() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let (insert, _) = setup_block_and_insert(&mut app);
         begin_bedit(&mut app, insert);
         add_circle_in_bedit(&mut app);
@@ -1325,7 +1325,7 @@ mod bedit_characterization_tests {
     /// (same handles, same geometry, same order).
     #[test]
     fn locked_discard_restores_definition_to_entry_state() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let (insert, _) = setup_block_and_insert(&mut app);
         let entry = definition_state(&app, "BLK");
         begin_bedit(&mut app, insert);
@@ -1339,7 +1339,7 @@ mod bedit_characterization_tests {
     /// Locked: refusals. A non-INSERT is rejected and no session opens.
     #[test]
     fn locked_bedit_refuses_non_insert_object() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let tab = app.active_tab;
         let line = app.tabs[tab]
@@ -1359,7 +1359,7 @@ mod bedit_characterization_tests {
     /// REFEDIT session is active and no BEDIT session opens.
     #[test]
     fn locked_bedit_picker_refused_while_refedit_active() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let (insert, _) = setup_block_and_insert(&mut app);
         let tab = app.active_tab;
         let _ = app.dispatch_command(&format!("REFEDIT_BEGIN:{}", insert.value()));
@@ -1375,7 +1375,7 @@ mod bedit_characterization_tests {
     /// Every entry point must refuse while REFEDIT is active.
     #[test]
     fn locked_bedit_begin_refuses_active_refedit() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let (insert, _) = setup_block_and_insert(&mut app);
         let tab = app.active_tab;
         let _ = app.dispatch_command(&format!("REFEDIT_BEGIN:{}", insert.value()));
@@ -1390,7 +1390,7 @@ mod bedit_characterization_tests {
     /// Locked: refusal. An xref definition cannot be edited.
     #[test]
     fn locked_bedit_refuses_xref_definition() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let (insert, _) = setup_block_and_insert(&mut app);
         let tab = app.active_tab;
         app.tabs[tab]
@@ -1411,7 +1411,7 @@ mod bedit_characterization_tests {
     /// the refusal pushes no undo entry and starts no command.
     #[test]
     fn locked_deny_list_refuses_while_session_open() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let (insert, _) = setup_block_and_insert(&mut app);
         let tab = app.active_tab;
         let _ = app.dispatch_command(&format!("BEDIT_BEGIN:{}", insert.value()));
@@ -1467,7 +1467,7 @@ mod bedit_characterization_tests {
     /// deny hook sits before the running-command teardown.
     #[test]
     fn locked_deny_list_does_not_cancel_a_running_command() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let (insert, _) = setup_block_and_insert(&mut app);
         let tab = app.active_tab;
         let _ = app.dispatch_command(&format!("BEDIT_BEGIN:{}", insert.value()));
@@ -1497,7 +1497,7 @@ mod bedit_characterization_tests {
     #[test]
     fn locked_deny_list_leaves_v7_allowed_commands_alone() {
         for verb in ["XREF", "NEW", "OPEN", "SAVEAS", "BEDIT"] {
-            let mut app = OpenCADStudio::new_for_test();
+            let mut app = lgbcadstudio::new_for_test();
             let (insert, _) = setup_block_and_insert(&mut app);
             let tab = app.active_tab;
             let _ = app.dispatch_command(&format!("BEDIT_BEGIN:{}", insert.value()));
@@ -1520,7 +1520,7 @@ mod bedit_characterization_tests {
     /// Discard removes local before-images before drawing undo resumes.
     #[test]
     fn locked_modify_discard_then_undo_does_not_restore_local_edits() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let (insert, members) = setup_block_and_insert(&mut app);
         let line = members[0];
         let entry = definition_state(&app, "BLK");
@@ -1561,7 +1561,7 @@ mod bedit_characterization_tests {
     /// Local undo restores both the entity store and block membership.
     #[test]
     fn locked_session_undo_restores_membership_without_crossing_entry() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let (insert, _) = setup_block_and_insert(&mut app);
         begin_bedit(&mut app, insert);
         let tab = app.active_tab;
@@ -1591,7 +1591,7 @@ mod bedit_characterization_tests {
     /// Opening starts an empty local history; undo cannot cross entry.
     #[test]
     fn locked_session_entry_has_no_undo_step() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let (insert, _) = setup_block_and_insert(&mut app);
         let tab = app.active_tab;
         begin_bedit(&mut app, insert);
@@ -1609,7 +1609,7 @@ mod bedit_characterization_tests {
     /// Switching a clean block replaces the single session.
     #[test]
     fn locked_clean_switch_replaces_the_session() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let (insert, _) = setup_block_and_insert(&mut app);
         let tab = app.active_tab;
         app.tabs[tab].scene.define_block_raw(
@@ -1640,7 +1640,7 @@ mod bedit_characterization_tests {
     /// No-change Save and Discard leave the drawing history untouched.
     #[test]
     fn locked_clean_save_and_discard_leave_history_unchanged() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let (insert, _) = setup_block_and_insert(&mut app);
         begin_bedit(&mut app, insert);
         app.finish_pending_history(app.active_tab);
@@ -1677,7 +1677,7 @@ mod block_base_point_tests {
     /// that the committed attribute lands on the codec transform's position.
     #[test]
     fn locked_attreq_injects_the_block_base_point_for_attribute_placement() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         // Block "ATTREQ_BP": base (10,5,0); LINE (10,5)-(30,5); ATTDEF TAG1 at
@@ -1757,7 +1757,7 @@ mod block_base_point_tests {
     /// Definition dialog prefills the base point from that definition.
     #[test]
     fn locked_block_def_name_select_prefills_the_definition_base_point() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.tabs[i].scene.define_block_raw(
@@ -1796,7 +1796,7 @@ mod block_base_point_tests {
     /// A block with base (10,5,0) and LINE (10,5)-(30,5), referenced by an
     /// INSERT at (100,100) with 30° rotation and uniform scale 2. Under the
     /// convention the LINE renders at (100,100)-(134.641016,120).
-    fn block_and_instance_with_base(app: &mut OpenCADStudio, name: &str) -> codec::Handle {
+    fn block_and_instance_with_base(app: &mut lgbcadstudio, name: &str) -> codec::Handle {
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.tabs[i].scene.define_block_raw(
@@ -1821,7 +1821,7 @@ mod block_base_point_tests {
     /// reference, and saving folds it back to the same block-local geometry.
     #[test]
     fn locked_refedit_working_copy_sits_on_the_rendered_reference() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let handle = block_and_instance_with_base(&mut app, "REFEDIT_BP");
         let i = app.active_tab;
 
@@ -1898,7 +1898,7 @@ mod block_base_point_tests {
     /// too: (100,100) + Rot(30)*2*((12,3) - (10,5)) = (105.464102, 98.535898).
     #[test]
     fn locked_visibility_grip_follows_the_base_point_convention() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let handle = block_and_instance_with_base(&mut app, "VIS_BP");
         let i = app.active_tab;
 

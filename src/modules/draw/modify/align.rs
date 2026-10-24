@@ -313,7 +313,7 @@ impl AlignCommand {
 inventory::submit!(crate::command::CommandRegistration { names: &["ALIGN"] }); // AlignCommand
                                                                                // ALIGNLEFT/ALIGNHCENTER/ALIGNRIGHT/ALIGNTOP/ALIGNVCENTER/ALIGNBOTTOM: one-shot
                                                                                // bounding-box alignment, dispatched directly (no CadCommand of their own) by
-                                                                               // `OpenCADStudio::align_selected_bounds` in `src/app/commands/inquiry.rs`.
+                                                                               // `lgbcadstudio::align_selected_bounds` in `src/app/commands/inquiry.rs`.
 inventory::submit!(crate::command::CommandRegistration {
     names: &[
         "ALIGNLEFT",

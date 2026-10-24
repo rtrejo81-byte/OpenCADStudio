@@ -1,4 +1,4 @@
-use super::{ArrowKey, Message, OpenCADStudio, TextEntryMode};
+use super::{ArrowKey, Message, lgbcadstudio, TextEntryMode};
 use crate::command::CadCommand;
 use crate::io::plot_style::PlotStyleTableExt as _;
 use crate::scene::VIEWCUBE_DRAW_PX;
@@ -10,7 +10,7 @@ use iced::Task;
 /// keyboard can't reach the main window (command line, F-key toggles, edit
 /// shortcuts) while a dialog is up. `CommandEscape` is handled separately (it
 /// closes the modal); a modal's own text fields emit their own messages, which
-/// are not in this set. See [`OpenCADStudio::update`] and #126.
+/// are not in this set. See [`lgbcadstudio::update`] and #126.
 fn is_modal_blocked_key_msg(msg: &Message) -> bool {
     matches!(
         msg,
@@ -122,7 +122,7 @@ pub(in crate::app) mod util;
 mod viewport;
 mod viewport_snap;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(in crate::app) fn reset_modal_geometry(&mut self) {
         self.modal_offset = iced::Vector::ZERO;
         self.modal_resize = iced::Vector::ZERO;
@@ -12812,11 +12812,11 @@ impl OpenCADStudio {
 #[cfg(test)]
 mod prop_pointer_tests {
     use super::Message;
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
     use crate::ui::dock::PanelId;
 
-    fn drawing_app() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn drawing_app() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app
     }
@@ -12851,10 +12851,10 @@ mod prop_pointer_tests {
 mod anno_scale_toggle_tests {
     // #59: silent no-op toggles must explain themselves on the command line.
     use super::Message;
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
 
-    fn app_with_target() -> (OpenCADStudio, usize) {
-        let mut app = OpenCADStudio::new_for_test();
+    fn app_with_target() -> (lgbcadstudio, usize) {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         let mut line = codec::entities::Line::new();
@@ -12907,7 +12907,7 @@ mod anno_scale_toggle_tests {
 
     #[test]
     fn missing_target_toggle_explains_itself() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.anno_object_scale_target = None;
         let before = app.command_line.history.len();
@@ -12928,7 +12928,7 @@ mod dock_visibility_tests {
     // #57: one visibility predicate for edge rendering and drag math. Pins
     // the full 8-panel table so a newly added panel cannot silently diverge
     // (behavior-preserving dedup: passes before and after by construction).
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
     use crate::ui::dock::PanelId;
 
     const ALL: [PanelId; 8] = [
@@ -12944,7 +12944,7 @@ mod dock_visibility_tests {
 
     #[test]
     fn dock_panel_visible_covers_every_panel() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.show_properties = true;
         app.show_block_palette = true;
@@ -12969,7 +12969,7 @@ mod dock_visibility_tests {
     #[test]
     fn dock_panel_hidden_on_start_tab() {
         // Fresh app, no drawing opened: the welcome tab shows no panels.
-        let app = OpenCADStudio::new_for_test();
+        let app = lgbcadstudio::new_for_test();
         assert!(app.tabs[app.active_tab].is_start);
         for id in ALL {
             assert!(!app.dock_panel_visible(id), "{id:?} must hide on Start");
@@ -12984,7 +12984,7 @@ mod free_text_entry_tests {
     //! tests pin the routing through `text_entry_mode` so the three key
     //! routes can't drift apart again.
     use super::Message;
-    use crate::app::{OpenCADStudio, TextEntryMode};
+    use crate::app::{lgbcadstudio, TextEntryMode};
     use crate::modules::annotate::table_cmd::TableCellEditCommand;
     use codec::entities::Table;
     use codec::types::Vector3;
@@ -12992,8 +12992,8 @@ mod free_text_entry_tests {
 
     /// A test drawing with a 2×2 table and the cell editor active on [0,0],
     /// seeded with `cell_text`.
-    fn app_with_cell_command(cell_text: &str) -> (OpenCADStudio, Handle) {
-        let mut app = OpenCADStudio::new_for_test();
+    fn app_with_cell_command(cell_text: &str) -> (lgbcadstudio, Handle) {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let mut table = Table::new(Vector3::new(0.0, 0.0, 0.0), 2, 2);
         table.cell_mut(0, 0).unwrap().set_text(cell_text);
@@ -13006,7 +13006,7 @@ mod free_text_entry_tests {
         (app, handle)
     }
 
-    fn cell_text(app: &OpenCADStudio, _handle: Handle) -> String {
+    fn cell_text(app: &lgbcadstudio, _handle: Handle) -> String {
         // ReplaceMany commits by erasing the old handle and re-adding the
         // entity under a new one, so look the (single) table up by type.
         app.tabs[0]
@@ -13032,7 +13032,7 @@ mod free_text_entry_tests {
 
     #[test]
     fn pasted_spreadsheet_rows_enter_one_point_each() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let _ = app.run_command_line("PLINE");
         // A column copied from a spreadsheet, then X/Y in two columns.
@@ -13116,7 +13116,7 @@ mod free_text_entry_tests {
 
     #[test]
     fn command_input_preserves_case_and_submits_multi_token_lines() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         // Ordinary command entry now retains its typed case…
         let _ = app.update(Message::CommandInput("lin".into()));
@@ -13132,7 +13132,7 @@ mod free_text_entry_tests {
 
     #[test]
     fn typed_command_characters_preserve_case() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let _ = app.update(Message::CommandAppendChar("MyPath".into()));
         assert_eq!(app.command_line.input, "MyPath");
@@ -13140,7 +13140,7 @@ mod free_text_entry_tests {
 
     #[test]
     fn literal_command_input_preserves_case() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let _ = app.update(Message::CommandInput(">Plugin MixedCase".into()));
         assert_eq!(app.command_line.input, ">Plugin MixedCase");
@@ -13148,7 +13148,7 @@ mod free_text_entry_tests {
 
     #[test]
     fn paste_shortcut_leaves_a_focused_field_alone() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.command_line.input = "EXISTING".into();
         app.clipboard = vec![codec::EntityType::Line(codec::entities::Line::default())];
@@ -13164,7 +13164,7 @@ mod free_text_entry_tests {
     #[test]
     fn paste_shortcut_over_the_command_line_pastes_copied_objects() {
         use crate::app::PasteFocus;
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
 
         // Text only: the command line already pasted it natively.
@@ -13237,11 +13237,11 @@ fn web_autosave_due(savetime_min: i32) -> bool {
 
 #[cfg(test)]
 mod point_style_dialog_tests {
-    use super::{Message, OpenCADStudio};
+    use super::{Message, lgbcadstudio};
     use crate::app::ModalKind;
 
-    fn open_with_values(mode: i16, size: f64) -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn open_with_values(mode: i16, size: f64) -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[app.active_tab]
             .scene
             .document

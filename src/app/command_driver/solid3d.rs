@@ -1,6 +1,6 @@
 use super::*;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn handle_extrude_entities(&mut self, result: CmdResult) -> Option<Task<Message>> {
         let i = self.active_tab;
         let CmdResult::ExtrudeEntities {

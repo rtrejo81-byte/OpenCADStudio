@@ -3,13 +3,13 @@ use codec::objects::{Dictionary, DictionaryWithDefault, ObjectType, SpatialFilte
 use codec::tables::BlockRecord;
 use codec::types::{Matrix4, Vector2, Vector3};
 use codec::EntityType;
-use OpenCADStudio::scene::pick::xclip::{insert_spatial_filter, world_clip_polygon_for_transform};
-use OpenCADStudio::scene::Scene;
+use lgbcadstudio::scene::pick::xclip::{insert_spatial_filter, world_clip_polygon_for_transform};
+use lgbcadstudio::scene::Scene;
 
 #[test]
 fn xclip_in_paper_and_viewport() {
     let mut scene = Scene::new();
-    scene.document = OpenCADStudio::io::load_bytes(
+    scene.document = lgbcadstudio::io::load_bytes(
         "embedded-image-print.dxf",
         include_bytes!("fixtures/embedded-image-print.dxf").to_vec(),
     )

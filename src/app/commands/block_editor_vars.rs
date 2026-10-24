@@ -1,4 +1,4 @@
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use iced::Task;
 
 const NAMES: &[&str] = &[
@@ -29,7 +29,7 @@ pub(super) fn setvar_listing() -> String {
     format!("SETVAR (block editor): {}", NAMES.join(" "))
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(in crate::app) fn block_editor_session_variable(&self, name: &str, i: usize) -> Option<u8> {
         let tab = self.tabs.get(i)?;
         Some(match name {
@@ -139,8 +139,8 @@ mod tests {
     use super::*;
     use codec::{entities::Insert, types::Vector3, EntityType, Handle};
 
-    fn fixture() -> (OpenCADStudio, Handle, Handle) {
-        let mut app = OpenCADStudio::new_for_test();
+    fn fixture() -> (lgbcadstudio, Handle, Handle) {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.tabs[i]
@@ -265,7 +265,7 @@ mod tests {
         assert_eq!(saved["block_editor"]["locked"], true);
         assert!(saved["block_editor"].get("BLOCKEDITOR").is_none());
         let loaded = serde_json::from_value(saved).unwrap();
-        let mut restored = OpenCADStudio::new_for_test();
+        let mut restored = lgbcadstudio::new_for_test();
         restored.apply_settings(&loaded);
         assert!(restored.block_editor_preferences.locked);
         let defaults: crate::app::settings::UserSettings = serde_json::from_str("{}").unwrap();
@@ -322,7 +322,7 @@ mod tests {
             assert_eq!(app.block_editor_preferences, valid, "{command}");
         }
         let saved = serde_json::to_value(app.current_settings()).unwrap();
-        let mut restored = OpenCADStudio::new_for_test();
+        let mut restored = lgbcadstudio::new_for_test();
         restored.apply_settings(&serde_json::from_value(saved).unwrap());
         assert_eq!(restored.block_editor_preferences, valid);
         assert_eq!(app.tabs[i].scene.document, before);

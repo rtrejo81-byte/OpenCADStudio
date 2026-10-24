@@ -10,10 +10,10 @@ use codec::entities::{
 use codec::tables::BlockRecord;
 use codec::types::{Vector2, Vector3};
 use codec::{CadDocument, EntityType, Handle};
-use OpenCADStudio::modules::draw::modify::explode::{
+use lgbcadstudio::modules::draw::modify::explode::{
     apply_explode_replacements, explode_batch, explode_entity, plan_explode,
 };
-use OpenCADStudio::scene::Scene;
+use lgbcadstudio::scene::Scene;
 
 const BLOCK_NAME: &str = "TEST_BLOCK";
 
@@ -616,7 +616,7 @@ fn explode_region_tilted_plane_arc_and_multi_island() {
             _ => None,
         })
         .expect("expected Arc");
-    let arc_planar = OpenCADStudio::entities::curve::arc_curve(arc);
+    let arc_planar = lgbcadstudio::entities::curve::arc_curve(arc);
     let mid = arc_planar.point_at(0.5);
     assert!(
         (mid[0] - 0.0).abs() < 1e-6 && (mid[1] - 4.0).abs() < 1e-6 && (mid[2] - 5.0).abs() < 1e-6,

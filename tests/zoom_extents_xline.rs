@@ -3,7 +3,7 @@
 use codec::entities::{Line, XLine};
 use codec::types::Vector3;
 use codec::EntityType;
-use OpenCADStudio::scene::Scene;
+use lgbcadstudio::scene::Scene;
 
 fn add_rect(scene: &mut Scene) {
     let corners = [

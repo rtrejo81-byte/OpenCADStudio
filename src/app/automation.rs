@@ -1,4 +1,4 @@
-//! Headless automation server (`OpenCADStudio --serve`).
+//! Headless automation server (`lgbcadstudio --serve`).
 //!
 //! Drives the app without a GUI over a line-based JSON protocol: one request
 //! object per line on stdin, one response object per line on stdout. State (the
@@ -25,7 +25,7 @@ use serde_json::{json, Value};
 #[cfg(not(target_arch = "wasm32"))]
 use sha2::{Digest, Sha256};
 
-use super::OpenCADStudio;
+use super::lgbcadstudio;
 
 /// Run the headless JSON server. Default transport is stdin/stdout; with
 /// `--port <N>` it instead listens on `127.0.0.1:<N>` and serves one client at
@@ -33,7 +33,7 @@ use super::OpenCADStudio;
 /// request carries `"token"` (see `rest::api_token`).
 #[cfg(not(target_arch = "wasm32"))]
 pub fn serve(read_only: bool) {
-    let mut app = OpenCADStudio::new_headless(read_only);
+    let mut app = lgbcadstudio::new_headless(read_only);
     match port_arg() {
         Some(port) => serve_socket(
             &mut app,
@@ -105,7 +105,7 @@ fn ready() -> Value {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn serve_stdio(app: &mut OpenCADStudio) {
+fn serve_stdio(app: &mut lgbcadstudio) {
     let stdin = std::io::stdin();
     let stdout = std::io::stdout();
     {
@@ -138,7 +138,7 @@ const SERVE_IDLE_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(1
 /// every later client. The document session survives reconnects.
 #[cfg(not(target_arch = "wasm32"))]
 fn serve_socket(
-    app: &mut OpenCADStudio,
+    app: &mut lgbcadstudio,
     port: u16,
     bound_port: &std::sync::Arc<std::sync::atomic::AtomicU16>,
 ) {
@@ -149,7 +149,7 @@ fn serve_socket(
 /// production traffic uses [`SERVE_IDLE_TIMEOUT`]).
 #[cfg(not(target_arch = "wasm32"))]
 fn serve_socket_with_idle(
-    app: &mut OpenCADStudio,
+    app: &mut lgbcadstudio,
     port: u16,
     bound_port: &std::sync::Arc<std::sync::atomic::AtomicU16>,
     idle: std::time::Duration,
@@ -163,7 +163,7 @@ fn serve_socket_with_idle(
     };
     let bound = listener.local_addr().map(|a| a.port()).unwrap_or(port);
     bound_port.store(bound, std::sync::atomic::Ordering::SeqCst);
-    eprintln!("OpenCADStudio --serve listening on 127.0.0.1:{bound}");
+    eprintln!("lgbcadstudio --serve listening on 127.0.0.1:{bound}");
     crate::rest::announce_token();
     for stream in listener.incoming().flatten() {
         let _ = stream.set_read_timeout(Some(idle));
@@ -673,7 +673,7 @@ fn audit_ascii_dxf_references(path: &std::path::Path) -> Result<Value, String> {
     }))
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// A headless session. `read_only` is the `--read-only` launch flag,
     /// which the GUI takes from its startup config instead. (#1928)
     #[cfg(not(target_arch = "wasm32"))]
@@ -1120,7 +1120,7 @@ impl OpenCADStudio {
     }
 
     /// Run a command line headlessly. Thin wrapper over the shared
-    /// [`OpenCADStudio::run_command_line`] (see `cmd_result.rs`), which the GUI
+    /// [`lgbcadstudio::run_command_line`] (see `cmd_result.rs`), which the GUI
     /// command line uses too so both process `UCS Z 90` / `LINE 0,0 10,10` /
     /// `PDMODE 3` identically.
     fn run_headless(&mut self, cmd: &str) -> Result<(), String> {
@@ -1745,7 +1745,7 @@ impl OpenCADStudio {
 mod tests {
     #[test]
     fn clayer_command_sets_layer_used_by_new_geometry() {
-        let mut app = super::OpenCADStudio::new_for_test();
+        let mut app = super::lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.automation_op(r#"{"op":"run","cmd":"LAYER NEW Annotations"}"#);
         app.automation_op(r#"{"op":"run","cmd":"CLAYER Annotations"}"#);
@@ -1756,7 +1756,7 @@ mod tests {
     #[cfg(not(target_arch = "wasm32"))]
     #[test]
     fn built_in_edits_advance_plugin_document_fingerprint_once() {
-        let mut app = super::OpenCADStudio::new_for_test();
+        let mut app = super::lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let before = app.last_plugin_document.expect("new drawing published");
         app.automation_op(r#"{"op":"run","cmd":"LINE 0,0 10,0"}"#);
@@ -1774,7 +1774,7 @@ mod tests {
         use codec::entities::Point;
         use codec::EntityType;
 
-        let mut app = super::OpenCADStudio::new_for_test();
+        let mut app = super::lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let tab = app.active_tab;
         let mut host = super::super::plugin_host::HostSession::new(&mut app, tab);
@@ -1804,7 +1804,7 @@ mod tests {
         use codec::entities::Point;
         use codec::EntityType;
 
-        let mut app = super::OpenCADStudio::new_for_test();
+        let mut app = super::lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let _ = plugin_dispatch_log();
         let tab = app.active_tab;
@@ -1839,7 +1839,7 @@ mod tests {
     #[cfg(not(target_arch = "wasm32"))]
     #[test]
     fn a_selection_change_dispatches_selection_changed() {
-        let mut app = super::OpenCADStudio::new_for_test();
+        let mut app = super::lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.automation_op(r#"{"op":"run","cmd":"LINE 0,0 10,0"}"#);
         let _ = plugin_dispatch_log();
@@ -1872,7 +1872,7 @@ mod tests {
     #[cfg(not(target_arch = "wasm32"))]
     #[test]
     fn a_document_open_dispatches_document_opened_once() {
-        let mut app = super::OpenCADStudio::new_for_test();
+        let mut app = super::lgbcadstudio::new_for_test();
         let _ = plugin_dispatch_log();
 
         app.automation_op(r#"{"op":"new"}"#);
@@ -1901,7 +1901,7 @@ mod tests {
     #[cfg(not(target_arch = "wasm32"))]
     #[test]
     fn a_file_open_dispatches_document_opened_through_the_message_flow() {
-        let mut app = super::OpenCADStudio::new_for_test();
+        let mut app = super::lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let path =
             std::env::temp_dir().join(format!("ocs_opened_dispatch_{}.dxf", std::process::id(),));
@@ -1964,7 +1964,7 @@ mod tests {
         // through, but because a re-mark of already-designated geometry is a
         // documented no-op — no epoch bump, no undo step, no publish — the
         // notification loop terminates instead of feeding itself.
-        let mut app = super::OpenCADStudio::new_for_test();
+        let mut app = super::lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let _ = plugin_dispatch_log();
         let tab = app.active_tab;
@@ -2005,7 +2005,7 @@ mod tests {
 
         // Undo/redo replay never publishes: the notification boundary is the
         // only channel, so replaying history steps in isolation is silent.
-        let mut app = super::OpenCADStudio::new_for_test();
+        let mut app = super::lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let _ = plugin_dispatch_log();
         let tab = app.active_tab;
@@ -2039,7 +2039,7 @@ mod tests {
     fn dispatching_without_loaded_plugins_leaves_the_app_state_untouched() {
         // The default `on_notification` is a no-op; with no plugin processes
         // loaded, a full boundary pass must not disturb the host.
-        let mut app = super::OpenCADStudio::new_for_test();
+        let mut app = super::lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         let epoch = app.tabs[i].scene.geometry_epoch;
@@ -2066,12 +2066,12 @@ mod tests {
             "a start-tab-free app does not announce spurious opens: {log:?}"
         );
     }
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
     use serde_json::{json, Value};
 
     #[test]
     fn audit_rejects_an_undeclared_entity_layer() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         assert_eq!(
             app.automation_op(r#"{"op":"run","cmd":"LINE 0,0 10,0"}"#)["ok"],
@@ -2094,7 +2094,7 @@ mod tests {
 
     #[test]
     fn save_verified_writes_reopens_hashes_and_matches_manifest() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         assert_eq!(
             app.automation_op(r#"{"op":"run","cmd":"LINE 0,0 10,0"}"#)["ok"],
@@ -2162,7 +2162,7 @@ mod tests {
         use codec::entities::{Dimension, DimensionLinear, EntityType};
         use codec::types::Vector3;
 
-        let mut app = super::OpenCADStudio::new_for_test();
+        let mut app = super::lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let mut dimension =
             DimensionLinear::new(Vector3::new(0.0, 0.0, 0.0), Vector3::new(10.0, 0.0, 0.0));
@@ -2199,7 +2199,7 @@ mod tests {
         use codec::entities::{Dimension, DimensionLinear, EntityType};
         use codec::types::Vector3;
 
-        let mut app = super::OpenCADStudio::new_for_test();
+        let mut app = super::lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let mut dimension =
             DimensionLinear::new(Vector3::new(0.0, 0.0, 0.0), Vector3::new(10.0, 0.0, 0.0));
@@ -2249,7 +2249,7 @@ mod tests {
         use codec::entities::{Dimension, DimensionLinear};
         use codec::{EntityType, Vector3};
 
-        let mut app = super::OpenCADStudio::new_for_test();
+        let mut app = super::lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         let mut d = DimensionLinear::new(Vector3::new(0.0, 0.0, 0.0), Vector3::new(10.0, 0.0, 0.0));
@@ -2333,7 +2333,7 @@ mod tests {
 
     #[test]
     fn layout_notice_skips_grid_camera_and_scene_builds() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         assert_eq!(app.automation_op(r#"{"op":"new"}"#)["ok"], true);
         assert_eq!(
             app.automation_op(r#"{"op":"run","cmd":"LINE 0,0 10,10"}"#)["ok"],
@@ -2366,7 +2366,7 @@ mod tests {
 
     #[test]
     fn batch_text_line_creates_text_and_consumes_every_token() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
 
         // Regression: the content token used to be dropped once the in-place
@@ -2385,7 +2385,7 @@ mod tests {
 
     #[test]
     fn multi_word_text_keeps_the_spaces() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
 
         let r = app.automation_op(r#"{"op":"run","cmd":"TEXT 0,0 5 0 hello world"}"#);
@@ -2403,7 +2403,7 @@ mod tests {
 
     #[test]
     fn zoom_extents_includes_sdf_text_outside_other_geometry() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
 
@@ -2429,7 +2429,7 @@ mod tests {
 
     #[test]
     fn a_stray_editor_is_not_hijacked_by_the_next_line() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
 
         // Line 1 stops at the content step and leaves the editor open.
@@ -2455,7 +2455,7 @@ mod tests {
 
     #[test]
     fn run_reports_leftover_tokens_instead_of_dropping_them() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
 
         // The radius step ends the command, so the extra token is never asked for.
@@ -2470,7 +2470,7 @@ mod tests {
 
     #[test]
     fn text_without_content_reports_the_open_editor() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
 
         let r = app.automation_op(r#"{"op":"run","cmd":"TEXT 0,0 5 0"}"#);
@@ -2488,7 +2488,7 @@ mod tests {
 
     #[test]
     fn a_command_still_waiting_is_named_as_the_blocker() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
 
         let r = app.automation_op(r#"{"op":"run","cmd":"LINE"}"#);
@@ -2497,7 +2497,7 @@ mod tests {
     }
 
     /// The text of the single `Text` entity in the drawing (panics otherwise).
-    fn assert_one_text(app: &OpenCADStudio) -> String {
+    fn assert_one_text(app: &lgbcadstudio) -> String {
         let i = app.active_tab;
         let texts: Vec<String> = app.tabs[i]
             .scene
@@ -2518,7 +2518,7 @@ mod tests {
 
     #[test]
     fn automation_ops_round_trip() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
 
         let r = app.automation_op(r#"{"op":"new"}"#);
         assert_eq!(r["ok"], true);
@@ -2576,7 +2576,7 @@ mod tests {
         use codec::entities::{AttributeEntity, EntityType, Insert};
         use codec::types::Vector3;
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         let mut insert = Insert::new("A_CPT", Vector3::new(12.0, 34.0, 5.0));
@@ -2614,7 +2614,7 @@ mod tests {
         // The --serve path never hands out a descriptor, so its clients send
         // envelope requests with no session_id; only a *wrong* one is refused.
         // Mutations still address the active document explicitly.
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let state = app.automation_op(r#"{"protocol":1,"op":"state"}"#);
         let doc = state["document_id"].as_u64().unwrap();
@@ -2643,7 +2643,7 @@ mod tests {
 
     #[test]
     fn wblock_op_writes_selected_handles_to_a_new_drawing() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.automation_op(r#"{"op":"run","cmd":"LINE 0,0 10,10"}"#);
         app.automation_op(r#"{"op":"run","cmd":"CIRCLE 5,5 3"}"#);
@@ -2683,7 +2683,7 @@ mod tests {
 
     #[test]
     fn wblock_op_exports_a_block_definition() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         let mut line = codec::entities::Line::new();
@@ -2724,7 +2724,7 @@ mod tests {
 
     #[test]
     fn wblock_op_rejects_bad_requests_without_touching_files() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let state = app.automation_op(r#"{"protocol":1,"op":"state"}"#);
         let doc = state["document_id"].as_u64().unwrap();
@@ -2742,7 +2742,7 @@ mod tests {
 
     #[test]
     fn plot_op_writes_a_pdf_of_model_space() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.automation_op(r#"{"op":"run","cmd":"LINE 0,0 100,80"}"#);
         app.automation_op(r#"{"op":"run","cmd":"CIRCLE 50,40 20"}"#);
@@ -2763,7 +2763,7 @@ mod tests {
 
     #[test]
     fn plot_op_validates_layout_and_window_arguments() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let state = app.automation_op(r#"{"protocol":1,"op":"state"}"#);
         let doc = state["document_id"].as_u64().unwrap();
@@ -2785,7 +2785,7 @@ mod tests {
 
     #[test]
     fn text_entities_expose_plain_text_and_usable_bounds() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         let mtext =
@@ -2807,7 +2807,7 @@ mod tests {
 
     #[test]
     fn capabilities_advertise_the_file_operations() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let caps = app.automation_op(r#"{"op":"capabilities"}"#);
         assert_eq!(caps["operations"]["wblock"], true);
         assert_eq!(caps["operations"]["plot"], true);
@@ -2826,13 +2826,13 @@ mod tests {
 
     /// Envelope mutation against the active document: fills `{doc}` with the
     /// document_id read from state, like every external client must.
-    fn mutate(app: &mut OpenCADStudio, request: &str) -> Value {
+    fn mutate(app: &mut lgbcadstudio, request: &str) -> Value {
         let state = app.automation_op(r#"{"protocol":1,"op":"state"}"#);
         let doc = state["document_id"].as_u64().unwrap();
         app.automation_op(&request.replacen("{doc}", &doc.to_string(), 1))
     }
 
-    fn count_type(app: &mut OpenCADStudio, kind: &str) -> u64 {
+    fn count_type(app: &mut lgbcadstudio, kind: &str) -> u64 {
         let q = app.automation_op(&format!(
             r#"{{"op":"query","type":"{kind}","detail":"summary"}}"#
         ));
@@ -2841,7 +2841,7 @@ mod tests {
 
     #[test]
     fn entities_create_builds_a_typed_batch_atomically() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let r = mutate(
             &mut app,
@@ -2890,7 +2890,7 @@ mod tests {
 
     #[test]
     fn entities_create_rejects_bad_definitions_without_committing() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let r = mutate(
             &mut app,
@@ -2915,7 +2915,7 @@ mod tests {
 
     #[test]
     fn entities_create_rejects_unknown_fields_and_degenerate_arcs() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
 
         let old_field = mutate(
@@ -2946,7 +2946,7 @@ mod tests {
 
     #[test]
     fn entities_create_validates_solid_corners_and_mtext_styles() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
 
         let malformed = mutate(
@@ -2982,7 +2982,7 @@ mod tests {
 
     #[test]
     fn entities_create_mtext_accepts_existing_style() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         {
             let doc = &mut app.tabs[app.active_tab].scene.document;
@@ -2999,7 +2999,7 @@ mod tests {
 
     #[test]
     fn entities_delete_erases_by_handle_and_validates() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.automation_op(r#"{"op":"run","cmd":"LINE 0,0 10,10"}"#);
         app.automation_op(r#"{"op":"run","cmd":"CIRCLE 5,5 3"}"#);
@@ -3035,7 +3035,7 @@ mod tests {
 
     #[test]
     fn entities_transform_moves_and_copies() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.automation_op(r#"{"op":"run","cmd":"LINE 0,0 10,0"}"#);
         let handle = app.automation_op(r#"{"op":"query","type":"Line","detail":"summary"}"#)
@@ -3081,7 +3081,7 @@ mod tests {
 
     #[test]
     fn entities_transform_rotates_scales_and_mirrors() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.automation_op(r#"{"op":"run","cmd":"LINE 10,0 20,0"}"#);
         let handle = app.automation_op(r#"{"op":"query","type":"Line","detail":"summary"}"#)
@@ -3145,7 +3145,7 @@ mod tests {
 
     #[test]
     fn entities_transform_arrays_a_grid_of_copies() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.automation_op(r#"{"op":"run","cmd":"CIRCLE 0,0 1"}"#);
         let handle = app.automation_op(r#"{"op":"query","type":"Circle","detail":"summary"}"#)
@@ -3180,7 +3180,7 @@ mod tests {
 
     #[test]
     fn xdata_round_trips_with_implicit_regapp() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.automation_op(r#"{"op":"run","cmd":"CIRCLE 5,5 2"}"#);
         let handle = app.automation_op(r#"{"op":"query","type":"Circle","detail":"summary"}"#)
@@ -3243,7 +3243,7 @@ mod tests {
 
     #[test]
     fn block_define_creates_a_definition_with_an_insert() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.automation_op(r#"{"op":"run","cmd":"LINE 0,0 10,0"}"#);
         app.automation_op(r#"{"op":"run","cmd":"CIRCLE 5,0 2"}"#);
@@ -3298,7 +3298,7 @@ mod tests {
 
     #[test]
     fn view_focus_requires_the_editor_window() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.automation_op(r#"{"op":"run","cmd":"CIRCLE 5,5 2"}"#);
         let handle = app.automation_op(r#"{"op":"query","type":"Circle","detail":"summary"}"#)
@@ -3321,7 +3321,7 @@ mod tests {
     fn ucs_interactive_inline_args() {
         // `UCS Z 90` must drive the interactive UCS command step-by-step (option
         // "Z" then value "90") and rotate the active UCS 90° about Z. (#169)
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.automation_op(r#"{"op":"run","cmd":"UCS Z 90"}"#);
         let i = app.active_tab;
@@ -3340,7 +3340,7 @@ mod tests {
 
     #[test]
     fn translated_and_rotated_ucs_resolves_absolute_relative_and_polar_input() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.automation_op(r#"{"op":"run","cmd":"UCS ORIGIN 100,200,300"}"#);
         app.automation_op(r#"{"op":"run","cmd":"UCS Z 90"}"#);
@@ -3366,7 +3366,7 @@ mod tests {
 
     #[test]
     fn tilted_ucs_places_planar_entities_with_the_plane_normal() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.automation_op(r#"{"op":"run","cmd":"UCS 3POINT 0,0,0 1,0,0 0,0,1"}"#);
         app.automation_op(r#"{"op":"run","cmd":"CIRCLE 2,3 1"}"#);
@@ -3395,7 +3395,7 @@ mod tests {
         // A single-value setting command entered with its value on one line
         // drives the interactive front-end (start + value step) and applies via
         // the inline handler. (F4)
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.automation_op(r#"{"op":"run","cmd":"PDMODE 3"}"#);
         app.automation_op(r#"{"op":"run","cmd":"LTSCALE 2.5"}"#);
@@ -3420,7 +3420,7 @@ mod tests {
         // rotate the selection (the reference point is optional, as the prompt
         // says). Before the fix this did nothing and the command cancelled, so
         // the objects never rotated. Regression for #159.
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.automation_op(r#"{"op":"run","cmd":"LINE 0,0 10,0"}"#);
         app.automation_op(r#"{"op":"select","type":"Line"}"#);
@@ -3446,7 +3446,7 @@ mod tests {
         use crate::ui::command_line::EntryKind;
 
         // Fresh app = welcome tab, no drawing.
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         assert!(
             app.tabs[app.active_tab].is_start,
             "test needs the welcome tab"
@@ -3533,7 +3533,7 @@ mod tests {
         // the poly path).
         use crate::app::Message;
         for (add, rect) in [(true, false), (true, true), (false, false), (false, true)] {
-            let mut app = OpenCADStudio::new_for_test();
+            let mut app = lgbcadstudio::new_for_test();
             app.automation_op(r#"{"op":"new"}"#);
             let i = app.active_tab;
             app.pick_add = add;
@@ -3627,7 +3627,7 @@ mod tests {
     fn fast_click_move_release_arms_a_box_at_the_actual_press_location() {
         use crate::app::Message;
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.pick_drag_rect = false;
@@ -3651,7 +3651,7 @@ mod tests {
 
     #[test]
     fn pickadd_command_flips_flag() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         // The Start tab blocks drawing commands — open a drawing first.
         app.automation_op(r#"{"op":"new"}"#);
         // The boot path may have restored a persisted value — normalize.
@@ -3680,7 +3680,7 @@ mod tests {
         use crate::command::StepInput;
         use codec::{EntityType, MText, Text};
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
 
@@ -3737,7 +3737,7 @@ mod tests {
         use crate::command::StepInput;
         use codec::{entities::Line, types::Vector3, EntityType};
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
 
@@ -3785,7 +3785,7 @@ mod tests {
         // Double-clicking a drawing that is already open should land on the tab
         // showing it, not load a second copy of the same file.
         use crate::app::Message;
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
 
         let path = std::env::temp_dir().join("ocs_already_open.dwg");
@@ -3835,7 +3835,7 @@ mod tests {
         // process each, all arriving together) would leave one tab and silently
         // lose the rest.
         use crate::app::Message;
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
 
         // Any existing file will do: OpenRecent only stats it, and the actual
@@ -3895,7 +3895,7 @@ mod tests {
                 std::fs::write(&path, b"a previous drawing").unwrap();
             }
 
-            let mut app = OpenCADStudio::new_for_test();
+            let mut app = lgbcadstudio::new_for_test();
             app.automation_op(r#"{"op":"new"}"#);
             let p = path.to_string_lossy().replace('\\', "\\\\");
             let saved = app.automation_op(&format!(r#"{{"op":"save","path":"{p}"}}"#));
@@ -3919,7 +3919,7 @@ mod tests {
 
     #[test]
     fn save_then_open_round_trips() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let path =
             std::env::temp_dir().join(format!("ocs_automation_test_{}.dxf", std::process::id()));
         let _ = std::fs::remove_file(&path);
@@ -3944,7 +3944,7 @@ mod tests {
 
     #[test]
     fn open_finalizes_like_the_ui_open_path() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let stale = codec::Handle::from(9999);
         app.tabs[app.active_tab].scene.solid_models.insert(
             stale,
@@ -3998,7 +3998,7 @@ mod tests {
             .stack_size(8 * 1024 * 1024)
             .spawn(|| {
                 use crate::app::Message;
-                let mut app = OpenCADStudio::new_for_test();
+                let mut app = lgbcadstudio::new_for_test();
                 app.automation_op(r#"{"op":"new"}"#);
                 {
                     app.tabs[0].scene.selection.borrow_mut().view.vp_size = (1920.0, 1080.0);
@@ -4067,7 +4067,7 @@ mod tests {
     #[test]
     fn test_mtp_in_line_command() {
         use crate::app::Message;
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         {
             app.tabs[0].scene.selection.borrow_mut().view.vp_size = (1920.0, 1080.0);
@@ -4123,7 +4123,7 @@ mod tests {
     #[test]
     fn mtp_snap_override_starts_the_existing_modifier() {
         use crate::app::Message;
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
 
         let _ = app.update(Message::CommandInput("LINE".to_string()));
@@ -4143,7 +4143,7 @@ mod tests {
     #[test]
     fn test_mtp_escape_restores_parent() {
         use crate::app::Message;
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
 
         // Start LINE
@@ -4179,7 +4179,7 @@ mod tests {
     #[test]
     fn test_mtp_typing_routing_with_dyn_input() {
         use crate::app::Message;
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.dyn_input = true;
 
@@ -4213,7 +4213,7 @@ mod tests {
     #[test]
     fn test_snap_override_typed_in_line_command() {
         use crate::app::Message;
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         {
             app.tabs[0].scene.selection.borrow_mut().view.vp_size = (1920.0, 1080.0);
@@ -4274,7 +4274,7 @@ mod tests {
     #[test]
     fn test_snap_override_feed_token() {
         use crate::app::Message;
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let _ = app.update(Message::CommandInput("LINE".to_string()));
         let _ = app.update(Message::CommandSubmit);
@@ -4294,7 +4294,7 @@ mod tests {
     #[test]
     fn test_open_color_dropdown() {
         use crate::app::Message;
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let wid = app.main_window.unwrap_or_else(iced::window::Id::unique);
         let _ = app.view(wid);
@@ -4317,7 +4317,7 @@ mod tests {
         let bound = Arc::new(AtomicU16::new(0));
         let listen_bound = bound.clone();
         std::thread::spawn(move || {
-            let mut app = super::OpenCADStudio::new_for_test();
+            let mut app = super::lgbcadstudio::new_for_test();
             super::serve_socket(&mut app, 0, &listen_bound);
         });
         let mut port = 0;
@@ -4385,7 +4385,7 @@ mod tests {
         let bound = Arc::new(AtomicU16::new(0));
         let listen_bound = bound.clone();
         std::thread::spawn(move || {
-            let mut app = super::OpenCADStudio::new_for_test();
+            let mut app = super::lgbcadstudio::new_for_test();
             super::serve_socket_with_idle(&mut app, 0, &listen_bound, Duration::from_millis(300));
         });
         let mut port = 0;
@@ -4450,7 +4450,7 @@ mod tests {
         // with a plugin class identity keeps the native display while no
         // declaring plugin is loaded (labels activate only through the live
         // plugin manager, which the test harness does not populate).
-        let mut app = super::OpenCADStudio::new_for_test();
+        let mut app = super::lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         let mut entity = codec::EntityType::Point(codec::entities::Point::new());

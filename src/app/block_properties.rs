@@ -1,9 +1,9 @@
-use super::{Message, OpenCADStudio};
+use super::{Message, lgbcadstudio};
 use crate::scene::model::object::{PropSection, PropValue, Property};
 use codec::{EntityType, Handle};
 use iced::Task;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     fn block_property_target(&self, i: usize) -> Option<(String, Handle, Handle)> {
         let tab = &self.tabs[i];
         if !tab.scene.selected_entities().is_empty() {

@@ -10,7 +10,7 @@
 // test skips (does not fail) when that file is absent so it never breaks CI.
 
 use codec::objects::ObjectType;
-use OpenCADStudio::io;
+use lgbcadstudio::io;
 
 const GOLDEN: &str = "/home/hakanseven/Downloads/0718-mbmdmc.dwg";
 

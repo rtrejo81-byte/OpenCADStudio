@@ -1,9 +1,9 @@
 //! Dock behaviour through the app: drags, hover, menus, and the real view.
 
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 
-fn fresh() -> OpenCADStudio {
-    let mut app = OpenCADStudio::new_for_test();
+fn fresh() -> lgbcadstudio {
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     // These tests drive dock controls, not the hardware warning dialog.
     // Software snapshots intentionally have no scene GPU adapter.
@@ -50,7 +50,7 @@ fn with_stack(f: impl FnOnce() + Send + 'static) {
         .unwrap_or_else(|e| std::panic::resume_unwind(e));
 }
 
-fn dock_app() -> OpenCADStudio {
+fn dock_app() -> lgbcadstudio {
     let mut app = fresh();
     // Tests load the user's persisted config; reset the dock to a known
     // state so this stays hermetic.
@@ -65,7 +65,7 @@ fn dock_app() -> OpenCADStudio {
 }
 
 /// Where the current dock drag would land, if it has started.
-fn drag_target(app: &OpenCADStudio) -> Option<crate::ui::dock::DropTarget> {
+fn drag_target(app: &lgbcadstudio) -> Option<crate::ui::dock::DropTarget> {
     app.dock_drag
         .and_then(|d| d.movement())
         .and_then(|(_, _, target)| target)
@@ -74,7 +74,7 @@ fn drag_target(app: &OpenCADStudio) -> Option<crate::ui::dock::DropTarget> {
 /// Press `id`'s title bar at `from`, drag to `to`, and return the target
 /// shown just before release.
 fn drag_panel(
-    app: &mut OpenCADStudio,
+    app: &mut lgbcadstudio,
     id: crate::ui::dock::PanelId,
     from: iced::Point,
     to: iced::Point,
@@ -547,7 +547,7 @@ fn headless_renderer() -> iced::Renderer {
 const VIEW_SIZE: iced::Size = iced::Size::new(1600.0, 900.0);
 
 /// Centre of the first text `label` in the real view.
-fn find_in_view(app: &OpenCADStudio, label: &str) -> iced::Point {
+fn find_in_view(app: &lgbcadstudio, label: &str) -> iced::Point {
     use iced_test::core::widget;
     use iced_test::runtime::user_interface::{Cache, UserInterface};
     use iced_test::Selector;
@@ -567,7 +567,7 @@ fn find_in_view(app: &OpenCADStudio, label: &str) -> iced::Point {
 /// `at`: feed `events` one at a time, and between events hand the
 /// published messages to the app and rebuild the view while keeping the
 /// widget-tree cache, as the runtime does.
-fn drive_view(app: &mut OpenCADStudio, at: iced::Point, events: &[iced::Event]) {
+fn drive_view(app: &mut lgbcadstudio, at: iced::Point, events: &[iced::Event]) {
     use iced_test::core::{mouse, shell, window};
     use iced_test::runtime::user_interface::{Cache, UserInterface};
     let mut renderer = headless_renderer();
@@ -1081,7 +1081,7 @@ fn orientation_parameter_batch_starts_from_actual_palette_rows() {
     });
 }
 
-fn authoring_app() -> OpenCADStudio {
+fn authoring_app() -> lgbcadstudio {
     use codec::{
         entities::{Insert, Line},
         types::Vector3,
@@ -1628,7 +1628,7 @@ fn authoring_palettes_unwired_move_action_does_not_start_a_command() {
 }
 
 /// Locate rotated category controls by their stable widget IDs.
-fn authoring_control(app: &OpenCADStudio, id: &'static str) -> iced::Point {
+fn authoring_control(app: &lgbcadstudio, id: &'static str) -> iced::Point {
     use iced_test::core::widget;
     use iced_test::runtime::user_interface::{Cache, UserInterface};
     use iced_test::Selector;
@@ -1644,7 +1644,7 @@ fn authoring_control(app: &OpenCADStudio, id: &'static str) -> iced::Point {
     }
 }
 
-fn authoring_click(app: &mut OpenCADStudio, point: iced::Point) {
+fn authoring_click(app: &mut lgbcadstudio, point: iced::Point) {
     drive_view(
         app,
         point,
@@ -1786,7 +1786,7 @@ fn authoring_palettes_selected_page_survives_test_block_and_close_and_ignores_hi
 }
 
 /// Optional rendered evidence when reviewing palette layout changes.
-fn authoring_capture(app: &OpenCADStudio, name: &str) {
+fn authoring_capture(app: &lgbcadstudio, name: &str) {
     if std::env::var_os("OCS_AUTHORING_PALETTE_CAPTURES").is_none() {
         return;
     }

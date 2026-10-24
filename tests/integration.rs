@@ -1,4 +1,4 @@
-//! Consolidated integration test runner for OpenCADStudio.
+//! Consolidated integration test runner for lgbcadstudio.
 //!
 //! Gathers and executes all integration test suites as submodules within a
 //! single test binary.

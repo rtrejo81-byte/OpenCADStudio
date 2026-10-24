@@ -10,7 +10,7 @@
 //! differs from the saved one", so every control the window gains later is
 //! covered without registering it here.
 
-use super::OpenCADStudio;
+use super::lgbcadstudio;
 
 /// The drawing-header variables the Options window edits, for the active
 /// tab, with the tab's modified flag so a revert leaves it as it found it.
@@ -34,7 +34,7 @@ pub(super) struct OptionsSnapshot {
     textfill: bool,
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     fn options_snapshot(&self) -> OptionsSnapshot {
         let header = self.tabs.get(self.active_tab).map(|tab| {
             let h = &tab.scene.document.header;
@@ -140,10 +140,10 @@ impl OpenCADStudio {
 
 #[cfg(test)]
 mod tests {
-    use crate::app::{settings, Message, OpenCADStudio};
+    use crate::app::{settings, Message, lgbcadstudio};
 
-    fn app() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn app() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app
     }

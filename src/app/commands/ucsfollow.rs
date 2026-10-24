@@ -1,12 +1,12 @@
 //! UCSFOLLOW is a drawing/viewport variable, not an application preference.
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use iced::Task;
 
 inventory::submit!(crate::command::CommandRegistration {
     names: &["UCSFOLLOW"]
 });
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn dispatch_ucsfollow(&mut self, cmd: &str, i: usize) -> Option<Task<Message>> {
         let rest = cmd.strip_prefix("SETVAR ").unwrap_or(cmd).trim();
         let mut parts = rest.splitn(2, char::is_whitespace);
@@ -73,8 +73,8 @@ impl OpenCADStudio {
 mod tests {
     use super::*;
 
-    fn app() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn app() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app
     }

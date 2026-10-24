@@ -3,10 +3,10 @@
 
 use iced::Task;
 
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use crate::ui::ribbon::{KeyTipInput, KeyTipStep};
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(in crate::app) fn on_keytip(&mut self, input: KeyTipInput) -> Task<Message> {
         match input {
             KeyTipInput::AltTap if self.ribbon.keytips_active() => self.hide_keytips(),

@@ -1,9 +1,9 @@
-use super::{Message, ModalKind, OpenCADStudio};
+use super::{Message, ModalKind, lgbcadstudio};
 use crate::scene::{block_basepoint, block_lookup as lookup};
 use crate::ui::window::block_lookup::{Action, Draft, State};
 use iced::Task;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(in crate::app) fn handle_place_block_single_parameter(
         &mut self,
         result: crate::command::CmdResult,

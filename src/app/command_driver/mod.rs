@@ -8,7 +8,7 @@
 //!
 //! # Handler signature rule (T5)
 //!
-//! Router arms stay thin: each forwards to a `handle_*` method on `OpenCADStudio`.
+//! Router arms stay thin: each forwards to a `handle_*` method on `lgbcadstudio`.
 //! - Payloads with **3 or fewer fields** are destructured at the router and passed
 //!   as individual arguments.
 //! - **Wide payloads** (more than 3 fields) are passed whole via
@@ -75,7 +75,7 @@
 //! - mleader arms + `apply_mleader_align`/`collect` helpers live in `mod.rs`
 //!   (router-only exception).
 
-use super::{Message, OpenCADStudio};
+use super::{Message, lgbcadstudio};
 use crate::command::{CmdResult, SelectionEntity, StepInput};
 use codec::Handle;
 use iced::Task;
@@ -99,7 +99,7 @@ pub(crate) use clipboard::{
     remap_ext_subtree_reference, remap_object, PasteSpace,
 };
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Applies one command result, then — when that result ended the active
     /// command — drops the selection. Editing tools (MOVE, COPY, ROTATE, …) and
     /// every other interactive command leave nothing selected once they finish,
@@ -437,7 +437,7 @@ impl OpenCADStudio {
         // Task produced by a command the arm dispatches; it must reach the
         // runtime or messages such as a chosen render mode are dropped.
         let mut dispatched = Task::none();
-        match result {
+        match result {                    
             CmdResult::QSelectSample {
                 state,
                 tab_id,

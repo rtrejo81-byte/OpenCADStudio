@@ -1,9 +1,9 @@
-use super::{Message, ModalKind, OpenCADStudio};
+use super::{Message, ModalKind, lgbcadstudio};
 use crate::scene::block_properties_table as table;
 use crate::ui::window::block_properties_table::{Action, State};
 use iced::Task;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(in crate::app) fn properties_table_error(&self) -> Option<&'static str> {
         let tab = &self.tabs[self.active_tab];
         let Some(session) = tab.active_block_edit_session() else {

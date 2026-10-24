@@ -1,6 +1,6 @@
 //! REST transport — the automation API over plain localhost HTTP.
 //!
-//! `OpenCADStudio --http 8090` serves the same operation dispatcher as
+//! `lgbcadstudio --http 8090` serves the same operation dispatcher as
 //! `--serve` behind resource-oriented JSON endpoints that any HTTP client —
 //! curl, Python `urllib`/`requests`, JS `fetch`, C# `HttpClient` — can call
 //! with no SDK and no AI-specific machinery. The REST layer is a thin
@@ -26,7 +26,7 @@
 //! executes over the live editor's envelope queue (`app::control::http_bridge`),
 //! so both `--http` modes serve the identical surface.
 
-use crate::app::OpenCADStudio;
+use crate::app::lgbcadstudio;
 use crate::io::line_read::{is_line_too_long, read_line_capped};
 use serde_json::{json, Value};
 use std::io::{BufReader, Read, Write};
@@ -84,7 +84,7 @@ const ENVELOPE_OPS: &[&str] = &[
     "getpoint",
 ];
 
-/// Loopback REST channel hosted by the GUI process: `OpenCADStudio.exe
+/// Loopback REST channel hosted by the GUI process: `lgbcadstudio.exe
 /// "<file>" --http <port>` boots the editor with a bridge that forwards
 /// requests into the live app (see `app::control::http_bridge`), so a client
 /// can read what the person at the screen selected. `--http` without files
@@ -104,7 +104,7 @@ pub(crate) const RETRYABLE: &[&str] = &[
 
 pub fn serve(port: u16, read_only: bool) {
     listen(
-        OpenCADStudio::new_headless(read_only),
+        lgbcadstudio::new_headless(read_only),
         port,
         Arc::new(AtomicU16::new(0)),
     );
@@ -189,7 +189,7 @@ impl HttpRequest {
 }
 
 /// One request handed from a connection thread to the dispatcher that owns
-/// the private app. `OpenCADStudio` is not `Send` (it holds `Rc`/`RefCell`
+/// the private app. `lgbcadstudio` is not `Send` (it holds `Rc`/`RefCell`
 /// scene state), so — exactly like the GUI-hosted bridge queues envelopes
 /// into the editor — connections funnel JSON through this channel and the
 /// dispatcher (the thread that called `listen`) answers on the per-request
@@ -199,7 +199,7 @@ struct Job {
     reply: std::sync::mpsc::Sender<(u16, Value)>,
 }
 
-fn listen(mut app: OpenCADStudio, port: u16, bound_port: Arc<AtomicU16>) {
+fn listen(mut app: lgbcadstudio, port: u16, bound_port: Arc<AtomicU16>) {
     let listener = match TcpListener::bind(("127.0.0.1", port)) {
         Ok(listener) => listener,
         Err(error) => {
@@ -209,7 +209,7 @@ fn listen(mut app: OpenCADStudio, port: u16, bound_port: Arc<AtomicU16>) {
     };
     let bound = listener.local_addr().map(|a| a.port()).unwrap_or(port);
     bound_port.store(bound, Ordering::SeqCst);
-    eprintln!("OpenCADStudio REST listening on http://127.0.0.1:{bound}/api/v1");
+    eprintln!("lgbcadstudio REST listening on http://127.0.0.1:{bound}/api/v1");
     announce_token();
     let (jobs, incoming) = std::sync::mpsc::channel::<Job>();
     // Connections are served one thread each: a slow op (plot, open a large
@@ -812,7 +812,7 @@ pub(crate) fn plan(method: &str, rest: &[&str], request: &HttpRequest) -> Plan {
 /// The headless executor: run a resolved plan against this server's private
 /// app. The GUI-hosted bridge runs the same plans over its envelope queue.
 fn route(
-    app: &mut OpenCADStudio,
+    app: &mut lgbcadstudio,
     request: &HttpRequest,
     document_id: &mut Option<u64>,
     counter: &mut u64,
@@ -871,14 +871,14 @@ fn harvest(document_id: &mut Option<u64>, response: &Value) {
 /// request_id, address the active document, and — when the dispatcher
 /// refuses because our cached state is behind — refresh once and retry.
 fn run_mutation(
-    app: &mut OpenCADStudio,
+    app: &mut lgbcadstudio,
     op: &str,
     mut fields: Value,
     document_id: &mut Option<u64>,
     counter: &mut u64,
     created: u16,
 ) -> (u16, Value) {
-    let mut attempt = |app: &mut OpenCADStudio, id: u64, document_id: &mut Option<u64>| -> Value {
+    let mut attempt = |app: &mut lgbcadstudio, id: u64, document_id: &mut Option<u64>| -> Value {
         *counter += 1;
         let cached = *document_id;
         let mut envelope = json!({
@@ -927,7 +927,7 @@ fn compact(response: Value) -> Value {
     response
 }
 
-fn fetch_state(app: &mut OpenCADStudio) -> Option<u64> {
+fn fetch_state(app: &mut lgbcadstudio) -> Option<u64> {
     let state = app.automation_op(r#"{"protocol":1,"op":"state"}"#);
     state["document_id"].as_u64()
 }
@@ -950,7 +950,7 @@ pub(crate) fn map_status(response: Value, created: bool) -> u16 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
     use std::io::BufRead;
 
     fn request(method: &str, path: &str, body: &str) -> HttpRequest {
@@ -978,7 +978,7 @@ mod tests {
         let bound = Arc::new(AtomicU16::new(0));
         let listen_bound = bound.clone();
         std::thread::spawn(move || {
-            listen(OpenCADStudio::new_for_test(), 0, listen_bound);
+            listen(lgbcadstudio::new_for_test(), 0, listen_bound);
         });
         let mut port = 0;
         for _ in 0..50 {
@@ -1040,7 +1040,7 @@ mod tests {
     /// there, and unstamped they died as "unknown op" on the legacy path.
     #[test]
     fn passthrough_reaches_envelope_only_ops() {
-        let mut app = OpenCADStudio::new();
+        let mut app = lgbcadstudio::new();
         app.automation_op(r#"{"op":"new"}"#);
         let mut document_id: Option<u64> = None;
         let mut counter: u64 = 0;
@@ -1071,7 +1071,7 @@ mod tests {
 
     #[test]
     fn get_selection_reports_selected_entities_read_only() {
-        let mut app = OpenCADStudio::new();
+        let mut app = lgbcadstudio::new();
         let mut document_id: Option<u64> = None;
         let mut counter: u64 = 0;
         let (_, body) = route(
@@ -1129,7 +1129,7 @@ mod tests {
 
     #[test]
     fn rest_surface_round_trips_real_entities() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let mut document_id = None;
         let mut counter = 0;
@@ -1261,7 +1261,7 @@ mod tests {
 
     #[test]
     fn rest_p1_document_surface_routes_end_to_end() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.automation_op(r#"{"op":"run","cmd":"CIRCLE 0,0 1"}"#);
         app.automation_op(r#"{"op":"run","cmd":"CIRCLE 20,0 5"}"#);

@@ -25,7 +25,7 @@ const ATTACH_FILTERS: [(&str, &[&str]); 8] = [
 ];
 const ALL_DGN_FILTER: u32 = 4;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// DWFATTACH / DGNATTACH on the command line: with a file, from its
     /// sheet / model prompt; without one, from the path prompt.
     pub(super) fn start_underlay_attach(

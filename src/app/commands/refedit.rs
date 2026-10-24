@@ -2,7 +2,7 @@
 //! reference or an external reference, with the reference's prompts and
 //! messages. The session itself lives in `DocumentTab::refedit_session`.
 
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use crate::modules::draw::modify::refedit::{
     apply_insert_inverse_transform, apply_insert_transform, level_hits, nesting_chain,
     rename_symbols, ChainLevel, RefCloseCommand, RefEditNames, RefEditOptionsCommand,
@@ -22,7 +22,7 @@ fn already_checked_out(name: &str) -> String {
     .into_owned()
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn dispatch_refedit(&mut self, cmd: &str, i: usize) -> Option<Task<Message>> {
         match cmd {
             "REFEDIT" | "-REFEDIT" => Some(self.start_refedit(i, cmd == "-REFEDIT")),

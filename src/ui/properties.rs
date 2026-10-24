@@ -1,4 +1,4 @@
-//! Properties panel — OpenCADStudio-style editable object properties.
+//! Properties panel — lgbcadstudio-style editable object properties.
 //!
 //! Shows two sections (General + Geometry) for the selected entity.
 //! • Layer      → combo_box  (options from document layer table)

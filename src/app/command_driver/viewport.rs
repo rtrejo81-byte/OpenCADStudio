@@ -1,6 +1,6 @@
 use super::*;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn handle_mview_create(
         &mut self,
         viewport: codec::entities::Viewport,

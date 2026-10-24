@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 use crate::io::model_import::{self, ModelFormat};
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// ACISIN and WMFIN; `None` defers to the other families.
     pub(super) fn dispatch_model_import(&mut self, cmd: &str, i: usize) -> Option<Task<Message>> {
         let (verb, rest) = match cmd.trim().split_once(char::is_whitespace) {
@@ -219,7 +219,7 @@ impl OpenCADStudio {
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// The 3D Studio Import window for a file; an error when it is no 3D
     /// Studio file.
     pub(in crate::app) fn open_tds_import_dialog(&mut self, path: &str) -> Result<(), String> {
@@ -706,7 +706,7 @@ fn with_attributes(
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// The layer, style, application names and blocks the legacy render
     /// records of a 3D Studio import use.
     fn define_tds_legacy(&mut self, i: usize, import: &crate::io::tds_import::TdsImport) {

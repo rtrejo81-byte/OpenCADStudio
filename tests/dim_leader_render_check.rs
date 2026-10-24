@@ -4,8 +4,8 @@ use codec::entities::{Dimension, DimensionAligned, DimensionLinear};
 use codec::types::Vector3;
 use codec::xdata::XDataValue;
 use codec::EntityType;
-use OpenCADStudio::entities::dim_override as ov;
-use OpenCADStudio::scene::Scene;
+use lgbcadstudio::entities::dim_override as ov;
+use lgbcadstudio::scene::Scene;
 
 #[test]
 fn dim_leader_extends_only_when_requested() {
@@ -47,7 +47,7 @@ fn dim_leader_extends_only_when_requested() {
                 ] {
                     ov::set(&mut scene.document, handle, code, Some(value));
                 }
-                scene.bump_entities(&[(handle, OpenCADStudio::scene::ChangeKind::Modified)]);
+                scene.bump_entities(&[(handle, lgbcadstudio::scene::ChangeKind::Modified)]);
                 let wires = scene.entity_wires();
                 let extension = wires.iter().any(|wire| {
                     (0..wire.points.len().saturating_sub(1)).any(|index| {

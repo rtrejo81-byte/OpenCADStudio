@@ -43,7 +43,7 @@ pub fn on_tab_closed(tab_id: u64) {
 ///
 /// `HostNotification::SelectionChangedV4` carries the active tab id and the
 /// current selection set. The caller is responsible for only calling this when
-/// the selection actually changed; see `OpenCADStudio::notify_plugins_selection_changed`.
+/// the selection actually changed; see `lgbcadstudio::notify_plugins_selection_changed`.
 pub fn publish_selection_changed_v4(tab_id: u64, handles: Vec<codec::Handle>) {
     broadcast(HostNotification::SelectionChangedV4 { tab_id, handles });
 }
@@ -51,7 +51,7 @@ pub fn publish_selection_changed_v4(tab_id: u64, handles: Vec<codec::Handle>) {
 /// Broadcast the tab-independent `HostNotification::SelectionChanged` to every
 /// loaded native plugin (API v9): the plain-handle variant of the selection
 /// event, dispatched at the same fingerprint-guarded message boundary as the
-/// tab-scoped one above (`OpenCADStudio::notify_plugins_selection_changed`).
+/// tab-scoped one above (`lgbcadstudio::notify_plugins_selection_changed`).
 pub fn publish_selection_changed(handles: Vec<codec::Handle>) {
     broadcast(HostNotification::SelectionChanged { handles });
 }
@@ -59,7 +59,7 @@ pub fn publish_selection_changed(handles: Vec<codec::Handle>) {
 /// Broadcast the tab-independent `HostNotification::DocumentChanged` to every
 /// loaded native plugin (API v9): the geometry epoch of the active tab's
 /// document after a mutation settled, dispatched at the fingerprint-guarded
-/// message boundary (`OpenCADStudio::notify_plugins_document_changed`).
+/// message boundary (`lgbcadstudio::notify_plugins_document_changed`).
 pub fn publish_document_changed(version: u64) {
     broadcast(HostNotification::DocumentChanged { version });
 }

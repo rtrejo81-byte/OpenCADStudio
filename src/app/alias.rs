@@ -18,7 +18,7 @@
 //! stored uppercased. Native builds use `ocad.pgp`; web builds store the same
 //! PGP text in `localStorage`.
 
-use super::OpenCADStudio;
+use super::lgbcadstudio;
 use rustc_hash::FxHashMap;
 mod pgp;
 #[cfg(not(target_arch = "wasm32"))]
@@ -154,7 +154,7 @@ pub(super) fn to_pgp(map: &FxHashMap<String, String>) -> String {
     let mut rows: Vec<(&String, &String)> = map.iter().collect();
     rows.sort_by(|a, b| a.0.cmp(b.0));
     let mut out = String::from(
-        "; OpenCADStudio command aliases.\n\
+        "; lgbcadstudio command aliases.\n\
          ; Format:  ALIAS,*COMMAND   (lines starting with ';' are comments)\n\
          ; Edit here or via the ALIASEDIT command. One alias per line.\n\n",
     );
@@ -284,7 +284,7 @@ pub(super) fn save_map(map: &FxHashMap<String, String>) -> std::io::Result<()> {
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Merge into the working buffer only. Apply persists; closing can discard.
     pub(super) fn import_alias_pgp(&mut self, bytes: &[u8]) {
         let parsed = pgp::parse(&pgp::decode(bytes));
@@ -450,7 +450,7 @@ mod tests {
 
     #[test]
     fn import_merges_supported_aliases_without_activating_them() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let original = app.command_aliases.clone();
         app.alias_editor_rows = vec![("KEEP".into(), "LINE".into()), ("E".into(), "ERASE".into())];
         app.import_alias_pgp(

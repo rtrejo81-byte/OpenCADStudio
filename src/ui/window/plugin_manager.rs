@@ -41,7 +41,7 @@ pub struct MarketView<'a> {
 /// Latest desktop builds, used by the browser-only plugin notice.
 #[cfg(target_arch = "wasm32")]
 pub const DESKTOP_DOWNLOAD_URL: &str =
-    "https://github.com/HakanSeven12/OpenCADStudio/releases/latest";
+    "https://github.com/HakanSeven12/lgbcadstudio/releases/latest";
 
 // Register the command names for autocomplete. On the web they open a desktop
 // download notice instead of the native marketplace.
@@ -580,7 +580,7 @@ fn marketplace_section<'a>(m: &MarketView, externals: &[ExternalPlugin]) -> Elem
         col = col.push(notice);
     }
 
-    // Curated registry entries (from the OpenCADStudio repo).
+    // Curated registry entries (from the lgbcadstudio repo).
     for e in m.registry {
         if repository_is_installed(&e.repo, Some(&e.name), externals)
             || !matches_search(m.search, &[&e.name, &e.description, &e.repo])

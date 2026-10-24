@@ -18,7 +18,7 @@
 //! changed on purpose were converted to `locked_*` tests pinning the new,
 //! shared outcome.
 
-use crate::app::OpenCADStudio;
+use crate::app::lgbcadstudio;
 use codec::entities::{
     Block as BlockEntity, BlockEnd, Dimension, DimensionAligned, Insert, LeaderContentType, Line,
     MultiLeader,
@@ -28,13 +28,13 @@ use codec::tables::{BlockRecord, DimStyle};
 use codec::types::{Handle, Vector3};
 use codec::EntityType;
 
-fn app() -> OpenCADStudio {
-    let mut app = OpenCADStudio::new_for_test();
+fn app() -> lgbcadstudio {
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     app
 }
 
-fn tab(app: &OpenCADStudio) -> usize {
+fn tab(app: &lgbcadstudio) -> usize {
     app.active_tab
 }
 
@@ -46,7 +46,7 @@ fn line(start: [f64; 3], end: [f64; 3]) -> EntityType {
 }
 
 /// One block definition holding a single LINE (0,0)-(1,0).
-fn define_block(app: &mut OpenCADStudio, name: &str) -> Handle {
+fn define_block(app: &mut lgbcadstudio, name: &str) -> Handle {
     let i = tab(app);
     app.tabs[i].scene.define_block_raw(
         name,
@@ -58,7 +58,7 @@ fn define_block(app: &mut OpenCADStudio, name: &str) -> Handle {
 
 /// A block definition built by hand, so `*` / xref / layout records can be
 /// named exactly (the codec's table does not police the `*` prefix).
-fn define_raw_block(app: &mut OpenCADStudio, name: &str, mut record: BlockRecord) -> Handle {
+fn define_raw_block(app: &mut lgbcadstudio, name: &str, mut record: BlockRecord) -> Handle {
     let i = tab(app);
     let doc = &mut app.tabs[i].scene.document;
     let next = doc.next_handle();
@@ -83,7 +83,7 @@ fn define_raw_block(app: &mut OpenCADStudio, name: &str, mut record: BlockRecord
     br
 }
 
-fn record_handle(app: &OpenCADStudio, name: &str) -> Handle {
+fn record_handle(app: &lgbcadstudio, name: &str) -> Handle {
     app.tabs[tab(app)]
         .scene
         .document
@@ -93,7 +93,7 @@ fn record_handle(app: &OpenCADStudio, name: &str) -> Handle {
         .unwrap_or_else(|| panic!("block {name} is not defined"))
 }
 
-fn record_exists(app: &OpenCADStudio, name: &str) -> bool {
+fn record_exists(app: &lgbcadstudio, name: &str) -> bool {
     app.tabs[tab(app)]
         .scene
         .document
@@ -102,7 +102,7 @@ fn record_exists(app: &OpenCADStudio, name: &str) -> bool {
         .is_some()
 }
 
-fn add_insert(app: &mut OpenCADStudio, block: &str) -> Handle {
+fn add_insert(app: &mut lgbcadstudio, block: &str) -> Handle {
     let i = tab(app);
     let insert = Insert::new(block.to_string(), Vector3::new(5.0, 5.0, 0.0));
     app.tabs[i].scene.add_entity(EntityType::Insert(insert))
@@ -110,7 +110,7 @@ fn add_insert(app: &mut OpenCADStudio, block: &str) -> Handle {
 
 /// INSERTs of any kind referencing `name`, in model space and inside block
 /// definitions alike (the document's flat entity list).
-fn insert_count(app: &OpenCADStudio, name: &str) -> usize {
+fn insert_count(app: &lgbcadstudio, name: &str) -> usize {
     app.tabs[tab(app)]
         .scene
         .document
@@ -121,11 +121,11 @@ fn insert_count(app: &OpenCADStudio, name: &str) -> usize {
         .count()
 }
 
-fn entity_count(app: &OpenCADStudio) -> usize {
+fn entity_count(app: &lgbcadstudio) -> usize {
     app.tabs[tab(app)].scene.document.entities().count()
 }
 
-fn errors(app: &OpenCADStudio) -> Vec<String> {
+fn errors(app: &lgbcadstudio) -> Vec<String> {
     app.command_line
         .history
         .iter()
@@ -134,7 +134,7 @@ fn errors(app: &OpenCADStudio) -> Vec<String> {
         .collect()
 }
 
-fn outputs(app: &OpenCADStudio) -> Vec<String> {
+fn outputs(app: &lgbcadstudio) -> Vec<String> {
     app.command_line
         .history
         .iter()
@@ -146,7 +146,7 @@ fn outputs(app: &OpenCADStudio) -> Vec<String> {
 /// The label of the step a path pushed. `push_undo_snapshot` parks the entry
 /// in `history.pending` until something finishes it, so a fresh step may not
 /// be on the stack yet.
-fn last_undo_label(app: &OpenCADStudio) -> Option<String> {
+fn last_undo_label(app: &lgbcadstudio) -> Option<String> {
     let history = &app.tabs[tab(app)].history;
     history
         .undo_stack
@@ -160,19 +160,19 @@ fn last_undo_label(app: &OpenCADStudio) -> Option<String> {
         })
 }
 
-fn undo_entry_count(app: &OpenCADStudio) -> usize {
+fn undo_entry_count(app: &lgbcadstudio) -> usize {
     let history = &app.tabs[tab(app)].history;
     history.undo_stack.len() + usize::from(history.pending.is_some())
 }
 
-fn undo(app: &mut OpenCADStudio) {
+fn undo(app: &mut lgbcadstudio) {
     let _ = app.update(crate::app::Message::Undo);
 }
 
 // ── scenario fixtures ────────────────────────────────────────────────────
 
 /// 1 unreferenced block.
-fn fixture_unreferenced(app: &mut OpenCADStudio) -> String {
+fn fixture_unreferenced(app: &mut lgbcadstudio) -> String {
     let name = "BO_ONE";
     define_block(app, name);
     name.to_string()
@@ -180,14 +180,14 @@ fn fixture_unreferenced(app: &mut OpenCADStudio) -> String {
 
 /// 1b a second unreferenced block under a different name, so a rename
 /// collision needs two distinct records.
-fn fixture_other_unreferenced(app: &mut OpenCADStudio) -> String {
+fn fixture_other_unreferenced(app: &mut lgbcadstudio) -> String {
     let name = "BO_OTHER";
     define_block(app, name);
     name.to_string()
 }
 
 /// 2 referenced by a model-space INSERT.
-fn fixture_model_space_reference(app: &mut OpenCADStudio) -> String {
+fn fixture_model_space_reference(app: &mut lgbcadstudio) -> String {
     let name = "BO_TWO";
     define_block(app, name);
     add_insert(app, name);
@@ -195,7 +195,7 @@ fn fixture_model_space_reference(app: &mut OpenCADStudio) -> String {
 }
 
 /// 3 referenced only by an INSERT nested inside another definition.
-fn fixture_nested_reference(app: &mut OpenCADStudio) -> String {
+fn fixture_nested_reference(app: &mut lgbcadstudio) -> String {
     let name = "BO_INNER";
     let outer = "BO_OUTER";
     define_block(app, name);
@@ -212,7 +212,7 @@ fn fixture_nested_reference(app: &mut OpenCADStudio) -> String {
 /// 4 referenced by a dimension's arrow block (the dimension-style reference
 /// family, the same relationship a table's anonymous block has with its
 /// contents).
-fn fixture_dimension_reference(app: &mut OpenCADStudio) -> String {
+fn fixture_dimension_reference(app: &mut lgbcadstudio) -> String {
     let name = "BO_ARROW";
     let br = define_block(app, name);
     let i = tab(app);
@@ -231,7 +231,7 @@ fn fixture_dimension_reference(app: &mut OpenCADStudio) -> String {
 /// 4b a dimension-style arrow block held by handle *and* by name, so a rename
 /// has to follow the name-based reference too (a handle-based one survives on
 /// its own).
-fn fixture_dimension_name_reference(app: &mut OpenCADStudio) -> String {
+fn fixture_dimension_name_reference(app: &mut lgbcadstudio) -> String {
     let name = "BO_ARROWNAME";
     let br = define_block(app, name);
     let i = tab(app);
@@ -249,7 +249,7 @@ fn fixture_dimension_name_reference(app: &mut OpenCADStudio) -> String {
 }
 
 /// 6 a multi-leader's block content.
-fn fixture_multileader_reference(app: &mut OpenCADStudio) -> String {
+fn fixture_multileader_reference(app: &mut lgbcadstudio) -> String {
     let name = "BO_ML";
     let br = define_block(app, name);
     let i = tab(app);
@@ -264,7 +264,7 @@ fn fixture_multileader_reference(app: &mut OpenCADStudio) -> String {
 }
 
 /// 5 anonymous block, unreferenced.
-fn fixture_anonymous(app: &mut OpenCADStudio) -> String {
+fn fixture_anonymous(app: &mut lgbcadstudio) -> String {
     let name = "*BO_ANON";
     define_raw_block(app, name, BlockRecord::new(name.to_string()));
     name.to_string()
@@ -272,7 +272,7 @@ fn fixture_anonymous(app: &mut OpenCADStudio) -> String {
 
 /// 8 a layout (*) block record, under the name the table stores it as (the
 /// service reports the stored name in its messages).
-fn fixture_layout(app: &mut OpenCADStudio) -> String {
+fn fixture_layout(app: &mut lgbcadstudio) -> String {
     app.tabs[tab(app)]
         .scene
         .document
@@ -283,7 +283,7 @@ fn fixture_layout(app: &mut OpenCADStudio) -> String {
 }
 
 /// 9 xref block.
-fn fixture_xref(app: &mut OpenCADStudio) -> String {
+fn fixture_xref(app: &mut lgbcadstudio) -> String {
     let name = "BO_XREF";
     define_block(app, name);
     let i = tab(app);
@@ -301,7 +301,7 @@ fn fixture_xref(app: &mut OpenCADStudio) -> String {
 /// 10 a dynamic block: the record's extension dictionary carries an
 /// `ACAD_ENHANCEDBLOCK` entry whose variants dictionary sources a `*U`
 /// anonymous record. Both records must survive every delete and purge path.
-fn attach_dynamic_block(app: &mut OpenCADStudio, record: &str) -> (Handle, Handle) {
+fn attach_dynamic_block(app: &mut lgbcadstudio, record: &str) -> (Handle, Handle) {
     let record_handle = record_handle(app, record);
     // The *U anonymous record the variants dictionary sources.
     let variant_handle = define_raw_block(
@@ -331,7 +331,7 @@ fn attach_dynamic_block(app: &mut OpenCADStudio, record: &str) -> (Handle, Handl
 }
 
 /// A fixture dynamic block: `BO_DYN` plus its `*U` variant record.
-fn fixture_dynamic_block(app: &mut OpenCADStudio) -> String {
+fn fixture_dynamic_block(app: &mut lgbcadstudio) -> String {
     let name = "BO_DYN";
     define_block(app, name);
     attach_dynamic_block(app, name);
@@ -340,7 +340,7 @@ fn fixture_dynamic_block(app: &mut OpenCADStudio) -> String {
 
 // ── path drivers ─────────────────────────────────────────────────────────
 
-fn palette_remove(app: &mut OpenCADStudio, name: &str) {
+fn palette_remove(app: &mut lgbcadstudio, name: &str) {
     let _ = app.on_block_palette(crate::ui::window::block_palette::BlockPaletteMsg::Menu(
         crate::ui::window::block_palette::Item::Current(name.to_string()),
         crate::ui::window::block_palette::MenuAction::Remove,
@@ -348,7 +348,7 @@ fn palette_remove(app: &mut OpenCADStudio, name: &str) {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn plugin_block_delete(app: &mut OpenCADStudio, name: &str) -> Result<Handle, String> {
+fn plugin_block_delete(app: &mut lgbcadstudio, name: &str) -> Result<Handle, String> {
     use ocs_plugin_api::host::TableOperation;
     let i = tab(app);
     let mut host = crate::app::plugin_host::HostSession::new(app, i);
@@ -358,7 +358,7 @@ fn plugin_block_delete(app: &mut OpenCADStudio, name: &str) -> Result<Handle, St
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn plugin_block_rename(app: &mut OpenCADStudio, from: &str, to: &str) -> Result<Handle, String> {
+fn plugin_block_rename(app: &mut lgbcadstudio, from: &str, to: &str) -> Result<Handle, String> {
     use ocs_plugin_api::host::TableOperation;
     let i = tab(app);
     let mut host = crate::app::plugin_host::HostSession::new(app, i);
@@ -368,7 +368,7 @@ fn plugin_block_rename(app: &mut OpenCADStudio, from: &str, to: &str) -> Result<
     })
 }
 
-fn control_request(app: &mut OpenCADStudio, mut req: serde_json::Value) -> serde_json::Value {
+fn control_request(app: &mut lgbcadstudio, mut req: serde_json::Value) -> serde_json::Value {
     use serde_json::json;
     static NEXT_ID: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
     let state = app.control_state();
@@ -390,7 +390,7 @@ fn control_request(app: &mut OpenCADStudio, mut req: serde_json::Value) -> serde
     }
 }
 
-fn mcp_block_delete(app: &mut OpenCADStudio, name: &str) -> serde_json::Value {
+fn mcp_block_delete(app: &mut lgbcadstudio, name: &str) -> serde_json::Value {
     use serde_json::json;
     let req = json!({"op":"block_delete","name":name});
     control_request(app, req)
@@ -398,13 +398,13 @@ fn mcp_block_delete(app: &mut OpenCADStudio, name: &str) -> serde_json::Value {
 
 /// `"force": true` — the protocol change: it erases the
 /// referencing INSERTs in the same undo step instead of refusing.
-fn mcp_block_delete_forced(app: &mut OpenCADStudio, name: &str) -> serde_json::Value {
+fn mcp_block_delete_forced(app: &mut lgbcadstudio, name: &str) -> serde_json::Value {
     use serde_json::json;
     let req = json!({"op":"block_delete","name":name,"force":true});
     control_request(app, req)
 }
 
-fn begin_bedit(app: &mut OpenCADStudio, handle: Handle) {
+fn begin_bedit(app: &mut lgbcadstudio, handle: Handle) {
     let _ = app.dispatch_command(&format!("BEDIT_BEGIN:{}", handle.value()));
 }
 
@@ -422,7 +422,7 @@ fn command_line_error(text: &str) -> String {
     format!("✕ INVALID: {text}")
 }
 
-fn bedit_open(app: &OpenCADStudio) -> bool {
+fn bedit_open(app: &lgbcadstudio) -> bool {
     app.tabs[tab(app)].scene.block_edit_block.is_some()
 }
 

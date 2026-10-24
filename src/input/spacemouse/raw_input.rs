@@ -43,7 +43,7 @@ impl Drop for Listener {
 }
 
 fn run(shared: Arc<Mutex<Bridge>>, window: &AtomicIsize) -> Result<(), String> {
-    let class: Vec<u16> = "OpenCADStudio.SpaceMouse.Pan\0".encode_utf16().collect();
+    let class: Vec<u16> = "lgbcadstudio.SpaceMouse.Pan\0".encode_utf16().collect();
     unsafe {
         let instance = GetModuleHandleW(std::ptr::null());
         let definition = WNDCLASSW {

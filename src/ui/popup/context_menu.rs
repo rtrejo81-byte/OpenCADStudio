@@ -71,7 +71,7 @@ pub enum GripMenuCmd {
 }
 
 /// Everything a menu row can do. Translated into the app's existing messages
-/// by `OpenCADStudio::on_context_menu_pick`, so a row does exactly what the
+/// by `lgbcadstudio::on_context_menu_pick`, so a row does exactly what the
 /// equivalent typed input / shortcut does.
 #[derive(Clone, Debug, PartialEq)]
 pub enum MenuAction {
@@ -361,7 +361,7 @@ pub struct GripMenuContext {
     pub moved: bool,
 }
 
-/// Inputs the builder needs, gathered by `OpenCADStudio::context_menu_context`.
+/// Inputs the builder needs, gathered by `lgbcadstudio::context_menu_context`.
 #[derive(Clone, Debug)]
 pub enum MenuContext {
     /// A command is running: its current step's options.

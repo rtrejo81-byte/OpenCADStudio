@@ -49,7 +49,7 @@ fn color_value(color: codec::types::Color) -> Value {
 }
 /// One Properties-panel row as the control protocol's JSON (`id`, `label`,
 /// `kind`, `value`, `options`). The node graph moves values in this form too,
-/// so a port's value round-trips through [`OpenCADStudio::set_property_value`].
+/// so a port's value round-trips through [`lgbcadstudio::set_property_value`].
 pub(crate) fn property_json(p: &crate::scene::model::object::Property) -> Value {
     let (kind, value, options) = match &p.value {
         PropValue::ReadOnly(v) | PropValue::ReadOnlyWithTooltip { value: v, .. } => {
@@ -271,7 +271,7 @@ fn parse_calibrate(
     ))
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// `embed_image` — pack the picture at `path` into an OLE2FRAME or linked RasterImage
     /// placed with its lower-left corner at `at` (default width ≈ pixel_width/100).
     /// Supports automatic reference scaling and calibration via `calibrate`:

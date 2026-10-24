@@ -5,7 +5,7 @@
 //! recorded in the file header's preview seeker (byte `0x0D`). This crate reads
 //! *only* that — no full document parse — and decodes it to an RGBA image. The
 //! preview container is a fixed byte format, so this crate depends only on
-//! `image` (no CAD library). Shared by OpenCADStudio (Linux, via its
+//! `image` (no CAD library). Shared by lgbcadstudio (Linux, via its
 //! `--dwg-thumbnail` mode), the Windows `IThumbnailProvider`, and the macOS
 //! QuickLook extension.
 

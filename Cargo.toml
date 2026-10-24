@@ -1,9 +1,9 @@
 [package]
-name = "OpenCADStudio"
-version = "2026.42.0"
+name = "lgbcadstudio"
+version = "1.0.0"
 edition = "2021"
 build = "build.rs"
-default-run = "OpenCADStudio"
+default-run = "lgbcadstudio"
 autotests = false
 
 [workspace]

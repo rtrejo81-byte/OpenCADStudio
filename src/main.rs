@@ -4,11 +4,11 @@
 // attached so eprintln! / panics stay visible while developing.
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
-use OpenCADStudio::app;
+use lgbcadstudio::app;
 #[cfg(target_arch = "wasm32")]
-use OpenCADStudio::sys;
+use lgbcadstudio::sys;
 #[cfg(not(target_arch = "wasm32"))]
-use OpenCADStudio::{cli, io, mcp, rest};
+use lgbcadstudio::{cli, io, mcp, rest};
 
 fn main() -> iced::Result {
     // Web (wasm) uses the single-window entry; native uses the multi-window
@@ -41,7 +41,7 @@ fn main() -> iced::Result {
         // setup; the parent interprets any non-zero exit (including a driver
         // abort) as "this backend is unusable".
         if let Some(which) = &args.gpu_probe {
-            OpenCADStudio::gpu_backend::run_probe_child(which);
+            lgbcadstudio::gpu_backend::run_probe_child(which);
         }
 
         // Plugin runner mode: the host spawns itself with this hidden flag to
@@ -77,7 +77,7 @@ fn main() -> iced::Result {
         if args.sync_mcp_schemas {
             let synced = mcp::sync_agent_tool_schemas();
             if synced {
-                println!("Successfully synchronized OpenCADStudio MCP schemas to ~/.gemini/antigravity/mcp/opencadstudio/");
+                println!("Successfully synchronized lgbcadstudioMCP schemas to ~/.gemini/antigravity/mcp/lgbcadstudio/");
             } else {
                 eprintln!(
                     "Antigravity MCP directory ~/.gemini/antigravity/mcp/ not found; skipped sync."
@@ -99,7 +99,7 @@ fn main() -> iced::Result {
         // (#635, #845). Installed after the child-process handoffs above: a
         // GPU probe aborting is how an unusable backend is detected, not a
         // crash worth filing.
-        OpenCADStudio::sys::crash_log::install();
+        lgbcadstudio::sys::crash_log::install();
 
         // Opt-in logging. `--log LEVEL` seeds RUST_LOG; the subscriber then
         // surfaces wgpu / iced / winit diagnostics that are otherwise silent.
@@ -124,7 +124,7 @@ fn main() -> iced::Result {
         // backend in an isolated child process and selects the first one that
         // survives a real offscreen render; a crash sentinel skips backends
         // that died with the previous run.
-        let gpu = OpenCADStudio::gpu_backend::resolve_gpu(args.backend.as_deref(), args.safe_mode);
+        let gpu = lgbcadstudio::gpu_backend::resolve_gpu(args.backend.as_deref(), args.safe_mode);
 
         // Headless modes exit without ever creating a window.
         if let Some(port) = args.http {
@@ -199,11 +199,11 @@ fn main() -> iced::Result {
             .unwrap_or_default();
         let gpu_fallback_notice = gpu
             .reason
-            .map(|reason| OpenCADStudio::gpu_backend::fallback_notice(&reason));
+            .map(|reason| lgbcadstudio::gpu_backend::fallback_notice(&reason));
         // The probe enables the packed renderer automatically on GPUs without
         // shader storage buffers; an explicit `--compat-renderer` does the
         // same without the notice.
-        let saved_compat = OpenCADStudio::gpu_backend::load_prefs().compat_renderer;
+        let saved_compat = lgbcadstudio::gpu_backend::load_prefs().compat_renderer;
         let compat_renderer = args.compat_renderer || saved_compat || gpu.compat_renderer;
         let gpu_compat_auto = !args.compat_renderer && !saved_compat && gpu.compat_renderer;
         let _ = cli::GUI_CONFIG.set(cli::GuiConfig {
@@ -226,8 +226,8 @@ fn main() -> iced::Result {
         // backend. A stale file at the next launch means this run aborted, so
         // the resolver skips those backends instead of crashing again.
         // Inactive on macOS/wasm, where the resolver leaves the env alone.
-        if OpenCADStudio::gpu_backend::gpu_guard_active() {
-            OpenCADStudio::gpu_backend::arm_sentinel(
+        if lgbcadstudio::gpu_backend::gpu_guard_active() {
+            lgbcadstudio::gpu_backend::arm_sentinel(
                 gpu.backend_value.as_deref().unwrap_or("auto"),
             );
             // The backend is only a suspect while it is young: a run that
@@ -235,11 +235,11 @@ fn main() -> iced::Result {
             // end — Task Manager, an OOM kill, a power cut — must not cost
             // the user that backend at the next launch.
             std::thread::spawn(|| {
-                std::thread::sleep(OpenCADStudio::gpu_backend::SENTINEL_PROOF_DELAY);
-                OpenCADStudio::gpu_backend::mark_sentinel_survived();
+                std::thread::sleep(lgbcadstudio::gpu_backend::SENTINEL_PROOF_DELAY);
+                lgbcadstudio::gpu_backend::mark_sentinel_survived();
             });
             let result = app::run();
-            OpenCADStudio::gpu_backend::disarm_sentinel();
+            lgbcadstudio::gpu_backend::disarm_sentinel();
             result
         } else {
             app::run()

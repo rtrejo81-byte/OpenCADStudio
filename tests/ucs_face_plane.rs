@@ -8,7 +8,7 @@
 //! of reach from here.
 
 use codec::{entities::Circle, types::Vector3, EntityType};
-use OpenCADStudio::scene::model::{presspull_model, solid_model};
+use lgbcadstudio::scene::model::{presspull_model, solid_model};
 
 /// Extrude a disc into a puck 10 units tall, centred on the origin.
 fn puck() -> kernel::brep::Body {
@@ -85,7 +85,7 @@ fn the_curved_side_is_not_offered_as_a_plane() {
 #[test]
 fn ucs_pick_command_enables_solid_face_picking() {
     use glam::DVec3;
-    use OpenCADStudio::command::{CadCommand, CmdResult, UcsPickCommand};
+    use lgbcadstudio::command::{CadCommand, CmdResult, UcsPickCommand};
 
     let cmd_face = UcsPickCommand { face: true };
     assert!(cmd_face.needs_entity_pick(), "UCS FACE needs entity pick");

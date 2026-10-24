@@ -4,7 +4,7 @@ use super::*;
 use crate::modules::insert::xclip::XclipAction;
 use crate::scene::pick::xclip as clip;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// A block reference's extents in WCS: its block's objects through the
     /// insert transform — the base-point-aware one, because that is where the
     /// renderer puts the contents the user drew the boundary around.

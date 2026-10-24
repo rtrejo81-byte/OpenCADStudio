@@ -1,6 +1,6 @@
 use super::*;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn dispatch_layers(&mut self, cmd: &str, i: usize) -> Option<Task<Message>> {
         match cmd {
             cmd if cmd.starts_with("GRAPHICATTRIBUTELAYER ") => {
@@ -864,7 +864,7 @@ impl OpenCADStudio {
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Translate every layer the two drawings name alike, in one step.
     ///
     /// The common case for a drawing arriving from outside: the names already
@@ -1184,7 +1184,7 @@ impl OpenCADStudio {
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Restore the saved layer state `name`, returning how many layers it
     /// touched. Inside a layout viewport the state applies to that viewport
     /// alone: its frozen layers become the viewport's freezes, and colour,

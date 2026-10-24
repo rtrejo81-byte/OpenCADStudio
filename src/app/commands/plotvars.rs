@@ -7,7 +7,7 @@
 //! value like the other variables. `PSETUPIN` brings named page setups in
 //! from another drawing (see `app::update::page_setup_import`).
 
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use iced::Task;
 
 /// The variables this family answers for, for the command registry and the
@@ -39,7 +39,7 @@ enum Outcome {
     Current(String),
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn dispatch_plotvars(&mut self, cmd: &str, i: usize) -> Option<Task<Message>> {
         // PSETUPIN [file [* | name,name…]] — the dash form is the same
         // command; both read the file and report on the command line.
@@ -189,15 +189,15 @@ impl OpenCADStudio {
 
 #[cfg(test)]
 mod tests {
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
 
-    fn app() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn app() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app
     }
 
-    fn last_line(app: &OpenCADStudio) -> String {
+    fn last_line(app: &lgbcadstudio) -> String {
         app.command_line
             .history
             .last()

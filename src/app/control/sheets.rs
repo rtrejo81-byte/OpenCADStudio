@@ -3,7 +3,7 @@
 
 use super::*;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// `close` — close a document tab. A dirty
     /// document is refused unless `"discard":true`; discarding clears the
     /// dirty flag so the close path skips the unsaved-changes dialog.

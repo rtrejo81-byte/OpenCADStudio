@@ -7,7 +7,7 @@ use crate::app::helpers::{
     parse_coord, polar_constrain_near, ucs_rotate_vec, ucs_to_wcs, ucs_z_axis, CoordKind,
 };
 use crate::app::TextEntryMode;
-use crate::app::{Message, OpenCADStudio, POLY_START_DELAY_MS};
+use crate::app::{Message, lgbcadstudio, POLY_START_DELAY_MS};
 use crate::modules::ModuleEvent;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::plugin::v4_support;
@@ -141,7 +141,7 @@ impl iced::advanced::widget::Operation<crate::app::PasteFocus> for PasteFocusPro
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn begin_tab_close_queue(&mut self, tab_ids: Vec<u64>) -> Task<Message> {
         self.pending_tab_closes.clear();
         self.pending_tab_closes.extend(tab_ids);
@@ -4835,18 +4835,18 @@ pub(crate) fn apply_attr_row(a: &mut codec::entities::AttributeEntity, row: &Att
 
 #[cfg(test)]
 mod layer_rename_tests {
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
     use codec::entities::Line;
     use codec::{EntityType, Handle};
 
-    fn app_with_editing_layer() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn app_with_editing_layer() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let _ = app.on_layer_new();
         app
     }
 
-    fn rename_layer(app: &mut OpenCADStudio, old_name: &str, new_name: &str) {
+    fn rename_layer(app: &mut lgbcadstudio, old_name: &str, new_name: &str) {
         let i = app.active_tab;
         assert!(
             app.tabs[i]
@@ -5046,10 +5046,10 @@ mod layer_name_target_tests {
     // RED: `Message::LayerToggleVisible` currently carries a panel-row `usize`;
     // these tests pass a layer `String` name and fail to compile until the
     // #22 migration lands.
-    use crate::app::{Message, OpenCADStudio};
+    use crate::app::{Message, lgbcadstudio};
     use crate::ui::window::layers::LayerSortCol;
 
-    fn rename_layer(app: &mut OpenCADStudio, old_name: &str, new_name: &str) {
+    fn rename_layer(app: &mut lgbcadstudio, old_name: &str, new_name: &str) {
         let i = app.active_tab;
         assert!(
             app.tabs[i]
@@ -5064,8 +5064,8 @@ mod layer_name_target_tests {
         let _ = app.on_layer_rename_commit();
     }
 
-    fn app_with_zulu_alpha() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn app_with_zulu_alpha() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let _ = app.on_layer_new();
         let first = app.tabs[app.active_tab].layers.edit_buf.clone();
@@ -5215,7 +5215,7 @@ mod layer_name_target_tests {
     fn shift_select_skips_filtered_out_rows() {
         // #50: rows hidden by the live filter must not join a shift-range.
         // Sorted panel: A1(0), B9(1), C1(2); filter "1" hides B9.
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         for new in ["C1", "B9", "A1"] {
             let _ = app.on_layer_new();
@@ -5263,7 +5263,7 @@ mod layer_name_target_tests {
     #[test]
     fn layer_transparency_edit_pushes_undo() {
         // #43: every sibling layer arm pushes an undo entry; transparency must too.
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.finish_pending_history(i);
@@ -5299,12 +5299,12 @@ mod layer_name_target_tests {
 mod tablestyle_ribbon_tests {
     // #45: picking a table style in the ribbon must write the document header
     // (like Text/Dim/MLeader), not just the ribbon mirror.
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
     use crate::modules::StyleKey;
 
     #[test]
     fn tablestyle_ribbon_pick_writes_header_and_dirties() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         let mut extra = codec::objects::TableStyle::standard();
@@ -5330,7 +5330,7 @@ mod tablestyle_ribbon_tests {
     #[test]
     fn tablestyle_pick_flows_into_table_insert() {
         // End-to-end: ribbon pick → header → insert dialog defaults to the pick.
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         let mut extra = codec::objects::TableStyle::standard();
@@ -5354,11 +5354,11 @@ mod tablestyle_ribbon_tests {
 mod tablestyle_buffer_tests {
     // #53: New/Copy/Delete must reload Table/MLine buffers (no stale edits
     // into the fresh style), and cell text-style typos must not persist.
-    use crate::app::{OpenCADStudio, StyleKind};
+    use crate::app::{lgbcadstudio, StyleKind};
 
     #[test]
     fn table_new_reloads_cell_buffers() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.ts_cell_textstyle[0] = "STALE_SENTINEL".to_string();
         let _ = app.style_new(StyleKind::Table);
@@ -5370,7 +5370,7 @@ mod tablestyle_buffer_tests {
 
     #[test]
     fn table_cell_unknown_text_style_is_rejected() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         let style_name = app.tabs[i]
@@ -5413,11 +5413,11 @@ mod tablestyle_buffer_tests {
 
 #[cfg(test)]
 mod plot_style_ctb_guard_tests {
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
     use codec::entities::Line;
     use codec::types::Vector3;
 
-    fn line_handle(app: &mut OpenCADStudio) -> codec::Handle {
+    fn line_handle(app: &mut lgbcadstudio) -> codec::Handle {
         let mut line = Line::new();
         line.start = Vector3::ZERO;
         line.end = Vector3::new(1.0, 0.0, 0.0);
@@ -5427,7 +5427,7 @@ mod plot_style_ctb_guard_tests {
 
     #[test]
     fn ctb_mode_plot_style_choice_pushes_no_undo_entry() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let i = app.active_tab;
         let h = line_handle(&mut app);
         // Mirror `chprop_integration_tests`: seed `source_handles` so
@@ -5466,11 +5466,11 @@ mod plot_style_ctb_guard_tests {
 /// open) can carry an index the first removal already invalidated.
 #[cfg(test)]
 mod tab_close_tests {
-    use crate::app::{Message, OpenCADStudio};
+    use crate::app::{Message, lgbcadstudio};
 
     /// `[Start, Drawing A, Drawing B]` — three clean tabs.
-    fn three_tabs() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn three_tabs() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.push_test_document();
         app.push_test_document();
         assert_eq!(app.tabs.len(), 3, "start page plus two drawings");
@@ -5525,7 +5525,7 @@ mod tab_close_tests {
     /// must still discard the tab the dialog was opened for.
     #[test]
     fn unsaved_dialog_discard_closes_the_tab_it_was_opened_for() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.push_test_document(); // A
         app.push_test_document(); // B
         app.push_test_document(); // C

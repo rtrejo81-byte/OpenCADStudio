@@ -1,6 +1,6 @@
 use super::*;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn handle_open_auto_constrain_settings(&mut self) {
         self.auto_constrain_saved = Some(self.auto_constrain_settings.clone());
         self.auto_constrain_selected_row = 0;

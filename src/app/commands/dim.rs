@@ -1,6 +1,6 @@
 use super::*;
 
-fn selected_edge_body(app: &OpenCADStudio, tab: usize) -> Option<codec::Handle> {
+fn selected_edge_body(app: &lgbcadstudio, tab: usize) -> Option<codec::Handle> {
     let scene = &app.tabs.get(tab)?.scene;
     let selected = scene.selected_handles_in_order();
     let [handle] = selected.as_slice() else {
@@ -18,7 +18,7 @@ fn selected_edge_body(app: &OpenCADStudio, tab: usize) -> Option<codec::Handle> 
 }
 
 fn solid_edge_sources(
-    app: &mut OpenCADStudio,
+    app: &mut lgbcadstudio,
     tab: usize,
 ) -> Vec<(codec::Handle, kernel::brep::Body)> {
     let handles = app.tabs[tab]
@@ -47,7 +47,7 @@ fn solid_edge_sources(
         .collect()
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn dispatch_dim(&mut self, cmd: &str, i: usize) -> Option<Task<Message>> {
         match cmd {
             "DIMALIGNED" => {
@@ -1571,7 +1571,7 @@ fn title_case(s: &str) -> String {
         .join(" ")
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// TXT2MTXT on the selection (in selection order), as one undo step.
     fn apply_txt2mtxt(&mut self, i: usize) {
         let scene = &self.tabs[i].scene;

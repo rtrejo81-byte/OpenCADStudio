@@ -1,5 +1,5 @@
 //! Per-drawing, transient inquiry UI; never serialized into document entities.
-use super::OpenCADStudio;
+use super::lgbcadstudio;
 use iced::Point;
 
 #[derive(Clone, Debug)]
@@ -26,7 +26,7 @@ impl MeasurementDisplay {
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn remember_measurement(&mut self, text: &str) {
         let tab = &mut self.tabs[self.active_tab];
         if tab
@@ -68,8 +68,8 @@ mod measurement_tests {
     use crate::modules::{CadModule, ModuleEvent, RibbonItem};
     use glam::DVec3;
 
-    fn app() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn app() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.tabs[i].scene.selection.borrow_mut().view.vp_size = (800.0, 600.0);
@@ -81,7 +81,7 @@ mod measurement_tests {
         app.dyn_input = false;
         app
     }
-    fn finish_distance(app: &mut OpenCADStudio) {
+    fn finish_distance(app: &mut lgbcadstudio) {
         let _ = app.dispatch_command("DIST");
         let _ = app.feed_command(StepInput::Point(DVec3::ZERO));
         let _ = app.feed_command(StepInput::Point(DVec3::new(3.0, 4.0, 0.0)));

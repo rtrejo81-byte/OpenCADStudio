@@ -1,7 +1,7 @@
 //! FIELD and the Field dialog behind the ƒ buttons of the attribute
 //! definition dialogs.
 
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use crate::command::CadCommand;
 use crate::modules::annotate::field_cmd::{
     FieldObjectPickCommand, FieldPlaceCommand, FieldTablePickCommand,
@@ -12,7 +12,7 @@ use crate::ui::window::field_dialog::{
 };
 use iced::Task;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn dispatch_field(&mut self, cmd: &str, i: usize) -> Option<Task<Message>> {
         match cmd {
             "FIELD" => {

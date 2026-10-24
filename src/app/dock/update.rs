@@ -1,7 +1,7 @@
 //! Dock state changes: drags, hover, open / close, and the queries the view
 //! and drop targeting share.
 
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 
 /// Pointer travel (px) before pressing a title bar or icon becomes a drag,
 /// so a plain click never moves anything.
@@ -25,7 +25,7 @@ fn hover_delay() -> impl std::future::Future<Output = ()> {
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Dock chrome interaction (grab / pin / resize / hover / move) applied to
     /// whichever panel the message names.
     pub(crate) fn on_dock(&mut self, m: crate::ui::dock::DockMsg) -> iced::Task<Message> {

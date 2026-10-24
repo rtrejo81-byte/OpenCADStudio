@@ -9,7 +9,7 @@ use crate::ui::window::pdf_shx_dialog::{ShxDialogMsg, ShxSettingsState};
 
 const INTRO: &str = "Select geometry to convert to text...";
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     fn drawing_path(&self, i: usize) -> Option<String> {
         self.tabs[i]
             .current_path

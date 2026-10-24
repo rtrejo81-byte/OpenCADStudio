@@ -8,7 +8,7 @@ use crate::app::helpers::{
     polar_constrain_if_near, polar_constrain_near, ucs_rotate_vec, ucs_to_wcs, ucs_z_axis,
     CoordKind,
 };
-use crate::app::{Message, ModalKind, OpenCADStudio, POLY_START_DELAY_MS};
+use crate::app::{Message, ModalKind, lgbcadstudio, POLY_START_DELAY_MS};
 use crate::modules::ModuleEvent;
 use crate::scene::model::object::GripApply;
 use crate::scene::pick::grip::{
@@ -427,7 +427,7 @@ fn over_ucs_icon(p: Point, h: &crate::ui::overlay::UcsIconHit) -> bool {
     h.tips.iter().any(|t| pt_seg_d2(p, h.origin, *t) <= arm2)
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     fn active_construction_ray(
         &self,
         tab: usize,
@@ -8337,8 +8337,8 @@ mod rapid_drawing_tests {
         assert!(dwell.discrete_preview_due_at(last + std::time::Duration::from_millis(16)));
     }
 
-    fn drawing_app(command: &str) -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn drawing_app(command: &str) -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.tabs[app.active_tab]
             .scene
@@ -8358,7 +8358,7 @@ mod rapid_drawing_tests {
         app
     }
 
-    fn screen(app: &OpenCADStudio, point: glam::DVec3) -> Point {
+    fn screen(app: &lgbcadstudio, point: glam::DVec3) -> Point {
         let p = app.tabs[app.active_tab]
             .scene
             .camera
@@ -8474,7 +8474,7 @@ mod rapid_drawing_tests {
         use crate::modules::draw::modify::stretch::StretchCommand;
         use codec::{entities::Line, types::Vector3, EntityType};
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.tabs[i].scene.selection.borrow_mut().view.vp_size = (800.0, 600.0);
@@ -8498,7 +8498,7 @@ mod rapid_drawing_tests {
         assert!(matches!(cmd.on_point(base), CmdResult::NeedPoint));
         app.tabs[i].active_cmd = Some(Box::new(cmd));
 
-        let preview_has_endpoint = |app: &OpenCADStudio, x: f32, y: f32| {
+        let preview_has_endpoint = |app: &lgbcadstudio, x: f32, y: f32| {
             app.tabs[i].scene.preview_wires.iter().any(|wire| {
                 wire.points.iter().any(|pt| {
                     (pt[0] - x).abs() < 0.1 && (pt[1] - y).abs() < 0.1
@@ -8529,22 +8529,22 @@ mod rapid_drawing_tests {
 #[cfg(test)]
 mod zoom_dynamic_cursor_tests {
     use super::*;
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
     use crate::ui::overlay::NavCursor;
 
-    fn zoom_armed_app() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn zoom_armed_app() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.tabs[0].scene.selection.borrow_mut().view.vp_size = (800.0, 600.0);
         let _ = app.dispatch_command("ZOOM DYNAMIC");
         app
     }
 
-    fn drag_to(app: &mut OpenCADStudio, y: f32) {
+    fn drag_to(app: &mut lgbcadstudio, y: f32) {
         let _ = app.update(Message::ViewportMove(Point::new(400.0, y)));
     }
 
-    fn zoom_dir_out(app: &OpenCADStudio) -> bool {
+    fn zoom_dir_out(app: &lgbcadstudio) -> bool {
         app.tabs[0].scene.selection.borrow().input.zoom_dir_out
     }
 
@@ -8591,7 +8591,7 @@ mod zoom_dynamic_cursor_tests {
     /// hand, which read as "drag the sheet" during a zoom and an orbit.
     #[test]
     fn each_navigation_tool_reports_its_own_mode() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         for (command, want) in [
             ("PAN", NavCursor::Pan),
@@ -8650,7 +8650,7 @@ mod snap_elevation_tests {
 #[cfg(test)]
 mod selection_preview_tests {
     use super::*;
-    use crate::app::{HoverDwell, OpenCADStudio, HOVER_DWELL_MS};
+    use crate::app::{HoverDwell, lgbcadstudio, HOVER_DWELL_MS};
 
     #[test]
     fn lower_endpoint_drag_previews_connected_tangent_profile_and_keeps_top_fixed() {
@@ -8663,7 +8663,7 @@ mod selection_preview_tests {
             EntityType,
         };
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.snapper.snap_enabled = false;
@@ -8747,7 +8747,7 @@ mod selection_preview_tests {
             [outer, inner, upper, lower, top, right]
         };
         let inner = handles[1];
-        let geometry = |app: &OpenCADStudio| {
+        let geometry = |app: &lgbcadstudio| {
             handles.map(|handle| {
                 app.tabs[i]
                     .scene
@@ -8775,7 +8775,7 @@ mod selection_preview_tests {
             false,
             glam::DVec3::new(lower_endpoint.x, lower_endpoint.y, 0.0),
         ));
-        let check_profile = |app: &OpenCADStudio| {
+        let check_profile = |app: &lgbcadstudio| {
             let entities = geometry(app);
             let EntityType::Line(line) = &entities[1] else {
                 panic!("line")
@@ -8867,7 +8867,7 @@ mod selection_preview_tests {
         use crate::scene::parametric_constraints::{ConstraintKind, ParametricRef};
         use codec::{entities::Line, types::Vector3, EntityType};
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.snapper.snap_enabled = false;
@@ -8894,7 +8894,7 @@ mod selection_preview_tests {
             driving_param: None,
             label: "Perpendicular constraint",
         });
-        let geometry = |app: &OpenCADStudio| {
+        let geometry = |app: &lgbcadstudio| {
             [a, b].map(
                 |handle| match app.tabs[i].scene.document.get_entity(handle).unwrap() {
                     EntityType::Line(line) => [line.start, line.end],
@@ -8949,7 +8949,7 @@ mod selection_preview_tests {
         };
         use codec::{entities::LwPolyline, types::Vector2, EntityType};
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.snapper.snap_enabled = false;
@@ -9010,7 +9010,7 @@ mod selection_preview_tests {
         } else {
             handle
         };
-        let vertices = |app: &OpenCADStudio| {
+        let vertices = |app: &lgbcadstudio| {
             let EntityType::LwPolyline(polyline) =
                 app.tabs[i].scene.document.get_entity(handle).unwrap()
             else {
@@ -9113,7 +9113,7 @@ mod selection_preview_tests {
         use codec::{entities::Line, types::Vector3, EntityType};
 
         for vertical in [false, true] {
-            let mut app = OpenCADStudio::new_for_test();
+            let mut app = lgbcadstudio::new_for_test();
             app.automation_op(r#"{"op":"new"}"#);
             let i = app.active_tab;
             app.snapper.snap_enabled = false;
@@ -9176,12 +9176,12 @@ mod selection_preview_tests {
     #[test]
     fn a_point_step_takes_the_point_where_the_button_went_down() {
         use codec::EntityType;
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.tabs[i].scene.selection.borrow_mut().view.vp_size = (800.0, 600.0);
         let bounds = iced::Rectangle::with_size(iced::Size::new(800.0, 600.0));
-        let cursor = |app: &OpenCADStudio, x: f64, y: f64| {
+        let cursor = |app: &lgbcadstudio, x: f64, y: f64| {
             let at = app.tabs[i]
                 .scene
                 .camera
@@ -9228,7 +9228,7 @@ mod selection_preview_tests {
     #[test]
     fn xline_direction_grip_drag_changes_direction() {
         use codec::{types::Vector3, EntityType};
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.tabs[i].scene.selection.borrow_mut().view.vp_size = (800.0, 600.0);
@@ -9286,7 +9286,7 @@ mod selection_preview_tests {
         };
         use codec::{entities::Line, types::Vector3, EntityType};
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.tabs[i].scene.selection.borrow_mut().view.vp_size = (800.0, 600.0);
@@ -9344,7 +9344,7 @@ mod selection_preview_tests {
         use glam::DVec3;
 
         for mode in ["link", "plain", "pan", "orbit", "zoom", "grip", "command"] {
-            let mut app = OpenCADStudio::new_for_test();
+            let mut app = lgbcadstudio::new_for_test();
             app.automation_op(r#"{"op":"new"}"#);
             let i = app.active_tab;
             app.show_ucs_icon = false;
@@ -9396,7 +9396,7 @@ mod selection_preview_tests {
     /// Drive one settled rollover pick over a line and report what the scene
     /// ended up highlighting.
     fn rollover_hits(preview: u8) -> bool {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.model_space.selection_preview = preview;
@@ -9443,7 +9443,7 @@ mod selection_preview_tests {
         use crate::snap::SnapType;
         use codec::{entities::Line, types::Vector3, EntityType};
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.snapper.snap_enabled = true;
@@ -9498,7 +9498,7 @@ mod selection_preview_tests {
         use crate::snap::SnapType;
         use codec::{entities::Solid3D, EntityType};
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         // 2D osnap fully off: only the 3D system may fire.
@@ -9592,7 +9592,7 @@ mod selection_preview_tests {
         use crate::snap::SnapType;
         use codec::{entities::Solid3D, EntityType};
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.snapper.snap_enabled = true;
@@ -9659,7 +9659,7 @@ mod selection_preview_tests {
         use crate::snap::SnapType;
         use codec::{entities::Solid3D, EntityType};
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.snapper.snap_enabled = false;
@@ -9725,7 +9725,7 @@ mod selection_preview_tests {
         use crate::snap::SnapType;
         use codec::{entities::Solid3D, EntityType};
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.snapper.snap_enabled = false;
@@ -9792,7 +9792,7 @@ mod selection_preview_tests {
     fn face_perpendicular_needs_base_and_interior_foot() {
         use codec::{entities::Solid3D, EntityType};
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.tabs[i].scene.selection.borrow_mut().view.vp_size = (800.0, 600.0);
@@ -9869,7 +9869,7 @@ mod selection_preview_tests {
         use crate::snap::SnapType;
         use codec::{entities::Solid3D, EntityType};
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.snapper.snap_enabled = false;

@@ -1,11 +1,11 @@
-//! High-performance text search and replacement operations for OpenCADStudio.
+//! High-performance text search and replacement operations for lgbcadstudio.
 //!
 //! Provides headless, control-bridge, and MCP-accessible text querying and batch
 //! replacement across Text, MText, Dimension, AttributeDefinition, and Insert entities.
 //! Safely preserves MText inline formatting codes (fonts, colors, heights, braces)
 //! and handles DXF Unicode escapes (`\U+XXXX`) and special character codes (`%%d`, `%%p`, etc.).
 
-use super::{failure, OpenCADStudio};
+use super::{failure, lgbcadstudio};
 use crate::app::Message;
 use codec::{CadDocument, EntityType, Handle};
 use iced::Task;
@@ -746,7 +746,7 @@ fn entity_block_name(doc: &CadDocument, entity_handle: Handle, owner: Handle) ->
     None
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// `text_search` — find text occurrences across active space entities, inserts,
     /// and block definitions with detailed machine-readable metadata.
     pub(crate) fn control_text_search(&self, req: &Value) -> Result<Value, Value> {

@@ -9,7 +9,7 @@ use codec::types::{Handle, Vector3};
 use codec::{CadDocument, EntityType};
 use iced::Task;
 
-use super::{Message, ModalKind, OpenCADStudio};
+use super::{Message, ModalKind, lgbcadstudio};
 use crate::command::CadCommand;
 use crate::ui::window::annotation_data::{
     DataExtractionField, DataExtractionState, DataLinkChoice, DataLinkField, ExtractionBegin,
@@ -1013,7 +1013,7 @@ fn load_extraction_settings(state: &mut DataExtractionState) -> Result<(), Strin
     Ok(())
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     fn reset_annotation_modal(&mut self, modal: ModalKind) {
         self.active_modal = Some(modal);
         self.reset_modal_geometry();

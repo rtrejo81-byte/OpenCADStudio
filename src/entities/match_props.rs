@@ -1,7 +1,7 @@
 //! MATCHPROP special-property kernels (#281).
 //!
 //! Free functions shared by the MATCHPROP handler and headless callers
-//! (buttons, MCP, plugins). No `OpenCADStudio` state required.
+//! (buttons, MCP, plugins). No `lgbcadstudio` state required.
 
 /// MATCHPROP special properties (#281): copy every STYLE-affecting field from
 /// `src` to `dst` when the destination supports it — never content (text

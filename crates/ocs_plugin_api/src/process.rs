@@ -1305,19 +1305,19 @@ mod tests {
 
     #[test]
     fn distinct_runner_path_appends_suffix() {
-        let host = PathBuf::from("/app/OpenCADStudio.exe");
+        let host = PathBuf::from("/app/lgbcadstudio.exe");
         let runner = distinct_runner_path(&host);
         assert_eq!(
             runner,
-            PathBuf::from("/app/OpenCADStudio-plugin-runner.exe")
+            PathBuf::from("/app/lgbcadstudio-plugin-runner.exe")
         );
     }
 
     #[test]
     fn distinct_runner_path_handles_no_extension() {
-        let host = PathBuf::from("/app/OpenCADStudio");
+        let host = PathBuf::from("/app/lgbcadstudio");
         let runner = distinct_runner_path(&host);
-        assert_eq!(runner, PathBuf::from("/app/OpenCADStudio-plugin-runner"));
+        assert_eq!(runner, PathBuf::from("/app/lgbcadstudio-plugin-runner"));
     }
 
     #[test]

@@ -14,10 +14,10 @@ use codec::entities::{Insert, Text, Wipeout};
 use codec::tables::BlockRecord;
 use codec::types::Vector3;
 use codec::EntityType;
-use OpenCADStudio::scene::cache::block_cache::{expand_insert, BlockCache};
-use OpenCADStudio::scene::view::render::InheritStyle;
-use OpenCADStudio::scene::Scene;
-use OpenCADStudio::scene::WireModel;
+use lgbcadstudio::scene::cache::block_cache::{expand_insert, BlockCache};
+use lgbcadstudio::scene::view::render::InheritStyle;
+use lgbcadstudio::scene::Scene;
+use lgbcadstudio::scene::WireModel;
 
 const DRAW_ORDER_BIAS: f32 = 0.001;
 const DEPTH_QUANTA: f32 = 16_777_216.0; // 2^24 (Depth24Plus)
@@ -120,7 +120,7 @@ fn block_text_depth_composes_through_the_instance_path() {
         false,
         [0.0, 0.0, 0.0, 1.0],
         1.0,
-        OpenCADStudio::scene::BlockScalePolicy::FromInsert,
+        lgbcadstudio::scene::BlockScalePolicy::FromInsert,
         false,
     )
     .expect("block defn cached");
@@ -163,7 +163,7 @@ fn block_text_depth_composes_through_the_instance_path() {
         // The wipeout mask, composed the same way the scene graph does it.
         let mask = ins_d + wipe_label * ins_half;
         let margin_quanta = (instance - mask) * DRAW_ORDER_BIAS * DEPTH_QUANTA;
-        let bias = OpenCADStudio::scene::pipeline::WIPEOUT_DEPTH_BIAS_QUANTA as f32;
+        let bias = lgbcadstudio::scene::pipeline::WIPEOUT_DEPTH_BIAS_QUANTA as f32;
         assert!(
             margin_quanta > bias + 2.0,
             "text drawn after its block's wipeout must clear it by more than \

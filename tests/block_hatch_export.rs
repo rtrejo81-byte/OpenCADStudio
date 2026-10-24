@@ -12,8 +12,8 @@ use codec::entities::hatch::{
 use codec::entities::Hatch;
 use codec::types::{Color as AcadColor, Vector2};
 use codec::EntityType;
-use OpenCADStudio::scene::model::hatch_model::HatchPattern;
-use OpenCADStudio::scene::Scene;
+use lgbcadstudio::scene::model::hatch_model::HatchPattern;
+use lgbcadstudio::scene::Scene;
 
 fn is_blue(c: &[f32; 4]) -> bool {
     c[2] > 0.85 && c[0] < 0.20 && c[1] < 0.20
@@ -218,8 +218,8 @@ fn textbox_boundary_path_is_not_filled() {
 fn app_created_hatch_roundtrips_catalog_spacing() {
     use std::sync::Arc;
 
-    use OpenCADStudio::scene::model::hatch_model::{HatchModel, PatFamily};
-    use OpenCADStudio::scene::model::hatch_patterns;
+    use lgbcadstudio::scene::model::hatch_model::{HatchModel, PatFamily};
+    use lgbcadstudio::scene::model::hatch_patterns;
 
     // Effective perpendicular spacing of a family, exactly as pattern_segments
     // computes it: rotate the local step out by the angle, project onto the
@@ -289,7 +289,7 @@ fn app_created_hatch_roundtrips_catalog_spacing() {
 fn nested_hatch_serializes_only_outer_as_external() {
     use std::sync::Arc;
 
-    use OpenCADStudio::scene::model::hatch_model::HatchModel;
+    use lgbcadstudio::scene::model::hatch_model::HatchModel;
 
     let outer: Vec<[f64; 2]> = vec![[-10.0, -10.0], [10.0, -10.0], [10.0, 10.0], [-10.0, 10.0]];
     let hole: Vec<[f64; 2]> = vec![[-5.0, -5.0], [5.0, -5.0], [5.0, 5.0], [-5.0, 5.0]];

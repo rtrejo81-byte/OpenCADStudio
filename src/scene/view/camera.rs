@@ -9,7 +9,7 @@
 // Zoom:      adjusts `distance` (exponential feel).
 // Snap:      directly assigns yaw+pitch encoded as a quaternion (for ViewCube).
 //
-// Coordinate convention: Z-up world space (same as the rest of OpenCADStudio).
+// Coordinate convention: Z-up world space (same as the rest of lgbcadstudio).
 
 use glam::camera::rh::proj::directx::{orthographic, perspective};
 use glam::camera::rh::view::look_at_mat4;

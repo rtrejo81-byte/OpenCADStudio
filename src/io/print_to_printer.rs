@@ -1033,7 +1033,7 @@ fn gdi_raster_print(
         let x = (page_w - draw_w) / 2;
         let y = (page_h - draw_h) / 2;
 
-        let doc_name = wide("OpenCADStudio Plot");
+        let doc_name = wide("lgbcadstudio Plot");
         // An optional redirect writes the spooled output to a file instead of
         // the physical tray — how "Microsoft Print to PDF" prints silently,
         // and how the fallback proves itself in tests without wasting paper.

@@ -1,7 +1,7 @@
 //! Graphic Attributes palette: applies line attributes and associative fills
 //! to the selection, or to the creation defaults when nothing is selected.
 
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use crate::scene::model::hatch_model::{GradientKind, HatchPattern};
 use crate::ui::window::gradient_editor::{GradientColorMode, GradientEditorState, GradientMsg};
 use crate::ui::window::graphic_attributes::{
@@ -212,7 +212,7 @@ fn concrete_graphic_attributes(
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn on_graphic_attributes(&mut self, message: GraphicAttributesMsg) -> Task<Message> {
         use GraphicAttributesMsg as M;
         if !matches!(
@@ -1051,13 +1051,13 @@ mod tests {
         Message::GraphicAttributes(message)
     }
 
-    fn fresh() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn fresh() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app
     }
 
-    fn add_closed_square(app: &mut OpenCADStudio, x: f64) -> Handle {
+    fn add_closed_square(app: &mut lgbcadstudio, x: f64) -> Handle {
         let mut polyline = LwPolyline::new();
         for (px, py) in [(0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0)] {
             polyline.add_point(Vector2::new(px + x, py));
@@ -1069,7 +1069,7 @@ mod tests {
             .add_entity(EntityType::LwPolyline(polyline))
     }
 
-    fn select(app: &mut OpenCADStudio, handles: &[Handle]) {
+    fn select(app: &mut lgbcadstudio, handles: &[Handle]) {
         let i = app.active_tab;
         app.tabs[i].scene.deselect_all();
         for handle in handles {
@@ -1077,7 +1077,7 @@ mod tests {
         }
     }
 
-    fn hatches(app: &OpenCADStudio) -> Vec<&codec::entities::Hatch> {
+    fn hatches(app: &lgbcadstudio) -> Vec<&codec::entities::Hatch> {
         app.tabs[app.active_tab]
             .scene
             .document
@@ -1089,7 +1089,7 @@ mod tests {
             .collect()
     }
 
-    fn common(app: &OpenCADStudio, handle: Handle) -> &codec::entities::EntityCommon {
+    fn common(app: &lgbcadstudio, handle: Handle) -> &codec::entities::EntityCommon {
         app.tabs[app.active_tab]
             .scene
             .document
@@ -1098,12 +1098,12 @@ mod tests {
             .common()
     }
 
-    fn fill_kind(app: &OpenCADStudio, handle: Handle) -> GraphicAttribute {
+    fn fill_kind(app: &lgbcadstudio, handle: Handle) -> GraphicAttribute {
         palette::current(&app.tabs[app.active_tab].scene.document, &[handle])
     }
 
     /// A closed square with a fill of `kind`; the fill HATCH is selected.
-    fn filled_square(app: &mut OpenCADStudio, kind: GraphicAttribute) -> (Handle, Handle) {
+    fn filled_square(app: &mut lgbcadstudio, kind: GraphicAttribute) -> (Handle, Handle) {
         let boundary = add_closed_square(app, 0.0);
         select(app, &[boundary]);
         let _ = app.on_graphic_attribute(kind);
@@ -1440,7 +1440,7 @@ mod tests {
         assert!((layer.transparency.as_percent() - 0.3).abs() < 0.01);
     }
 
-    fn open_square(app: &mut OpenCADStudio) -> Handle {
+    fn open_square(app: &mut lgbcadstudio) -> Handle {
         let i = app.active_tab;
         let mut polyline = LwPolyline::new();
         for (x, y) in [(0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0)] {
@@ -1453,7 +1453,7 @@ mod tests {
         handle
     }
 
-    fn has_hatch(app: &OpenCADStudio) -> bool {
+    fn has_hatch(app: &lgbcadstudio) -> bool {
         app.tabs[app.active_tab]
             .scene
             .document
@@ -1461,14 +1461,14 @@ mod tests {
             .any(|entity| matches!(entity, EntityType::Hatch(_)))
     }
 
-    fn is_closed(app: &OpenCADStudio, handle: Handle) -> bool {
+    fn is_closed(app: &lgbcadstudio, handle: Handle) -> bool {
         matches!(
             app.tabs[app.active_tab].scene.document.get_entity(handle),
             Some(EntityType::LwPolyline(polyline)) if polyline.is_closed
         )
     }
 
-    fn type_and_enter(app: &mut OpenCADStudio, input: &str) {
+    fn type_and_enter(app: &mut lgbcadstudio, input: &str) {
         let _ = app.update(Message::CommandInput(input.to_string()));
         let _ = app.update(Message::CommandSubmit);
     }
@@ -1570,7 +1570,7 @@ mod tests {
 
     #[test]
     fn graphic_attributes_starts_hidden_and_toggle_is_persisted() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.apply_config(crate::app::config::AppConfig::default());
         assert!(!app.show_graphic_attributes);
         assert!(!app.ribbon.show_graphic_attributes);
@@ -1586,7 +1586,7 @@ mod tests {
         assert!(!app.current_config().show_graphic_attributes);
     }
 
-    fn closed_square_on(app: &mut OpenCADStudio, layer: &str) -> Handle {
+    fn closed_square_on(app: &mut lgbcadstudio, layer: &str) -> Handle {
         let i = app.active_tab;
         if app.tabs[i].scene.document.layers.get(layer).is_none() {
             let mut new_layer = codec::tables::Layer::new(layer);
@@ -1603,7 +1603,7 @@ mod tests {
         handle
     }
 
-    fn fill_layers(app: &OpenCADStudio) -> Vec<String> {
+    fn fill_layers(app: &lgbcadstudio) -> Vec<String> {
         app.tabs[app.active_tab]
             .scene
             .document
@@ -1668,7 +1668,7 @@ mod tests {
     fn showing_the_palette_docks_it_below_properties_once() {
         use crate::app::config::DockSide;
         use crate::ui::dock::PanelId;
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.apply_config(crate::app::config::AppConfig::default());
         assert_eq!(app.dock.location(PanelId::GraphicAttributes), None);
 
@@ -1693,7 +1693,7 @@ mod tests {
         );
     }
 
-    fn output_since(app: &OpenCADStudio, start: usize) -> String {
+    fn output_since(app: &lgbcadstudio, start: usize) -> String {
         app.command_line.history[start..]
             .iter()
             .map(|entry| entry.text.as_str())

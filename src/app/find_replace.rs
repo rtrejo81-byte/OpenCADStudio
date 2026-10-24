@@ -1,9 +1,9 @@
-use super::{FindMatchKey, Message, OpenCADStudio};
+use super::{FindMatchKey, Message, lgbcadstudio};
 use crate::entities::traits::EntityTypeOps;
 use codec::EntityType;
 use iced::Task;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn open_find_replace(&mut self) -> Task<Message> {
         self.find_replace.current_match = None;
         self.find_replace.status.clear();

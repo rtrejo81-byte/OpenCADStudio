@@ -1,4 +1,4 @@
-// Ellipse tool — ribbon dropdown + all OpenCADStudio ellipse creation methods.
+// Ellipse tool — ribbon dropdown + all lgbcadstudio ellipse creation methods.
 //
 // Commands:
 //   ELLIPSE      — Center, Axes  (center → major endpoint → minor distance)

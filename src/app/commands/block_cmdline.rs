@@ -2,13 +2,13 @@
 //! ATTSYNC, INSBASE, and the BATTMAN check for attributed blocks. The
 //! interactive steps live in `modules::insert::block_cmdline`.
 
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use crate::modules::insert::block_cmdline::{
     AttsyncCommand, BlockTable, DashBeditCommand, DashBlockCommand, DashWblockCommand, WblockSource,
 };
 use iced::Task;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn dispatch_block_cmdline(&mut self, cmd: &str, i: usize) -> Option<Task<Message>> {
         use crate::command::CadCommand;
         match cmd {

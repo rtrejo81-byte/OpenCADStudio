@@ -7,7 +7,7 @@
 //!
 //! Layout (mirrors the spec in `docs/plugin-architecture.md`):
 //! ```text
-//! <config>/OpenCADStudio/plugins/
+//! <config>/lgbcadstudio/plugins/
 //!   <plugin-id>/
 //!     plugin.toml
 //!     <lib<name>.so | .dll | .dylib>
@@ -131,7 +131,7 @@ pub(crate) fn acadrust_source_compatible(
             })
 }
 
-/// `<config>/OpenCADStudio/plugins`, matching the settings/recent-files store.
+/// `<config>/lgbcadstudio/plugins`, matching the settings/recent-files store.
 /// Overridable via `OCS_PLUGINS_DIR` for tests.
 pub fn plugins_dir() -> Option<PathBuf> {
     if let Ok(p) = std::env::var("OCS_PLUGINS_DIR") {
@@ -154,7 +154,7 @@ pub fn plugins_dir() -> Option<PathBuf> {
         p
     };
     let mut p = base;
-    p.push("OpenCADStudio");
+    p.push("lgbcadstudio");
     p.push("plugins");
     Some(p)
 }
@@ -430,7 +430,7 @@ mod loader {
     /// process. Call once at startup. Returns per-id results so the host can
     /// report load failures.
     pub(crate) fn load_at_startup(
-        app: &mut crate::app::OpenCADStudio,
+        app: &mut crate::app::lgbcadstudio,
     ) -> Vec<(String, Result<(), String>)> {
         let discovered = super::discover();
         let mut manager = PluginManager::new();
@@ -944,7 +944,7 @@ acadrust_source = "git+https://github.com/HakanSeven12/opencadcodec.git?rev=0908
 
     /// Integration smoke test for the out-of-process plugin path.
     /// Set `OCS_TEST_PLUGIN` to the built cdylib path and make sure the
-    /// `OpenCADStudio` binary is built; the test uses it as the runner host.
+    /// `lgbcadstudio` binary is built; the test uses it as the runner host.
     #[test]
     fn with_manager_reentry_survives_the_first_write_boundary() {
         // The FIRST-WRITE-BOUNDARY hang class (v13 AppHangB1, the consumer's
@@ -1011,7 +1011,7 @@ acadrust_source = "git+https://github.com/HakanSeven12/opencadcodec.git?rev=0908
         );
         std::env::set_var("OCS_PLUGIN_RUNNER_EXE", &host_exe);
 
-        let mut app = crate::app::OpenCADStudio::new_for_test();
+        let mut app = crate::app::lgbcadstudio::new_for_test();
         let mut host = crate::app::plugin_host::HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
             &path,
@@ -1078,7 +1078,7 @@ acadrust_source = "git+https://github.com/HakanSeven12/opencadcodec.git?rev=0908
 
         const FRESH_BOOTS: usize = 3;
         for boot in 1..=FRESH_BOOTS {
-            let mut app = crate::app::OpenCADStudio::new_for_test();
+            let mut app = crate::app::lgbcadstudio::new_for_test();
             let mut host = crate::app::plugin_host::HostSession::new(&mut app, 0);
             let process = ocs_plugin_api::process::PluginProcess::spawn(
                 &path,

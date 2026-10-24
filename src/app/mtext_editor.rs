@@ -753,7 +753,7 @@ fn seed_mtext_state(state: &mut MTextEditorState, m: &MText) {
     state.original = Some(m.clone());
 }
 
-impl super::OpenCADStudio {
+impl super::lgbcadstudio {
     /// Open the in-place editor for a new (`handle = None`) or existing MText.
     /// Open the rich MText editor for a new or existing MText / MultiLeader.
     /// The committed slot is chosen by the edited entity's type.

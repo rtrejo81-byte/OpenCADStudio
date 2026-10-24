@@ -60,7 +60,7 @@ pub(super) fn require_existing(
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// `entities_create` — build a batch of typed entities, auto-create the
     /// layers they name, and commit everything as one undoable step. All definitions are validated before the first
     /// entity is added, so the batch is all-or-nothing.

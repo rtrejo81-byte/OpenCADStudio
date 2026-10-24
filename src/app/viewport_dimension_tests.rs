@@ -1,4 +1,4 @@
-use super::OpenCADStudio;
+use super::lgbcadstudio;
 use crate::command::{DimensionAssociationSource, StepInput};
 use crate::entities::dim_override;
 use crate::scene::viewport_ref::{AcceptedSnap, MeasurementScale, ViewportFrame};
@@ -9,8 +9,8 @@ use codec::types::{Handle, Vector3};
 use codec::{CadDocument, EntityType};
 use glam::DVec3;
 
-fn fixture() -> (OpenCADStudio, Handle, ViewportFrame) {
-    let mut app = OpenCADStudio::new_for_test();
+fn fixture() -> (lgbcadstudio, Handle, ViewportFrame) {
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let mut scene = Scene::new();
     let line = scene.add_entity(EntityType::Line(Line::from_points(
@@ -53,7 +53,7 @@ fn hit(frame: ViewportFrame, source: Handle, model: DVec3) -> SnapResult {
     }
 }
 
-fn point(app: &mut OpenCADStudio, frame: ViewportFrame, source: Handle, model: DVec3) {
+fn point(app: &mut lgbcadstudio, frame: ViewportFrame, source: Handle, model: DVec3) {
     let i = app.active_tab;
     let hit = hit(frame, source, model);
     let paper = hit.world.with_z(0.0);
@@ -87,7 +87,7 @@ fn displayed(doc: &CadDocument) -> f64 {
     dim.measurement() * MeasurementScale::user_lfac_for_space(factor, true)
 }
 
-pub(super) fn preview_text(app: &OpenCADStudio, entity: &EntityType) -> String {
+pub(super) fn preview_text(app: &lgbcadstudio, entity: &EntityType) -> String {
     let EntityType::Dimension(dimension) = entity else {
         panic!("expected dimension")
     };
@@ -97,7 +97,7 @@ pub(super) fn preview_text(app: &OpenCADStudio, entity: &EntityType) -> String {
     crate::entities::dimension::dimension_text_value(dimension, Some(&style)).unwrap()
 }
 
-fn finish_aligned(app: &mut OpenCADStudio, line: Handle, frame: ViewportFrame) {
+fn finish_aligned(app: &mut lgbcadstudio, line: Handle, frame: ViewportFrame) {
     let _ = app.dispatch_command("DIMALIGNED");
     point(app, frame, line, DVec3::ZERO);
     point(app, frame, line, DVec3::X * 100.0);
@@ -1255,7 +1255,7 @@ fn start_centerline_dimension(
     paper_first: bool,
     paper_kind: SnapType,
     factor: f64,
-) -> (OpenCADStudio, Handle, Handle, ViewportFrame) {
+) -> (lgbcadstudio, Handle, Handle, ViewportFrame) {
     let (mut app, model, frame) = fixture();
     let i = app.active_tab;
     let paper = app.tabs[i]

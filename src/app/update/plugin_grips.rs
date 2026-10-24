@@ -24,7 +24,7 @@ use std::time::Duration;
 use glam::DVec3;
 use iced::{Point, Rectangle, Task};
 
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use crate::plugin::grip_points::{self, ActivePluginGrip, GripCandidate};
 
 /// Poll slice for an outstanding delivery (kept tiny: the pump reschedules
@@ -45,7 +45,7 @@ const SETTLING_CADENCE: Duration = Duration::from_millis(2);
 /// down rather than freezing the UI.
 const SETTLE_WATCHDOG: Duration = Duration::from_secs(10);
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Custom grips of tab `i` that are visible in the current view, with
     /// their tile-relative screen positions. Hover, press and render share
     /// this one query — it goes through the per-tab uniform grid with

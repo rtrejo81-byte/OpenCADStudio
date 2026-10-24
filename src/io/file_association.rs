@@ -263,10 +263,10 @@ mod windows_impl {
     /// (they point at now-deleted ProgIDs, which Windows simply ignores).
     pub(super) fn unregister_handler() -> Result<(), String> {
         for key in [
-            r"Software\Classes\Applications\OpenCADStudio.exe",
-            r"Software\Classes\OpenCADStudio.DWG",
-            r"Software\Classes\OpenCADStudio.DXF",
-            r"Software\Classes\OpenCADStudio.BAK",
+            r"Software\Classes\Applications\lgbcadstudio.exe",
+            r"Software\Classes\lgbcadstudio.DWG",
+            r"Software\Classes\lgbcadstudio.DXF",
+            r"Software\Classes\lgbcadstudio.BAK",
             r"Software\Open CAD Studio",
         ] {
             let w = wide(key);
@@ -349,7 +349,7 @@ mod windows_impl {
         }
         let dll = dll.to_string_lossy();
         let clsid_base = format!(r"Software\Classes\CLSID\{THUMB_CLSID}");
-        set_string(&clsid_base, None, "OpenCADStudio DWG Thumbnail Provider")?;
+        set_string(&clsid_base, None, "lgbcadstudio DWG Thumbnail Provider")?;
         set_string(&format!(r"{clsid_base}\InprocServer32"), None, &dll)?;
         set_string(
             &format!(r"{clsid_base}\InprocServer32"),
@@ -384,7 +384,7 @@ mod windows_impl {
 
     /// Register the running .exe (per-user, HKCU) so the portable build matches
     /// what the MSI provides machine-wide:
-    ///   * an `Applications\OpenCADStudio.exe` entry → listed under "Open with";
+    ///   * an `Applications\lgbcadstudio.exe` entry → listed under "Open with";
     ///   * ProgIDs + a Capabilities / RegisteredApplications block → the app is
     ///     a default-app candidate, so the in-app "set as default" prompt's OS
     ///     dialog (LaunchAdvancedAssociationUI "Open CAD Studio") finds it.
@@ -393,7 +393,7 @@ mod windows_impl {
         let exe = exe.to_string_lossy().to_string();
 
         // ── "Open with" exe listing ─────────────────────────────────────────
-        const APP_BASE: &str = r"Software\Classes\Applications\OpenCADStudio.exe";
+        const APP_BASE: &str = r"Software\Classes\Applications\lgbcadstudio.exe";
         set_string(
             &format!(r"{APP_BASE}\shell\open\command"),
             None,
@@ -417,23 +417,23 @@ mod windows_impl {
         // ── ProgIDs (per-user mirror of the MSI's) ──────────────────────────
         // The Capabilities entries below point at these, and they must resolve
         // to a real open command for "set as default" to apply them.
-        register_progid(&exe, "OpenCADStudio.DWG", "DWG Drawing")?;
-        register_progid(&exe, "OpenCADStudio.DXF", "DXF Drawing")?;
-        register_progid(&exe, "OpenCADStudio.BAK", "CAD Backup")?;
+        register_progid(&exe, "lgbcadstudio.DWG", "DWG Drawing")?;
+        register_progid(&exe, "lgbcadstudio.DXF", "DXF Drawing")?;
+        register_progid(&exe, "lgbcadstudio.BAK", "CAD Backup")?;
         // Also offer the ProgIDs in each extension's Open-with list.
         set_string(
             r"Software\Classes\.dwg\OpenWithProgids",
-            Some("OpenCADStudio.DWG"),
+            Some("lgbcadstudio.DWG"),
             "",
         )?;
         set_string(
             r"Software\Classes\.dxf\OpenWithProgids",
-            Some("OpenCADStudio.DXF"),
+            Some("lgbcadstudio.DXF"),
             "",
         )?;
         set_string(
             r"Software\Classes\.bak\OpenWithProgids",
-            Some("OpenCADStudio.BAK"),
+            Some("lgbcadstudio.BAK"),
             "",
         )?;
 
@@ -452,17 +452,17 @@ mod windows_impl {
         set_string(
             &format!(r"{CAP}\FileAssociations"),
             Some(".dwg"),
-            "OpenCADStudio.DWG",
+            "lgbcadstudio.DWG",
         )?;
         set_string(
             &format!(r"{CAP}\FileAssociations"),
             Some(".dxf"),
-            "OpenCADStudio.DXF",
+            "lgbcadstudio.DXF",
         )?;
         set_string(
             &format!(r"{CAP}\FileAssociations"),
             Some(".bak"),
-            "OpenCADStudio.BAK",
+            "lgbcadstudio.BAK",
         )?;
         set_string(
             r"Software\RegisteredApplications",
@@ -552,7 +552,7 @@ mod linux_impl {
              Categories=Graphics;Engineering;\n\
              MimeType=image/vnd.dwg;image/vnd.dxf;\n\
              Keywords=CAD;DWG;DXF;drawing;design;\n\
-             StartupWMClass=OpenCADStudio\n"
+             StartupWMClass=lgbcadstudio\n"
         );
 
         // The icon is checked first and on its own. It and the .desktop entry

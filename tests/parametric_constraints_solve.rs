@@ -1,10 +1,10 @@
 use codec::entities::EntityType;
 use codec::types::{Handle, Vector3};
-use OpenCADStudio::scene::named_parameters::DrivingValue;
-use OpenCADStudio::scene::parametric_constraints::{
+use lgbcadstudio::scene::named_parameters::DrivingValue;
+use lgbcadstudio::scene::parametric_constraints::{
     ConstraintKind, ParametricRef, ParametricScope,
 };
-use OpenCADStudio::scene::{ChangeKind, Scene};
+use lgbcadstudio::scene::{ChangeKind, Scene};
 
 fn add_line(scene: &mut Scene, x1: f64, y1: f64, x2: f64, y2: f64) -> Handle {
     scene.add_entity(EntityType::Line(codec::entities::Line::from_points(
@@ -489,7 +489,7 @@ fn copying_two_constrained_entities_carries_their_constraint_along() {
         .len();
 
     let transform =
-        OpenCADStudio::command::EntityTransform::Translate(glam::DVec3::new(100.0, 100.0, 0.0));
+        lgbcadstudio::command::EntityTransform::Translate(glam::DVec3::new(100.0, 100.0, 0.0));
     let new_handles = scene.copy_entities(&[a, b], &transform);
     assert_eq!(new_handles.len(), 2);
     let (new_a, new_b) = (new_handles[0], new_handles[1]);
@@ -540,7 +540,7 @@ fn a_duplicated_horizontal_constraint_is_reported_as_redundant() {
     // `solve_scope` resolves the redundant row back to the
     // `ConstraintId` a `ConflictResolverPanel` would name.
     use kernel_constraints::diagnosis::RedundancyKind;
-    use OpenCADStudio::scene::parametric_constraints::ConstraintKind;
+    use lgbcadstudio::scene::parametric_constraints::ConstraintKind;
 
     let mut scene = Scene::new();
     let a = add_line(&mut scene, 0.0, 0.0, 10.0, 3.0);
@@ -577,7 +577,7 @@ fn a_duplicated_horizontal_constraint_is_reported_as_redundant() {
 #[test]
 fn two_conflicting_distance_targets_are_reported_as_conflicting() {
     use kernel_constraints::diagnosis::RedundancyKind;
-    use OpenCADStudio::scene::parametric_constraints::ConstraintKind;
+    use lgbcadstudio::scene::parametric_constraints::ConstraintKind;
 
     let mut scene = Scene::new();
     let a = add_line(&mut scene, 0.0, 0.0, 10.0, 0.0);

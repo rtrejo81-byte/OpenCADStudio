@@ -1,7 +1,7 @@
 use super::document::DocumentTab;
 use super::document::DynComponent;
 use super::history::history_dropdown_labels;
-use super::{ArrowKey, Message, OpenCADStudio};
+use super::{ArrowKey, Message, lgbcadstudio};
 use crate::scene::pick::grip::{grips_to_screen, grips_to_screen_paper, grips_to_screen_rte};
 use crate::scene::view::viewport_pane::ViewportPane;
 use crate::scene::{VIEWCUBE_PAD, VIEWCUBE_REGION_PX};
@@ -385,7 +385,7 @@ fn named_visual_style(
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     #[cfg(not(target_arch = "wasm32"))]
     pub fn view(&self, window_id: window::Id) -> Element<'_, Message> {
         // ── Floating panel windows ─────────────────────────────────────────
@@ -2963,7 +2963,7 @@ bg={bg_ms:.1}ms n={view_count}"
             }
             None => modal_underlay,
         };
-        // Shared CAD colour picker. Indexed ACI colours use OpenCADStudio's own
+        // Shared CAD colour picker. Indexed ACI colours use lgbcadstudio's own
         // dialog; True Color keeps the existing iced_aw gradient picker.
         // Which part of the widget tree the frame went into. Reported as a
         // breakdown rather than one number, because a first switch to a paper
@@ -3019,7 +3019,7 @@ bg={bg_ms:.1}ms n={view_count}"
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub fn subscription(&self) -> Subscription<Message> {
         use iced::event;
         // Only request per-frame ticks while something on screen is animating
@@ -3917,7 +3917,7 @@ fn start_page_content<'a>(
     secondary_items.push(
         button(text(crate::t!("OCS Desktop")).size(14))
             .on_press(Message::OpenUrl(
-                "https://github.com/HakanSeven12/OpenCADStudio/releases/latest".to_string(),
+                "https://github.com/HakanSeven12/lgbcadstudio/releases/latest".to_string(),
             ))
             .padding([10, 22])
             .style(|theme: &Theme, status| start_action_shape(button::primary(theme, status)))
@@ -3935,13 +3935,13 @@ fn start_page_content<'a>(
             )))
             .width(20)
             .height(20),
-            text("r/OpenCADStudio").size(14),
+            text("r/lgbcadstudio").size(14),
         ]
         .spacing(7)
         .align_y(iced::Center),
     )
     .on_press(Message::OpenUrl(
-        "https://www.reddit.com/r/OpenCADStudio/".to_string(),
+        "https://www.reddit.com/r/lgbcadstudio/".to_string(),
     ))
     .padding([10, 22])
     .style(|theme: &Theme, status| {

@@ -4017,7 +4017,7 @@ mod ocs {
     /// for a constraint command's object picks). Raises a Python exception
     /// on failure — including on hosts that predate `HostApi::run_command`
     /// (Phase 1, `ocs.command()` — see `docs/python-scripting-roadmap.md`
-    /// in the OpenCADStudio repo for what this can and can't do).
+    /// in the lgbcadstudio repo for what this can and can't do).
     #[cfg(feature = "experimental-command-replay")]
     #[pyfunction]
     fn command(cmd: rustpython_vm::builtins::PyStrRef, vm: &VirtualMachine) -> PyResult<()> {

@@ -79,7 +79,7 @@ mod tests {
     fn sdk_worker_dispatches_window_messages_and_app_wakes() {
         std::thread::spawn(|| unsafe {
             let wake = Wake::new().unwrap();
-            let class: Vec<u16> = "OpenCADStudio.SpaceMouse.Worker.Test\0"
+            let class: Vec<u16> = "lgbcadstudio.SpaceMouse.Worker.Test\0"
                 .encode_utf16()
                 .collect();
             let instance = GetModuleHandleW(std::ptr::null());

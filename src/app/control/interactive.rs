@@ -7,7 +7,7 @@
 use super::*;
 use crate::app::automation::{entity_json, entity_type_matches};
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// `user_select` — hand the screen to the person at the desk: they pick
     /// entities (optionally filtered by type / layer), Enter confirms, Escape
     /// cancels. The operation resolves only after that answer, so callers

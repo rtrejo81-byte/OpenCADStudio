@@ -2,7 +2,7 @@ use super::*;
 #[cfg(target_arch = "wasm32")]
 use crate::io::plot_style::PlotStyleTableExt as _;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn dispatch_fileops(&mut self, cmd: &str, i: usize) -> Option<Task<Message>> {
         match cmd {
             // QNEW starts from the default template (Options > Files); NEW
@@ -613,7 +613,7 @@ fn parse_background_color(args: &[&str]) -> Option<[f32; 4]> {
 // whose bytes never entered the session is reported as skipped rather than
 // silently dropped, the web counterpart of native's missing-file skip.
 #[cfg(target_arch = "wasm32")]
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(in crate::app) fn archive_web(&mut self, i: usize, cmd: &str) -> Task<Message> {
         let Some(src) = self.tabs[i].current_path.clone() else {
             self.command_line.push_error(
@@ -866,10 +866,10 @@ fn push_skipped(skipped: &mut Vec<String>, name: &str) {
 
 #[cfg(test)]
 mod tests {
-    use crate::app::{Message, OpenCADStudio};
+    use crate::app::{Message, lgbcadstudio};
 
-    fn fresh_app() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn fresh_app() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app
     }

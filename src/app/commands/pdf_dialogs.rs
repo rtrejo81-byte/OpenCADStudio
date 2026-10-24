@@ -46,7 +46,7 @@ fn file_stem(path: &str) -> String {
         .unwrap_or_default()
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// The path an attached file is stored with: full, relative to the saved
     /// drawing (the full path until it is saved), or the file name alone.
     fn pdf_stored_path(&self, path: &str, path_type: Pathtype) -> String {

@@ -891,7 +891,7 @@ impl Scene {
             }
         }
         // Restore from the standard *Active VPORT entry. (Earlier builds also
-        // wrote an app-specific "OpenCADStudio_Camera_Model" View record and
+        // wrote an app-specific "lgbcadstudio_Camera_Model" View record and
         // preferred it here — that polluted the file for other CAD programs and
         // is no longer written or read; the view round-trips fine via VPORT.)
         let vp = match self
@@ -1405,7 +1405,7 @@ impl Scene {
     ///
     /// The sheet viewport entity is the authoritative paper-space view (it
     /// round-trips through both the DXF and DWG writers). An older
-    /// `OpenCADStudio_Camera_<layout>` named View is honoured only as a
+    /// `lgbcadstudio_Camera_<layout>` named View is honoured only as a
     /// backward-compatible fallback for files saved under the previous scheme.
     fn apply_sheet_viewport_camera(&mut self) -> bool {
         // The Layout object already owns the authoritative sheet-viewport
@@ -1422,7 +1422,7 @@ impl Scene {
             Some(v) if v.view_height.abs() >= 1e-9 => v,
             _ => {
                 // Back-compat: files OCS saved with the named-View side-channel.
-                let view_name = format!("OpenCADStudio_Camera_{}", self.current_layout);
+                let view_name = format!("lgbcadstudio_Camera_{}", self.current_layout);
                 let fallback = self
                     .document
                     .views

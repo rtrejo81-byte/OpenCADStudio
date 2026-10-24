@@ -17,7 +17,7 @@
 //! when each manager was hand-copied: a dead New, a missing ribbon refresh, a
 //! style added without a handle (dropped on DWG save, issue #67).
 
-use super::OpenCADStudio;
+use super::lgbcadstudio;
 use codec::objects::{Dictionary, MLineStyle, MultiLeaderStyle, ObjectType, TableStyle};
 use codec::tables::{DimStyle, TextStyle};
 use codec::types::Handle;
@@ -198,7 +198,7 @@ impl StyleKind {
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     // ── Queries ────────────────────────────────────────────────────────────
 
     /// All style names for `kind`, in display order (object-backed styles are
@@ -1140,7 +1140,7 @@ pub(super) struct ScaleStage {
     materialized: bool,
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     fn capture_scale_state(&self) -> ScaleSnapshot {
         let i = self.active_tab;
         let doc = &self.tabs[i].scene.document;
@@ -1279,12 +1279,12 @@ impl OpenCADStudio {
 #[cfg(test)]
 mod rename_follow_tests {
     // #42: renaming a text style must follow into dimstyle dimtxsty.
-    use super::{OpenCADStudio, StyleKind};
+    use super::{lgbcadstudio, StyleKind};
     use codec::tables::{DimStyle, TextStyle};
 
     #[test]
     fn text_rename_follows_dimtxsty() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         let mut ts = TextStyle::new("OLD");

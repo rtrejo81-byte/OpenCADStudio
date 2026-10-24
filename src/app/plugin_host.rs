@@ -7,13 +7,13 @@ use codec::xdata::ExtendedDataRecord;
 use ocs_plugin_api::host::{CadDocument, EntityType, Handle, HostApi, HostSettingValue};
 use ocs_plugin_api::shm::{DocumentSnapshotStore, DocumentViewData};
 
-use super::OpenCADStudio;
+use super::lgbcadstudio;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::plugin::v4_support;
 
 /// Session adapter: one active document tab, command line, undo.
 pub(crate) struct HostSession<'a> {
-    app: &'a mut OpenCADStudio,
+    app: &'a mut lgbcadstudio,
     tab: usize,
     doc_store: Option<DocumentSnapshotStore<DocumentViewData>>,
 }
@@ -65,7 +65,7 @@ impl Drop for PluginRequest<'_, '_> {
 }
 
 impl<'a> HostSession<'a> {
-    pub(crate) fn new(app: &'a mut OpenCADStudio, tab: usize) -> Self {
+    pub(crate) fn new(app: &'a mut lgbcadstudio, tab: usize) -> Self {
         Self {
             app,
             tab,
@@ -2112,7 +2112,7 @@ impl<'a> HostSession<'a> {
                 })
                 .ok_or_else(|| format!("layout {name:?} does not exist"))
         };
-        let names_taken = |app: &crate::app::OpenCADStudio, tab: usize, name: &str| {
+        let names_taken = |app: &crate::app::lgbcadstudio, tab: usize, name: &str| {
             app.tabs[tab]
                 .scene
                 .layout_names()
@@ -4342,7 +4342,7 @@ fn plugin_step_to_result(step: ocs_plugin_api::host::CommandStep) -> crate::comm
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
     use crate::entities::traits::RenderConvertible;
     use codec::entities::{Line, Point};
     use codec::xdata::XDataValue;
@@ -4350,7 +4350,7 @@ mod tests {
 
     #[test]
     fn selection_query_is_live_and_replacement_is_validated() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let a = host.add_entity(EntityType::Point(Point::new()));
@@ -4367,7 +4367,7 @@ mod tests {
 
     #[test]
     fn nested_insert_attribute_crud_uses_parent_storage_and_undo() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let (insert_handle, attribute_handle);
         {
@@ -4474,7 +4474,7 @@ mod tests {
 
     #[test]
     fn scripted_selection_does_not_expand_linked_leader_annotation() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let annotation = host.add_entity(EntityType::Text(codec::entities::Text::default()));
@@ -4487,7 +4487,7 @@ mod tests {
 
     #[test]
     fn entity_transaction_validates_before_mutation_and_undoes_as_one_step() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let (first, second);
         {
@@ -4549,7 +4549,7 @@ mod tests {
 
     #[test]
     fn xrecord_crud_round_trips_refusals_and_list() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let entries = || {
@@ -4696,7 +4696,7 @@ mod tests {
 
     #[test]
     fn xrecord_mutations_are_single_undo_steps_that_restore_objects() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let original_entries = || vec![codec::objects::XRecordEntry::string(1, "one")];
         let changed_entries = || {
@@ -4786,7 +4786,7 @@ mod tests {
     /// the whole operation at once.
     #[test]
     fn xrecord_writes_join_a_plugin_initiated_undo_scope() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let original_entries = || vec![codec::objects::XRecordEntry::string(1, "one")];
         let changed_entries = || {
@@ -4872,7 +4872,7 @@ mod tests {
 
     #[test]
     fn xrecords_survive_dxf_and_dwg_round_trips() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let entries = || {
@@ -4956,10 +4956,10 @@ mod tests {
             plugin_path.display()
         );
         let runner_path = std::env::var_os("OCS_PLUGIN_RUNNER_EXE")
-            .expect("set OCS_PLUGIN_RUNNER_EXE to the built OpenCADStudio executable");
+            .expect("set OCS_PLUGIN_RUNNER_EXE to the built lgbcadstudio executable");
         assert!(std::path::Path::new(&runner_path).is_file());
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -5088,9 +5088,9 @@ mod tests {
             return;
         };
         let runner_path = std::env::var_os("OCS_PLUGIN_RUNNER_EXE")
-            .expect("set OCS_PLUGIN_RUNNER_EXE to the built OpenCADStudio executable");
+            .expect("set OCS_PLUGIN_RUNNER_EXE to the built lgbcadstudio executable");
         assert!(std::path::Path::new(&runner_path).is_file());
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -5271,7 +5271,7 @@ mod tests {
             return;
         };
         let runner_path = std::env::var_os("OCS_PLUGIN_RUNNER_EXE")
-            .expect("set OCS_PLUGIN_RUNNER_EXE to the built OpenCADStudio executable");
+            .expect("set OCS_PLUGIN_RUNNER_EXE to the built lgbcadstudio executable");
         assert!(std::path::Path::new(&runner_path).is_file());
 
         let shx_path =
@@ -5283,7 +5283,7 @@ mod tests {
         shx.extend_from_slice(b"ARROW\0\x10\x14\0");
         std::fs::write(&shx_path, shx).unwrap();
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let style_handle = host.document_mut().allocate_handle();
@@ -5476,10 +5476,10 @@ mod tests {
             return;
         };
         let runner_path = std::env::var_os("OCS_PLUGIN_RUNNER_EXE")
-            .expect("set OCS_PLUGIN_RUNNER_EXE to the built OpenCADStudio executable");
+            .expect("set OCS_PLUGIN_RUNNER_EXE to the built lgbcadstudio executable");
         assert!(std::path::Path::new(&runner_path).is_file());
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let next = host.document().next_handle();
@@ -5741,9 +5741,9 @@ mod tests {
             return;
         };
         let runner_path = std::env::var_os("OCS_PLUGIN_RUNNER_EXE")
-            .expect("set OCS_PLUGIN_RUNNER_EXE to the built OpenCADStudio executable");
+            .expect("set OCS_PLUGIN_RUNNER_EXE to the built lgbcadstudio executable");
         assert!(std::path::Path::new(&runner_path).is_file());
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let next = host.document().next_handle();
@@ -5982,9 +5982,9 @@ mod tests {
             return;
         };
         let runner_path = std::env::var_os("OCS_PLUGIN_RUNNER_EXE")
-            .expect("set OCS_PLUGIN_RUNNER_EXE to the built OpenCADStudio executable");
+            .expect("set OCS_PLUGIN_RUNNER_EXE to the built lgbcadstudio executable");
         assert!(std::path::Path::new(&runner_path).is_file());
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -6213,9 +6213,9 @@ mod tests {
             return;
         };
         let runner_path = std::env::var_os("OCS_PLUGIN_RUNNER_EXE")
-            .expect("set OCS_PLUGIN_RUNNER_EXE to the built OpenCADStudio executable");
+            .expect("set OCS_PLUGIN_RUNNER_EXE to the built lgbcadstudio executable");
         assert!(std::path::Path::new(&runner_path).is_file());
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -6555,9 +6555,9 @@ mod tests {
             return;
         };
         let runner_path = std::env::var_os("OCS_PLUGIN_RUNNER_EXE")
-            .expect("set OCS_PLUGIN_RUNNER_EXE to the built OpenCADStudio executable");
+            .expect("set OCS_PLUGIN_RUNNER_EXE to the built lgbcadstudio executable");
         assert!(std::path::Path::new(&runner_path).is_file());
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -6844,9 +6844,9 @@ mod tests {
             return;
         };
         let runner_path = std::env::var_os("OCS_PLUGIN_RUNNER_EXE")
-            .expect("set OCS_PLUGIN_RUNNER_EXE to the built OpenCADStudio executable");
+            .expect("set OCS_PLUGIN_RUNNER_EXE to the built lgbcadstudio executable");
         assert!(std::path::Path::new(&runner_path).is_file());
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -7183,9 +7183,9 @@ mod tests {
             return;
         };
         let runner_path = std::env::var_os("OCS_PLUGIN_RUNNER_EXE")
-            .expect("set OCS_PLUGIN_RUNNER_EXE to the built OpenCADStudio executable");
+            .expect("set OCS_PLUGIN_RUNNER_EXE to the built lgbcadstudio executable");
         assert!(std::path::Path::new(&runner_path).is_file());
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -7451,9 +7451,9 @@ mod tests {
             return;
         };
         let runner_path = std::env::var_os("OCS_PLUGIN_RUNNER_EXE")
-            .expect("set OCS_PLUGIN_RUNNER_EXE to the built OpenCADStudio executable");
+            .expect("set OCS_PLUGIN_RUNNER_EXE to the built lgbcadstudio executable");
         assert!(std::path::Path::new(&runner_path).is_file());
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -7714,9 +7714,9 @@ mod tests {
             return;
         };
         let runner_path = std::env::var_os("OCS_PLUGIN_RUNNER_EXE")
-            .expect("set OCS_PLUGIN_RUNNER_EXE to the built OpenCADStudio executable");
+            .expect("set OCS_PLUGIN_RUNNER_EXE to the built lgbcadstudio executable");
         assert!(std::path::Path::new(&runner_path).is_file());
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -9077,7 +9077,7 @@ mod tests {
         let Some(plugin_path) = std::env::var_os("OCS_TEST_PYTHON_PLUGIN") else {
             return;
         };
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let mut records = std::collections::BTreeMap::new();
@@ -9458,7 +9458,7 @@ mod tests {
         let Some(plugin_path) = std::env::var_os("OCS_TEST_PYTHON_PLUGIN") else {
             return;
         };
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -9748,7 +9748,7 @@ mod tests {
         let Some(plugin_path) = std::env::var_os("OCS_TEST_PYTHON_PLUGIN") else {
             return;
         };
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         // A Body entity carrying a kernel box; scripts cannot create one.
@@ -9838,7 +9838,7 @@ mod tests {
         let Some(plugin_path) = std::env::var_os("OCS_TEST_PYTHON_PLUGIN") else {
             return;
         };
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -10120,7 +10120,7 @@ mod tests {
         let Some(plugin_path) = std::env::var_os("OCS_TEST_PYTHON_PLUGIN") else {
             return;
         };
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -10517,7 +10517,7 @@ mod tests {
         let Some(plugin_path) = std::env::var_os("OCS_TEST_PYTHON_PLUGIN") else {
             return;
         };
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -10839,7 +10839,7 @@ mod tests {
         let Some(plugin_path) = std::env::var_os("OCS_TEST_PYTHON_PLUGIN") else {
             return;
         };
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -10921,7 +10921,7 @@ mod tests {
         let Some(plugin_path) = std::env::var_os("OCS_TEST_PYTHON_PLUGIN") else {
             return;
         };
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let object = |host: &mut HostSession<'_>, data: ClassObjectData| {
@@ -11032,7 +11032,7 @@ mod tests {
         picture.save(&jpeg).unwrap();
         picture.save(&tiff).unwrap();
         std::fs::write(&text, "not a picture").unwrap();
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -11154,7 +11154,7 @@ mod tests {
         let Some(plugin_path) = std::env::var_os("OCS_TEST_PYTHON_PLUGIN") else {
             return;
         };
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let paper = host
@@ -11372,7 +11372,7 @@ mod tests {
         let Some(plugin_path) = std::env::var_os("OCS_TEST_PYTHON_PLUGIN") else {
             return;
         };
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -11576,7 +11576,7 @@ L.delete('Structure', erase_objects=True)
         let Some(plugin_path) = std::env::var_os("OCS_TEST_PYTHON_PLUGIN") else {
             return;
         };
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -11811,7 +11811,7 @@ S.delete('Heading')
         let Some(plugin_path) = std::env::var_os("OCS_TEST_PYTHON_PLUGIN") else {
             return;
         };
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -12075,7 +12075,7 @@ B.delete('Widget2')
         let Some(plugin_path) = std::env::var_os("OCS_TEST_PYTHON_PLUGIN") else {
             return;
         };
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -12277,7 +12277,7 @@ check('unknown_insert_block', lambda: doc.create_entity('Insert', block_name='Gh
         let Some(plugin_path) = std::env::var_os("OCS_TEST_PYTHON_PLUGIN") else {
             return;
         };
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -12546,7 +12546,7 @@ LT.delete('Temp')
         // The array assertions below check loose copies; ARRAYRECT/ARRAYPOLAR
         // build associative arrays by default (thread-local, this thread only).
         crate::modules::draw::defaults::set_array_assoc(0.0);
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -12951,7 +12951,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
         let Some(plugin_path) = std::env::var_os("OCS_TEST_PYTHON_PLUGIN") else {
             return;
         };
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -13032,10 +13032,10 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
     #[test]
     fn script_commands_setting_gates_the_runner() {
         use ocs_plugin_api::host::CommandRequest as R;
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         assert!(app.script_commands, "scripts may run commands by default");
-        let run = |app: &mut OpenCADStudio, line: &str| {
+        let run = |app: &mut lgbcadstudio, line: &str| {
             HostSession::new(app, 0).run_command(R::Run { line: line.into() })
         };
         assert!(run(&mut app, "LINE 0,0 10,0").is_ok());
@@ -13081,7 +13081,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
     #[allow(unused_must_use)]
     fn spike_command_runner_prompts() {
         use ocs_plugin_api::host::CommandRequest as R;
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let show = |label: &str, r: &Result<ocs_plugin_api::host::CommandOutcome, String>| match r {
@@ -13146,7 +13146,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
         image::RgbaImage::from_pixel(6, 6, image::Rgba([90, 9, 9, 255]))
             .save(&b)
             .unwrap();
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let process = ocs_plugin_api::process::PluginProcess::spawn(
@@ -13284,9 +13284,9 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
             return;
         };
         let runner_path = std::env::var_os("OCS_PLUGIN_RUNNER_EXE")
-            .expect("set OCS_PLUGIN_RUNNER_EXE to the built OpenCADStudio executable");
+            .expect("set OCS_PLUGIN_RUNNER_EXE to the built lgbcadstudio executable");
         assert!(std::path::Path::new(&runner_path).is_file());
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let process = {
             let mut host = HostSession::new(&mut app, 0);
@@ -13299,7 +13299,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
                 .expect("spawn staged Python plugin"),
             )
         };
-        let request = |app: &mut OpenCADStudio, prompt: &str, entity: bool| {
+        let request = |app: &mut lgbcadstudio, prompt: &str, entity: bool| {
             let mut started = None;
             {
                 let mut host = HostSession::new(app, 0);
@@ -13423,9 +13423,9 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
             return;
         };
         let runner_path = std::env::var_os("OCS_PLUGIN_RUNNER_EXE")
-            .expect("set OCS_PLUGIN_RUNNER_EXE to the built OpenCADStudio executable");
+            .expect("set OCS_PLUGIN_RUNNER_EXE to the built lgbcadstudio executable");
         assert!(std::path::Path::new(&runner_path).is_file());
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         app.tabs
             .push(crate::app::document::DocumentTab::new_drawing(2));
@@ -13553,7 +13553,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
         // Notifications are best-effort and consumed by the runner's reader
         // thread before its next Dispatch. Give that thread a bounded handoff.
         std::thread::sleep(std::time::Duration::from_millis(50));
-        let poll_events_until = |app: &mut OpenCADStudio, tab: usize, epoch: &str| {
+        let poll_events_until = |app: &mut lgbcadstudio, tab: usize, epoch: &str| {
             let mut output = String::new();
             for _ in 0..10 {
                 {
@@ -13644,7 +13644,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn unmapped_canvas_kind_layer_change_undoes() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let handle;
         {
@@ -13677,7 +13677,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn insert_transform_transaction_undoes_without_changing_block_identity() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let handle;
         {
@@ -13708,7 +13708,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn system_variables_change_without_command_reentry() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         assert_eq!(
@@ -13765,7 +13765,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn xdata_record_round_trips_and_registers_appid() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let mut host = HostSession::new(&mut app, 0);
         let h = host.add_entity(EntityType::Point(Point::new()));
 
@@ -13795,7 +13795,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
     #[test]
     fn plugin_state_round_trips_through_hostapi_trait() {
         use ocs_plugin_api::host::{self, HostApi};
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let mut session = HostSession::new(&mut app, 0);
         let host: &mut dyn HostApi = &mut session;
 
@@ -13817,7 +13817,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
     #[test]
     fn ensure_plugin_state_type_mismatch_does_not_panic() {
         use ocs_plugin_api::host::{self, HostApi};
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let mut session = HostSession::new(&mut app, 0);
         let host: &mut dyn HostApi = &mut session;
         let _ = host::ensure_plugin_state(host, "opencad.demo", || 7u32);
@@ -13841,7 +13841,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn add_entities_batch_assigns_handles_and_publishes_once() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
 
@@ -13869,7 +13869,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn update_entity_replaces_in_place_preserving_handle() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let h = host.add_entity(EntityType::Point(Point::at(codec::types::Vector3::new(
@@ -13910,7 +13910,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn reference_only_refusals_record_no_undo_step() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         // Marking an absent entity refuses.
@@ -13953,7 +13953,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn reference_only_designation_composes_undo_like_entity_writes() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let handle = host.add_entity(reference_test_line(10.0, 0.0, Handle::NULL));
@@ -14005,7 +14005,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn reference_only_designation_is_not_written_to_dwg_or_dxf() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let handle = host.add_entity(reference_test_line(10.0, 0.0, Handle::NULL));
@@ -14070,7 +14070,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn erasing_a_designated_entity_undoes_designation_with_it() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let handle = host.add_entity(reference_test_line(10.0, 0.0, Handle::NULL));
@@ -14103,7 +14103,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn user_paths_refuse_and_plugin_paths_write_reference_only_entities() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let handle = host.add_entity(reference_test_line(10.0, 0.0, Handle::NULL));
@@ -14185,7 +14185,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn select_all_visible_skips_reference_only_entities() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let handle = host.add_entity(reference_test_line(10.0, 0.0, Handle::NULL));
@@ -14202,7 +14202,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
         // A plugin adds/edits an entity naming a layer no LAYER command ever
         // created. The layer must gain a real table entry (non-null handle) so
         // it survives a DWG save instead of collapsing to layer 0 (#252, #67).
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
 
@@ -14240,7 +14240,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn remove_entity_deletes_and_clears_caches() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let h = host.add_entity(EntityType::Point(Point::at(codec::types::Vector3::new(
@@ -14259,7 +14259,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn update_entity_refreshes_selected_grips() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let handle = {
             let mut host = HostSession::new(&mut app, 0);
@@ -14313,7 +14313,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn update_entities_transaction_refreshes_selected_grips() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let handle = {
             let mut host = HostSession::new(&mut app, 0);
@@ -14353,7 +14353,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn remove_entity_clears_selected_grips_of_removed_entity() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let handle = {
             let mut host = HostSession::new(&mut app, 0);
@@ -14378,7 +14378,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn update_entity_without_selection_keeps_grip_cache_empty() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let handle = {
             let mut host = HostSession::new(&mut app, 0);
@@ -14404,7 +14404,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn background_tab_update_leaves_active_grips_untouched() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let _handle = {
             let mut host = HostSession::new(&mut app, 0);
@@ -14467,7 +14467,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn plugin_interactive_command_drives_host_flow() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         {
             let mut host = HostSession::new(&mut app, 0);
@@ -14559,7 +14559,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn plugin_cursor_move_preview_wires() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
 
         // 1. Polyline default color (None -> CYAN)
@@ -14663,7 +14663,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn plugin_object_pick_routes_to_command() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let target = {
             let mut host = HostSession::new(&mut app, 0);
@@ -14688,7 +14688,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
     #[test]
     fn host_document_reader_sees_entities() {
         use ocs_plugin_api::host::ReaderEntityKind;
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         host.add_entity(codec::EntityType::Point(codec::entities::Point::at(
@@ -14703,7 +14703,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn host_document_view_publish_and_read_shared() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let info = host.document_view().unwrap();
@@ -14724,7 +14724,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
     /// handle, read it back, and remove it.
     #[test]
     fn document_reader_to_xdata_roundtrip() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let h = host.add_entity(EntityType::Point(Point::at(codec::types::Vector3::new(
@@ -14755,7 +14755,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
     /// memory, then write and read-back XDATA through the normal HostApi RPCs.
     #[test]
     fn shared_document_view_read_then_write_xdata_roundtrip() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
         let info = host.document_view().unwrap();
@@ -14788,7 +14788,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
     fn test_plugin_add_layer_with_defaults_and_modify() {
         use ocs_plugin_api::host::LayerConfig;
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
 
@@ -14856,7 +14856,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn test_entity_creation_with_novel_layer_refreshes_gui() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
 
         // Verify COGO_LINES does not exist initially
@@ -14924,7 +14924,7 @@ step('undo_move', lambda: M.move([u], (0, 0, 0), (7, 0, 0)))
 
     #[test]
     fn test_plugin_execute_command() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.tabs[0].is_start = false;
         let mut host = HostSession::new(&mut app, 0);
 

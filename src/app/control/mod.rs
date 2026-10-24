@@ -1,5 +1,5 @@
 //! Semantic control shared by the GUI, headless client and web adapter.
-use super::{Message, OpenCADStudio};
+use super::{Message, lgbcadstudio};
 use crate::command::{InputKind, StepInput};
 use iced::Task;
 use serde_json::{json, Value};
@@ -472,7 +472,7 @@ pub(super) fn active_command_metadata(command: &dyn crate::command::CadCommand) 
     })
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn control_busy(&self) -> bool {
         self.control.pending.is_some()
     }
@@ -1890,7 +1890,7 @@ pub(super) fn action_names() -> &'static [&'static str] {
 #[cfg(test)]
 mod tests {
     use super::*;
-    fn request(app: &mut OpenCADStudio, mut req: Value) -> Value {
+    fn request(app: &mut lgbcadstudio, mut req: Value) -> Value {
         let state = app.control_state();
         req["protocol"] = json!(1);
         req["document_id"] = state["document_id"].clone();
@@ -1910,7 +1910,7 @@ mod tests {
     }
     #[test]
     fn qsave_completion_reports_clean_document_state() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         assert_eq!(request(&mut app, json!({"op":"new"}))["ok"], true);
         assert_eq!(
             request(&mut app, json!({"op":"run","cmd":"LINE 0,0 10,0"}))["status"],
@@ -1946,7 +1946,7 @@ mod tests {
 
     #[test]
     fn qsave_save_failure_settles_instead_of_hanging() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         assert_eq!(request(&mut app, json!({"op":"new"}))["ok"], true);
         assert_eq!(
             request(&mut app, json!({"op":"run","cmd":"LINE 0,0 10,0"}))["status"],
@@ -1986,7 +1986,7 @@ mod tests {
 
     #[test]
     fn capture_parks_for_the_next_frame_then_finishes_with_its_result() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.main_window = Some(iced::window::Id::unique());
         assert_eq!(request(&mut app, json!({"op":"new"}))["ok"], true);
         let path = std::env::temp_dir().join(format!("ocs-capture-frame-{}.png", session_id()));
@@ -2028,7 +2028,7 @@ mod tests {
 
     #[test]
     fn control_stepwise_drawing_undo_and_properties() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         assert_eq!(
             request(&mut app, json!({"op":"new"}))["status"],
             "completed"
@@ -2088,7 +2088,7 @@ mod tests {
     }
     #[test]
     fn selection_changes_are_published_to_the_event_stream() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         request(&mut app, json!({"op":"new"}));
         request(&mut app, json!({"op":"run","cmd":"LINE 0,0 10,0"}));
         let handle = request(&mut app, json!({"op":"query","type":"Line"}))["entities"][0]
@@ -2127,7 +2127,7 @@ mod tests {
 
     #[test]
     fn command_discovery_explains_batch_and_interactive_use() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let detail = app
             .control_request(json!({"op":"commands","name":"pline"}))
             .0;
@@ -2147,7 +2147,7 @@ mod tests {
     }
     #[test]
     fn control_queries_exact_curve_relationships_and_metrics() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         request(&mut app, json!({"op":"new"}));
         request(&mut app, json!({"op":"run","cmd":"LINE -5,0 5,0"}));
         request(&mut app, json!({"op":"run","cmd":"LINE 0,-5 0,5"}));
@@ -2198,7 +2198,7 @@ mod tests {
 
     #[test]
     fn control_shell_roundtrips_with_kernel_mass_properties() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         request(&mut app, json!({"op":"new"}));
         request(&mut app, json!({"op":"start","cmd":"BOX"}));
         request(
@@ -2283,7 +2283,7 @@ mod tests {
 
     #[test]
     fn control_retry_is_idempotent_and_stale_state_rejected() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         request(&mut app, json!({"op":"new"}));
         let state = app.control_state();
         let req = json!({"op":"run","cmd":"LINE 0,0 10,0","request_id":"line","document_id":state["document_id"],"revision":state["revision"]});
@@ -2298,7 +2298,7 @@ mod tests {
     }
     #[test]
     fn external_change_modal_actions_are_automatable() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let names = crate::app::automation_action_names();
         for name in [
             "external_change_reload",
@@ -2322,7 +2322,7 @@ mod tests {
 
     #[test]
     fn pending_request_id_reuse_rejects_changed_payload() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.main_window = Some(iced::window::Id::unique());
         assert_eq!(
             request(&mut app, json!({"op":"new"}))["status"],
@@ -2362,7 +2362,7 @@ mod tests {
 
     #[test]
     fn control_errors_and_missing_entities_do_not_report_success() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         request(&mut app, json!({"op":"new"}));
         let result = request(&mut app, json!({"op":"run","cmd":"NONEXISTENT_COMMAND"}));
         assert_eq!(result["status"], "failed", "{result}");
@@ -2377,7 +2377,7 @@ mod tests {
     }
     #[test]
     fn cancel_ends_the_started_command() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         request(&mut app, json!({"op":"new"}));
         let started = request(&mut app, json!({"op":"start","cmd":"PURGE"}));
         assert_eq!(started["status"], "waiting_input", "{started}");
@@ -2390,7 +2390,7 @@ mod tests {
     }
     #[test]
     fn direct_user_input_takes_command_ownership() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         request(&mut app, json!({"op":"new"}));
         request(&mut app, json!({"op":"start","cmd":"LINE"}));
         let _ = app.update(Message::ViewportLeftPress);
@@ -2402,7 +2402,7 @@ mod tests {
     }
     #[test]
     fn control_preserves_other_documents_and_waits_for_async_open() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         request(&mut app, json!({"op":"new"}));
         request(&mut app, json!({"op":"run","cmd":"CIRCLE 0,0 3"}));
         let id = app.control_state()["document_id"].as_u64().unwrap();
@@ -2468,7 +2468,7 @@ mod tests {
         use base64::Engine as _;
         let bytes = std::fs::read(concat!(env!("CARGO_MANIFEST_DIR"), "/web/fonts/greek.ttf"))
             .expect("bundled web font");
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         request(&mut app, json!({"op":"new"}));
         let reply = request(
             &mut app,
@@ -2498,7 +2498,7 @@ mod tests {
 
     #[test]
     fn open_from_bytes_is_refused_natively_without_touching_documents() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         request(&mut app, json!({"op":"new"}));
         let tabs = app.tabs.len();
         let reply = request(
@@ -2512,7 +2512,7 @@ mod tests {
 
     #[test]
     fn point_steps_that_take_keywords_accept_points() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         request(&mut app, json!({"op":"new"}));
         request(&mut app, json!({"op":"run","cmd":"CIRCLE 0,0 3"}));
         request(&mut app, json!({"op":"select","type":"CIRCLE"}));
@@ -2546,7 +2546,7 @@ mod tests {
 
     #[test]
     fn embed_image_op_places_an_ole2frame_and_undoes_it() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         request(&mut app, json!({"op":"new"}));
         let img = image::RgbaImage::from_pixel(40, 30, image::Rgba([9, 9, 9, 255]));
         let path = std::env::temp_dir().join(format!("ocs-embed-{}.png", session_id()));
@@ -2559,7 +2559,7 @@ mod tests {
         assert_eq!(response["status"], "completed", "{response}");
         let handle = response["result"]["handle"].as_str().unwrap().to_string();
         assert_eq!(response["result"]["kind"], "Ole2Frame");
-        let ole_count = |app: &OpenCADStudio| {
+        let ole_count = |app: &lgbcadstudio| {
             app.tabs[app.active_tab]
                 .scene
                 .document
@@ -2584,7 +2584,7 @@ mod tests {
 
     #[test]
     fn embed_image_calibrates_from_source_and_target_points() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         request(&mut app, json!({"op":"new"}));
         let img = image::RgbaImage::from_pixel(100, 100, image::Rgba([12, 12, 12, 255]));
         let path = std::env::temp_dir().join(format!("ocs-embed-calib-{}.png", session_id()));
@@ -2612,7 +2612,7 @@ mod tests {
         let _ = std::fs::remove_file(path);
     }
 
-    fn user_select_pick(app: &mut OpenCADStudio, kind: &str) -> String {
+    fn user_select_pick(app: &mut lgbcadstudio, kind: &str) -> String {
         let handle = app.automation_op(
             format!(r#"{{"op":"query","type":"{kind}","detail":"summary"}}"#).as_str(),
         )["entities"][0]["handle"]
@@ -2626,14 +2626,14 @@ mod tests {
         handle
     }
 
-    fn user_select_result(app: &mut OpenCADStudio, request_id: &str) -> Value {
+    fn user_select_result(app: &mut lgbcadstudio, request_id: &str) -> Value {
         app.control_request(json!({"op":"operation","request_id":request_id}))
             .0
     }
 
     #[test]
     fn user_select_stays_running_until_the_user_confirms_then_returns_entities() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.main_window = Some(iced::window::Id::unique());
         assert_eq!(
             request(&mut app, json!({"op":"new"}))["status"],
@@ -2666,7 +2666,7 @@ mod tests {
 
     #[test]
     fn user_select_filter_deselects_entities_outside_the_request() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.main_window = Some(iced::window::Id::unique());
         request(&mut app, json!({"op":"new"}));
         request(&mut app, json!({"op":"run","cmd":"LINE 0,0 10,10"}));
@@ -2695,7 +2695,7 @@ mod tests {
 
     #[test]
     fn user_select_escape_cancels_and_an_empty_enter_confirms_zero() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.main_window = Some(iced::window::Id::unique());
         request(&mut app, json!({"op":"new"}));
         request(&mut app, json!({"op":"run","cmd":"LINE 0,0 10,10"}));
@@ -2721,7 +2721,7 @@ mod tests {
 
     #[test]
     fn user_select_request_is_printed_and_stays_visible_until_answered() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.main_window = Some(iced::window::Id::unique());
         request(&mut app, json!({"op":"new"}));
         request(&mut app, json!({"op":"run","cmd":"LINE 0,0 10,10"}));
@@ -2766,7 +2766,7 @@ mod tests {
 
     #[test]
     fn user_select_requires_a_gui_window() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         request(&mut app, json!({"op":"new"}));
         let reply = request(&mut app, json!({"op":"user_select","request_id":"us-h"}));
         assert_eq!(reply["code"], "gui_required", "{reply}");
@@ -2774,7 +2774,7 @@ mod tests {
 
     #[test]
     fn getpoint_resolves_with_the_clicked_point_and_esc_cancels() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.main_window = Some(iced::window::Id::unique());
         request(&mut app, json!({"op":"new"}));
         let asked = request(
@@ -2804,7 +2804,7 @@ mod tests {
 
     #[test]
     fn getpoint_snap_marker_and_snapped_answer_while_pending() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.main_window = Some(iced::window::Id::unique());
         request(&mut app, json!({"op":"new"}));
         request(&mut app, json!({"op":"run","cmd":"LINE 0,0 100,0"}));
@@ -2865,7 +2865,7 @@ mod tests {
 
     #[test]
     fn user_select_snap_marker_shows_while_pending() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.main_window = Some(iced::window::Id::unique());
         request(&mut app, json!({"op":"new"}));
         request(&mut app, json!({"op":"run","cmd":"LINE 0,0 100,0"}));
@@ -2926,7 +2926,7 @@ mod tests {
 
     #[test]
     fn get_selection_reports_insert_block_and_position() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         request(&mut app, json!({"op":"new"}));
         request(&mut app, json!({"op":"run","cmd":"LINE 0,0 10,10"}));
         let line = app.automation_op(r#"{"op":"query","type":"LINE","detail":"summary"}"#)
@@ -2969,7 +2969,7 @@ mod tests {
 
     #[test]
     fn plot_op_applies_per_layer_lineweights() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         request(&mut app, json!({"op":"new"}));
         {
             let scene = &mut app.tabs[app.active_tab].scene;
@@ -3031,7 +3031,7 @@ mod tests {
 
     #[test]
     fn plot_op_applies_ctb_colors_through_layer_aci() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         request(&mut app, json!({"op":"new"}));
         {
             let scene = &mut app.tabs[app.active_tab].scene;
@@ -3145,7 +3145,7 @@ mod tests {
     /// dispatch match only invokes from some of its arms.
     #[test]
     fn entities_transform_rejects_unknown_actions_without_panicking() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         request(&mut app, json!({"op":"new"}));
         request(&mut app, json!({"op":"run","cmd":"LINE 0,0 10,0"}));
         let lines = app.control_request(json!({"op":"query","type":"Line"})).0;

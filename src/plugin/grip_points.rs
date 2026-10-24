@@ -420,7 +420,7 @@ fn live_endpoint(
 /// begin/move/settle/cancel alike. `None`: no live endpoint (the pump
 /// reschedules; the drag degrades gracefully, never a freeze).
 pub(crate) fn send_grip_event(
-    app: &mut crate::app::OpenCADStudio,
+    app: &mut crate::app::lgbcadstudio,
     tab: usize,
     plugin_id: &str,
     event: CustomGripEvent,
@@ -434,7 +434,7 @@ pub(crate) fn send_grip_event(
 /// next outstanding grip answer, serving nested plugin requests through a
 /// fresh host session on the way (command frames refused in this context).
 pub(crate) fn poll_grip_event(
-    app: &mut crate::app::OpenCADStudio,
+    app: &mut crate::app::lgbcadstudio,
     tab: usize,
     plugin_id: &str,
     wait: std::time::Duration,
@@ -633,7 +633,7 @@ impl PluginGripDeliveries {
 /// surface. Returns `None` when the owner has no in-process sink: the drag
 /// machinery then uses the async route (never an error loop).
 pub(crate) fn dispatch_grip_event(
-    app: &mut crate::app::OpenCADStudio,
+    app: &mut crate::app::lgbcadstudio,
     tab: usize,
     plugin_id: &str,
     event: CustomGripEvent,

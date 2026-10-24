@@ -1,10 +1,10 @@
-use super::super::{Message, OpenCADStudio};
+use super::super::{Message, lgbcadstudio};
 use crate::t;
 use iced::widget::{button, column, container, row, text, Space};
 use iced::{Background, Element, Fill, Fit, Theme};
 use std::borrow::Cow;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Title shown in the active modal's title bar. Keep in sync with the
     /// [`Self::modal_content`] dispatch.
     pub(super) fn modal_title(&self) -> String {
@@ -2612,10 +2612,10 @@ fn donation_dialog_window(sizing: crate::ui::modal::ModalSizing) -> Element<'sta
 fn default_assoc_dialog_window(sizing: crate::ui::modal::ModalSizing) -> Element<'static, Message> {
     container(
         column![
-            text(t!("Make Open CAD Studio your default CAD app?"))
+            text(t!("Make LGBCADStudio by Trejo Studio your default CAD app?"))
                 .size(15),
             iced::widget::Space::new().height(10),
-            text(t!("Open .dwg and .dxf drawings in Open CAD Studio by default. You can change this later in your system settings."))
+            text(t!("Open .dwg and .dxf drawings in LGBCADStudio by Trejo by default. You can change this later in your system settings."))
                 .size(12)
                 .style(dialog_muted_text_style),
             iced::widget::Space::new().height(22),

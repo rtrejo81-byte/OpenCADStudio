@@ -6,7 +6,7 @@ use super::{format_size, VIEWCUBE_HIT_SIZE};
 use crate::app::helpers::{
     parse_coord, polar_constrain_near, ucs_rotate_vec, ucs_to_wcs, ucs_z_axis, CoordKind,
 };
-use crate::app::{Message, OpenCADStudio, POLY_START_DELAY_MS};
+use crate::app::{Message, lgbcadstudio, POLY_START_DELAY_MS};
 use crate::modules::ModuleEvent;
 use crate::scene::model::object::GripApply;
 use crate::scene::pick::grip::{find_hit_grip, find_hit_grip_paper, find_hit_grip_rte, GripEdit};
@@ -20,7 +20,7 @@ use codec::{EntityType as AcadEntityType, Handle};
 use iced::time::Instant;
 use iced::{mouse, Point, Task};
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(in crate::app) fn open_save_dialog_window(&mut self, tab_idx: usize) -> Task<Message> {
         if self.refuse_block_test_save(tab_idx) {
             return Task::none();
@@ -1119,19 +1119,19 @@ impl OpenCADStudio {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
     use codec::entities::Line;
     use codec::types::Vector3;
     use codec::EntityType;
 
-    fn fresh() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn fresh() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app
     }
 
     /// A foreign document: the fresh scene's document plus one model-space LINE.
-    fn foreign_doc(app: &OpenCADStudio) -> codec::CadDocument {
+    fn foreign_doc(app: &lgbcadstudio) -> codec::CadDocument {
         let mut doc = app.tabs[app.active_tab].scene.document.clone();
         let model_br = doc
             .objects
@@ -1205,7 +1205,7 @@ mod tests {
     /// definition itself INSERTs a `Door` block — so the imported `Door` is a
     /// *nested dependency*, not a top-level entity. The `Door` in this file is
     /// unrelated to any `Door` in the destination drawing.
-    fn nested_foreign_doc(app: &OpenCADStudio) -> codec::CadDocument {
+    fn nested_foreign_doc(app: &lgbcadstudio) -> codec::CadDocument {
         use codec::entities::Insert;
         use codec::tables::BlockRecord;
         use codec::Handle;
@@ -1265,7 +1265,7 @@ mod tests {
     /// A foreign document whose model space INSERTs a `Fixture` block whose
     /// definition INSERTs `Door (2)`, whose definition in turn INSERTs `Door`.
     /// The file therefore carries *both* `Door` and `Door (2)` as nested deps.
-    fn doubly_nested_foreign_doc(app: &OpenCADStudio) -> codec::CadDocument {
+    fn doubly_nested_foreign_doc(app: &lgbcadstudio) -> codec::CadDocument {
         use codec::entities::Insert;
         use codec::tables::BlockRecord;
         use codec::Handle;
@@ -1565,7 +1565,7 @@ mod tests {
         dir
     }
 
-    fn palette_output(app: &OpenCADStudio, start: usize) -> String {
+    fn palette_output(app: &lgbcadstudio, start: usize) -> String {
         app.command_line.history[start..]
             .iter()
             .map(|e| e.text.as_str())

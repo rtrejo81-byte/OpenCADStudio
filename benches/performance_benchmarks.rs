@@ -1,4 +1,4 @@
-//! OpenCADStudio Performance Benchmarking Suite
+//! lgbcadstudio Performance Benchmarking Suite
 //!
 //! Measures latency, percentiles, throughput, and memory metrics across core CAD subsystems:
 //! 1. Scene Entity Ingestion & Population
@@ -45,27 +45,27 @@ use codec::{CadDocument, DxfReader, DxfWriter, EntityType};
 use glam::{DVec3, Mat4, Vec3};
 use iced::{Color, Point, Rectangle};
 
-use OpenCADStudio::scene::parametric_constraints::{
+use lgbcadstudio::scene::parametric_constraints::{
     ConstraintKind, ParametricRef, ParametricScope,
 };
-use OpenCADStudio::scene::pick::hit_test::{box_hit, click_hit};
-use OpenCADStudio::scene::pick::interaction_index::InteractionIndex;
-use OpenCADStudio::scene::pick::selection_state::{
+use lgbcadstudio::scene::pick::hit_test::{box_hit, click_hit};
+use lgbcadstudio::scene::pick::interaction_index::InteractionIndex;
+use lgbcadstudio::scene::pick::selection_state::{
     SelectionGesture, SelectionState, SelectionView,
 };
-use OpenCADStudio::scene::pipeline::wire_arena::partition_wires;
-use OpenCADStudio::scene::view::camera::Camera;
-use OpenCADStudio::scene::{ChangeKind, Scene};
-use OpenCADStudio::snap::Snapper;
-use OpenCADStudio::ui::icons::{self, CHECK};
-use OpenCADStudio::ui::overlay::{
+use lgbcadstudio::scene::pipeline::wire_arena::partition_wires;
+use lgbcadstudio::scene::view::camera::Camera;
+use lgbcadstudio::scene::{ChangeKind, Scene};
+use lgbcadstudio::snap::Snapper;
+use lgbcadstudio::ui::icons::{self, CHECK};
+use lgbcadstudio::ui::overlay::{
     grid_segments, selection_overlay, should_reuse, CrosshairOptions, GridCanvasState, GridKey,
     GridParams, GridStyle, GripMarker, NavCursor, OstTrackPoint, SelectionVisualOptions,
     UcsIconParams,
 };
-use OpenCADStudio::ui::properties::LinetypeItem;
-use OpenCADStudio::ui::ribbon::{LayerInfo, Ribbon};
-use OpenCADStudio::ui::style::plotstyle::build_layer_usage;
+use lgbcadstudio::ui::properties::LinetypeItem;
+use lgbcadstudio::ui::ribbon::{LayerInfo, Ribbon};
+use lgbcadstudio::ui::style::plotstyle::build_layer_usage;
 #[path = "support/harness.rs"]
 mod harness;
 
@@ -1243,7 +1243,7 @@ fn bench_ui_statusbar_derived_data(runner: &mut BenchmarkRunner) {
 //
 // NOTE: the budget step below calls the real `apply_grip_budget`
 // (app/properties.rs) with the real `MAX_SELECTED_GRIPS` (app/settings.rs),
-// re-exported via `OpenCADStudio::app` so this external bench crate can reach
+// re-exported via `lgbcadstudio::app` so this external bench crate can reach
 // them (both modules are otherwise private/`pub(crate)`).
 // Projection is measured with the real `grips_to_screen` on the capped set,
 // which bounds the per-frame cost by construction: uncapped it is O(vertices),
@@ -1254,9 +1254,9 @@ fn bench_ui_grip_budget(runner: &mut BenchmarkRunner) {
         return;
     }
 
-    use OpenCADStudio::app::{apply_grip_budget, MAX_SELECTED_GRIPS};
-    use OpenCADStudio::scene::model::object::{GripDef, GripShape};
-    use OpenCADStudio::scene::pick::grip::grips_to_screen;
+    use lgbcadstudio::app::{apply_grip_budget, MAX_SELECTED_GRIPS};
+    use lgbcadstudio::scene::model::object::{GripDef, GripShape};
+    use lgbcadstudio::scene::pick::grip::grips_to_screen;
 
     // Fixture: one dense polyline's grips — 2 per vertex (vertex + midpoint),
     // i.e. ~200K grips for a 100K-vertex polyline in full mode. Midpoint grips
@@ -1518,11 +1518,11 @@ fn bench_ui_selection_overlay(runner: &mut BenchmarkRunner) {
 
 fn build_selection_overlay_element(
     n_grips: usize,
-) -> iced::Element<'static, OpenCADStudio::app::Message> {
-    use OpenCADStudio::app::{CursorType, IsoPlane};
-    use OpenCADStudio::scene::model::object::GripShape;
-    use OpenCADStudio::scene::parametric_constraints::GlyphEntry;
-    use OpenCADStudio::snap::SnapType;
+) -> iced::Element<'static, lgbcadstudio::app::Message> {
+    use lgbcadstudio::app::{CursorType, IsoPlane};
+    use lgbcadstudio::scene::model::object::GripShape;
+    use lgbcadstudio::scene::parametric_constraints::GlyphEntry;
+    use lgbcadstudio::snap::SnapType;
 
     let selection = Arc::new(std::cell::RefCell::new(SelectionState::default()));
     let grips: Vec<GripMarker> = (0..n_grips)
@@ -2226,7 +2226,7 @@ fn bench_navigation_latency_and_coalescing(runner: &mut BenchmarkRunner) {
     let mut inc_samples = Vec::with_capacity(runs);
     for _ in 0..runs {
         let t0 = Instant::now();
-        let mut tree = OpenCADStudio::scene::pick::quadtree::QuadTree::new(tree_bounds);
+        let mut tree = lgbcadstudio::scene::pick::quadtree::QuadTree::new(tree_bounds);
         for &(handle, aabb) in &tree_items {
             tree.insert(handle, aabb);
         }
@@ -2247,7 +2247,7 @@ fn bench_navigation_latency_and_coalescing(runner: &mut BenchmarkRunner) {
 // ── Main Entrypoint ─────────────────────────────────────────────────────────
 
 fn main() {
-    println!("\nInitializing OpenCADStudio Performance Benchmarks...");
+    println!("\nInitializing lgbcadstudio Performance Benchmarks...");
     let mut runner = BenchmarkRunner::new(
         "                                      OPENCADSTUDIO PERFORMANCE BENCHMARK REPORT                                        ",
         "cad_performance_metrics.json",

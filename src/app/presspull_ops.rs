@@ -47,7 +47,7 @@ fn extrusion_history(
     sweep_model::extrusion_history(entity, None, direction.to_array(), 0.0, anchor.to_array())
 }
 
-impl super::OpenCADStudio {
+impl super::lgbcadstudio {
     fn restore_presspull_bodies(&mut self) {
         let scene = &mut self.tabs[self.active_tab].scene;
         let handles = scene

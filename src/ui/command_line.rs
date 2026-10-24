@@ -1,4 +1,4 @@
-//! OpenCADStudio-style command line — bottom panel with input and history
+//! lgbcadstudio-style command line — bottom panel with input and history
 
 use iced::time::Instant;
 

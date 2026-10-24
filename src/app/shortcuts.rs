@@ -1,6 +1,6 @@
 //! Editable keyboard shortcut table shared by the CUI dialog and key events.
 
-use super::{Message, OpenCADStudio};
+use super::{Message, lgbcadstudio};
 use iced::Task;
 use rustc_hash::FxHashMap;
 use std::collections::BTreeMap;
@@ -193,7 +193,7 @@ pub(super) const INPUT_ACTIONS: &[&str] = &[
     "PASTECLIP",
 ];
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Commit the working rows to the live bindings, discarding an
     /// unfinished draft and reporting duplicates. Shared by Apply and
     /// Apply-and-Exit.

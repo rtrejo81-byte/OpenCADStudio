@@ -1,7 +1,7 @@
-use super::OpenCADStudio;
+use super::lgbcadstudio;
 use crate::ui;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Apply the current layer to the document header and all per-tab/UI
     /// creation state. Both built-in commands and plugin settings use this.
     pub(super) fn set_current_layer_name(&mut self, tab: usize, layer: &str) -> Result<(), String> {

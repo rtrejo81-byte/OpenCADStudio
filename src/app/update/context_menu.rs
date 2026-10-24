@@ -4,7 +4,7 @@
 //! The rows themselves are built by `ui::popup::context_menu` (a pure model);
 //! this module is the glue between that model and the app's messages.
 
-use crate::app::{ArrowKey, ContextMenuNav, Message, OpenCADStudio};
+use crate::app::{ArrowKey, ContextMenuNav, Message, lgbcadstudio};
 use crate::command::StepInput;
 use crate::scene::pick::grip::GripEditMode;
 use crate::ui::popup::context_menu::{
@@ -14,7 +14,7 @@ use crate::ui::popup::context_menu::{
 use codec::Handle;
 use iced::Task;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// True while the viewport context menu is open on the active tab.
     pub(in crate::app) fn context_menu_open(&self) -> bool {
         self.tabs
@@ -439,35 +439,35 @@ mod tests {
             .unwrap_or_else(|e| std::panic::resume_unwind(e));
     }
 
-    fn app() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn app() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.tabs[0].scene.selection.borrow_mut().view.vp_size = (800.0, 600.0);
         let _ = app.update(Message::ViewportMove(Point::new(200.0, 150.0)));
         app
     }
 
-    fn start(app: &mut OpenCADStudio, cmd: &str, points: &[(f64, f64)]) {
+    fn start(app: &mut lgbcadstudio, cmd: &str, points: &[(f64, f64)]) {
         let _ = app.dispatch_command(cmd);
         for &(x, y) in points {
             let _ = app.feed_command(StepInput::Point(DVec3::new(x, y, 0.0)));
         }
     }
 
-    fn right_click(app: &mut OpenCADStudio) {
+    fn right_click(app: &mut lgbcadstudio) {
         let _ = app.update(Message::ViewportRightPress);
         let _ = app.update(Message::ViewportRightRelease);
     }
 
-    fn menu_open(app: &OpenCADStudio) -> bool {
+    fn menu_open(app: &lgbcadstudio) -> bool {
         app.tabs[0].scene.selection.borrow().menu.open_at.is_some()
     }
 
-    fn active(app: &OpenCADStudio) -> Option<&'static str> {
+    fn active(app: &lgbcadstudio) -> Option<&'static str> {
         app.tabs[0].active_cmd.as_ref().map(|c| c.name())
     }
 
-    fn menu_actions(app: &OpenCADStudio) -> Vec<MenuAction> {
+    fn menu_actions(app: &lgbcadstudio) -> Vec<MenuAction> {
         app.current_context_menu()
             .selectable()
             .into_iter()
@@ -733,7 +733,7 @@ mod tests {
     // ── Grip menu ─────────────────────────────────────────────────────
 
     /// A drawing with one line, selected, its start grip hot at the origin.
-    fn grip_app() -> (OpenCADStudio, Handle) {
+    fn grip_app() -> (lgbcadstudio, Handle) {
         use codec::{entities::Line, types::Vector3, EntityType};
         let mut app = app();
         app.snapper.snap_enabled = false;
@@ -758,7 +758,7 @@ mod tests {
         (app, handle)
     }
 
-    fn move_cursor_to(app: &mut OpenCADStudio, world: DVec3) {
+    fn move_cursor_to(app: &mut lgbcadstudio, world: DVec3) {
         let cursor = app.tabs[0]
             .scene
             .camera
@@ -771,7 +771,7 @@ mod tests {
         let _ = app.on_viewport_move(Point::new(cursor.x, cursor.y));
     }
 
-    fn line_start(app: &OpenCADStudio, handle: Handle) -> (f64, f64) {
+    fn line_start(app: &lgbcadstudio, handle: Handle) -> (f64, f64) {
         match app.tabs[0].scene.document.get_entity(handle) {
             Some(codec::EntityType::Line(l)) => (l.start.x, l.start.y),
             other => panic!("{other:?}"),
@@ -934,8 +934,8 @@ mod transparent_tests {
             .unwrap_or_else(|e| std::panic::resume_unwind(e));
     }
 
-    fn line_app() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn line_app() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.tabs[0].scene.selection.borrow_mut().view.vp_size = (800.0, 600.0);
         let _ = app.dispatch_command("LINE");
@@ -943,7 +943,7 @@ mod transparent_tests {
         app
     }
 
-    fn active(app: &OpenCADStudio) -> Option<&'static str> {
+    fn active(app: &lgbcadstudio) -> Option<&'static str> {
         app.tabs[0].active_cmd.as_ref().map(|c| c.name())
     }
 

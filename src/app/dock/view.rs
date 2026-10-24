@@ -2,13 +2,13 @@
 //! the + menu and the drag preview.
 
 use crate::app::document::DocumentTab;
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use crate::t;
 use crate::ui::dock::DOCK_DIVIDER_W;
 use iced::widget::{button, canvas, column, container, mouse_area, row, stack, text, Space};
 use iced::{Background, Border, Color, Element, Fill, Length, Theme};
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Everything the dock draws over the workspace (the row of edges and
     /// viewport): floating pallets, an open + menu, the drag preview, and
     /// the pointer capture that feeds drags.

@@ -3,7 +3,7 @@ use codec::objects::{ClassObjectData, ObjectType};
 use codec::types::{Color, Handle, Vector3};
 use codec::xdata::{ExtendedDataRecord, XDataValue};
 use codec::EntityType;
-use OpenCADStudio::scene::Scene;
+use lgbcadstudio::scene::Scene;
 
 fn add_slice(scene: &mut Scene) -> Handle {
     let mut common = EntityCommon::new();
@@ -100,10 +100,10 @@ fn section_plane_graph_survives_dxf_and_dwg_roundtrips() {
 
     for extension in ["dxf", "dwg"] {
         let bytes =
-            OpenCADStudio::io::save_to_bytes(&scene.document, extension, scene.document.version)
+            lgbcadstudio::io::save_to_bytes(&scene.document, extension, scene.document.version)
                 .expect("section document should save");
         let document =
-            OpenCADStudio::io::load_bytes(&format!("section-roundtrip.{extension}"), bytes)
+            lgbcadstudio::io::load_bytes(&format!("section-roundtrip.{extension}"), bytes)
                 .expect("section document should reload");
         assert_section_graph(&document, extension);
     }

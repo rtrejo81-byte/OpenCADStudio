@@ -143,7 +143,7 @@ pub fn build_embedded_ole(
 
     let mut ole = Ole2Frame::new();
     ole.ole_object_type = OleObjectType::Embedded;
-    ole.source_application = "OpenCADStudio".to_string();
+    ole.source_application = "lgbcadstudio".to_string();
     ole.upper_left_corner = upper_left;
     ole.lower_right_corner = lower_right;
     ole.envelope = OleFrameEnvelope::Geometry {

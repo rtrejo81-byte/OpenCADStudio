@@ -1,6 +1,6 @@
 //! Read-only object sampling for the selection-filter dialog.
 
-use crate::app::{OpenCADStudio, QSelectCondition, QSelectState};
+use crate::app::{lgbcadstudio, QSelectCondition, QSelectState};
 use crate::command::{CadCommand, CmdResult};
 use codec::Handle;
 use glam::DVec3;
@@ -78,7 +78,7 @@ fn append_unique_conditions(target: &mut Vec<QSelectCondition>, incoming: Vec<QS
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn on_qselect_pick_object(&mut self) -> Task<crate::app::Message> {
         // Finish or cancel a condition edit first. Sampling only appends rows.
         if self
@@ -203,7 +203,7 @@ mod tests {
     fn sample_round_trip_keeps_selection_and_dialog_geometry() {
         use codec::entities::Line;
         use codec::types::Vector3;
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         let first = app.tabs[i]

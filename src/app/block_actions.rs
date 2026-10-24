@@ -1,4 +1,4 @@
-use super::{Message, OpenCADStudio};
+use super::{Message, lgbcadstudio};
 use crate::command::CadCommand;
 use crate::scene::block_actions::{self as actions, Kind};
 use codec::{EntityType, Handle};
@@ -10,7 +10,7 @@ pub(super) const TEST_GRIP_START: usize = usize::MAX / 2;
 pub(super) fn is_test_grip(id: usize) -> bool {
     (TEST_GRIP_START..usize::MAX).contains(&id)
 }
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(in crate::app) fn action_association_error(&self) -> Option<&'static str> {
         let tab = &self.tabs[self.active_tab];
         let Some(session) = tab.active_block_edit_session() else {
@@ -705,7 +705,7 @@ impl OpenCADStudio {
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     fn refresh_reference_action_grips(&mut self, wo: [f64; 3]) {
         let i = self.active_tab;
         let tab = &self.tabs[i];
@@ -842,7 +842,7 @@ impl OpenCADStudio {
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     fn toggle_action_grip(
         &mut self,
         document: u64,

@@ -5,22 +5,22 @@ use codec::entities::{Insert, Viewport, Wipeout};
 use codec::types::{Vector2, Vector3};
 use codec::EntityType;
 use std::sync::Arc;
-use OpenCADStudio::io::pdf_export::{
+use lgbcadstudio::io::pdf_export::{
     export_pdf, export_pdf_pages, PdfPageInput, PdfPlotOptions, PlotContent, PlotGroupSplits,
     PlotImage, PlotWire,
 };
-use OpenCADStudio::scene::model::image_model::{ImageModel, ImageQuadVertex};
-use OpenCADStudio::scene::{Scene, WireModel};
+use lgbcadstudio::scene::model::image_model::{ImageModel, ImageQuadVertex};
+use lgbcadstudio::scene::{Scene, WireModel};
 
 fn embedded_scene() -> Scene {
     let mut scene = Scene::new();
-    scene.document = OpenCADStudio::io::load_bytes(
+    scene.document = lgbcadstudio::io::load_bytes(
         "embedded-image-print.dxf",
         include_bytes!("fixtures/embedded-image-print.dxf").to_vec(),
     )
     .expect("synthetic embedded bitmap DXF");
     scene.images =
-        OpenCADStudio::scene::build_derived_caches_with_progress(&scene.document, &|_| {}, None)
+        lgbcadstudio::scene::build_derived_caches_with_progress(&scene.document, &|_| {}, None)
             .images;
     scene.set_current_layout("Layout1".into());
     scene

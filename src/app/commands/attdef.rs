@@ -1,7 +1,7 @@
 //! ATTDEF (dialog), -ATTDEF (command line), AFLAGS, and the Edit Attribute
 //! Definition dialog opened by double-click / TEXTEDIT / DDEDIT.
 
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use crate::command::CadCommand;
 use crate::modules::draw::draw::attdef::{
     self as attdef, AttdefCommand, AttdefPickCommand, AttdefPlaceCommand, AttdefSpec, Justify,
@@ -16,7 +16,7 @@ fn short(v: f64) -> String {
     t.trim_end_matches('0').trim_end_matches('.').to_string()
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn dispatch_attdef(&mut self, cmd: &str, i: usize) -> Option<Task<Message>> {
         if matches!(cmd, "ATTDEF" | "-ATTDEF") {
             // Placement measures the tag with its style's font.

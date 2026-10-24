@@ -751,7 +751,7 @@ pub fn download_bytes(name: &str, bytes: &[u8]) {
     let _ = web_sys::Url::revoke_object_url(&url);
 }
 
-/// The `window.openCadStudioSaveFile(name, bytes)` function an embedding page
+/// The `window.lgbcadstudioSaveFile(name, bytes)` function an embedding page
 /// registers to receive saved and exported files, if any.
 #[cfg(target_arch = "wasm32")]
 pub fn save_hook() -> Option<js_sys::Function> {
@@ -759,7 +759,7 @@ pub fn save_hook() -> Option<js_sys::Function> {
     let window = web_sys::window()?;
     js_sys::Reflect::get(
         window.as_ref(),
-        &wasm_bindgen::JsValue::from_str("openCadStudioSaveFile"),
+        &wasm_bindgen::JsValue::from_str("lgbcadstudioSaveFile"),
     )
     .ok()?
     .dyn_into::<js_sys::Function>()
@@ -1347,7 +1347,7 @@ pub mod web_diag {
                 for (id, label) in [
                     (
                         "ocs-err-title",
-                        crate::t!("OpenCADStudio renderer error — copy this into a bug report:"),
+                        crate::t!("lgbcadstudio renderer error — copy this into a bug report:"),
                     ),
                     ("ocs-err-copy", crate::t!("Copy")),
                     ("ocs-err-dismiss", crate::t!("Dismiss")),

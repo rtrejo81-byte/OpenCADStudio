@@ -150,7 +150,7 @@ pub(super) struct DocumentTab {
     pub(super) edit_revision: u64,
     /// A whole document replaced this tab's content (file open, template new,
     /// system open) and native plugins have not been told yet: the
-    /// message boundary (`OpenCADStudio::notify_plugins_document_opened`,
+    /// message boundary (`lgbcadstudio::notify_plugins_document_opened`,
     /// API v9) dispatches `DocumentOpened` once and clears it, so edits and
     /// switching between tabs never announce the same load again.
     pub(super) document_opened_pending: bool,

@@ -1,9 +1,10 @@
-use super::{Message, OpenCADStudio};
+use super::{Message, lgbcadstudio};
 use crate::command::CadCommand;
 use crate::scene::Scene;
 use iced::Task;
 use std::path::PathBuf;
-
+pub(crate) mod numera;
+pub(crate) mod sumanum;
 mod attdef;
 mod attman;
 mod block_cmdline;
@@ -45,7 +46,7 @@ mod xref_attach;
 // the module root to keep that path valid.
 pub(crate) use view::DrawOrderCommand;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// First `"{prefix}{n}"` (n ≥ 1) not already used by a block record in the
     /// active drawing. Used to auto-name a paste-as-block definition.
     pub(super) fn unique_block_name(&self, prefix: &str) -> String {
@@ -65,6 +66,7 @@ impl OpenCADStudio {
             n += 1;
         }
     }
+   
 
     /// Per-command start state every new command begins from — also used by
     /// entry points that install a command without going through dispatch
@@ -1195,20 +1197,20 @@ inventory::submit!(crate::command::CommandRegistration {
 
 #[cfg(test)]
 mod marquee_cancel_tests {
-    use crate::app::{GripPendingValue, Message, OpenCADStudio};
+    use crate::app::{GripPendingValue, Message, lgbcadstudio};
     use crate::scene::model::object::GripMenuAction;
     use crate::scene::pick::grip::GripEdit;
     use codec::Handle;
     use iced::time::Instant;
 
-    fn fresh() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn fresh() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app
     }
 
     /// Arm a held box drag.
-    fn arm_marquee(app: &mut OpenCADStudio) {
+    fn arm_marquee(app: &mut lgbcadstudio) {
         let i = app.active_tab;
         let mut sel = app.tabs[i].scene.selection.borrow_mut();
         sel.input.left_down = true;
@@ -1223,7 +1225,7 @@ mod marquee_cancel_tests {
     }
 
     /// Arm a held lasso drag.
-    fn arm_lasso(app: &mut OpenCADStudio) {
+    fn arm_lasso(app: &mut lgbcadstudio) {
         let i = app.active_tab;
         let mut sel = app.tabs[i].scene.selection.borrow_mut();
         sel.input.left_down = true;
@@ -1369,10 +1371,10 @@ fn strip_command_prefixes(cmd: &str) -> Option<&str> {
 
 #[cfg(test)]
 mod ribbon_highlight_tests {
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
 
-    fn fresh() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn fresh() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app
     }

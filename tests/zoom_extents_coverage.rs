@@ -12,7 +12,7 @@ use codec::entities::hatch::{BoundaryEdge, BoundaryPath, LineEdge};
 use codec::entities::{Hatch, Line};
 use codec::types::{Vector2, Vector3};
 use codec::EntityType;
-use OpenCADStudio::scene::Scene;
+use lgbcadstudio::scene::Scene;
 
 fn add_line(scene: &mut Scene, x1: f64, y1: f64, x2: f64, y2: f64) {
     let mut line = Line::new();

@@ -5,10 +5,10 @@ use codec::entities::{Line, Polyline2D, Polyline3D, Solid, Vertex2D, Vertex3DPol
 use codec::types::Vector3;
 use codec::{EntityType, Handle};
 
-use OpenCADStudio::modules::draw::modify::flatten::{
+use lgbcadstudio::modules::draw::modify::flatten::{
     apply_flatten_updates, collect_flatten_handles, flatten_entity_z, plan_flatten,
 };
-use OpenCADStudio::scene::Scene;
+use lgbcadstudio::scene::Scene;
 
 fn line_with_z(z0: f64, z1: f64) -> EntityType {
     let mut line = Line::new();

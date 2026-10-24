@@ -2,7 +2,7 @@
 //! "Import…" chooser of the Plot dialog and the command that drives the same
 //! path from the command line.
 
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use crate::ui::window::plot::{PageSetupImportDraft, PageSetupImportMsg, PlotDlgMsg};
 use iced::Task;
 use std::path::{Path, PathBuf};
@@ -24,7 +24,7 @@ fn read_page_setups_task(path: PathBuf) -> Task<Message> {
     )
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn on_page_setup_import(&mut self, msg: PageSetupImportMsg) -> Task<Message> {
         match msg {
             PageSetupImportMsg::Pick => Task::perform(
@@ -200,7 +200,7 @@ impl OpenCADStudio {
 
 #[cfg(all(test, not(target_arch = "wasm32")))]
 mod tests {
-    use crate::app::{Message, OpenCADStudio};
+    use crate::app::{Message, lgbcadstudio};
     use crate::ui::window::plot::{PageSetupImportMsg as I, PlotDlgMsg};
 
     const FIXTURE: &str = concat!(
@@ -208,14 +208,14 @@ mod tests {
         "/tests/fixtures/plot/page-setups-metric.dxf"
     );
 
-    fn app() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn app() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let _ = app.update(Message::LayoutSwitch("Layout1".into()));
         app
     }
 
-    fn last_line(app: &OpenCADStudio) -> String {
+    fn last_line(app: &lgbcadstudio) -> String {
         app.command_line
             .history
             .last()

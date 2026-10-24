@@ -15,7 +15,7 @@ fn dvec(v: codec::types::Vector3) -> DVec3 {
     DVec3::new(v.x, v.y, v.z)
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// The points each point cloud shows (the renderer's placed set).
     fn extraction_clouds(&self, i: usize) -> Clouds {
         let document = &self.tabs[i].scene.document;
@@ -102,7 +102,7 @@ impl OpenCADStudio {
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// PCEXTRACTSECTION's settings dialog, filled from the session settings.
     fn open_pc_section_dialog(&mut self, i: usize) {
         use crate::modules::insert::pc_extract::{has_job, settings};

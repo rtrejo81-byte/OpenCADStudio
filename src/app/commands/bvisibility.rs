@@ -1,12 +1,12 @@
 //! BVSTATE, BVHIDE and BVSHOW: the visibility states of the block open in
 //! the Block Editor (see `scene::block_visibility`).
 
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use crate::scene::block_visibility as visibility;
 use codec::{CadDocument, EntityType, Handle};
 use iced::Task;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(in crate::app) fn handle_place_block_orientation_parameter(
         &mut self,
         result: crate::command::CmdResult,

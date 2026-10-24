@@ -2,7 +2,7 @@ use super::document::{
     DeltaSnapshot, HistorySnapshot, HistoryState, ParametricConstraintsEntryDelta,
     StructureSnapshot,
 };
-use super::{Message, ModalKind, OpenCADStudio};
+use super::{Message, ModalKind, lgbcadstudio};
 use codec::{CadDocument, EntityType};
 use iced::Task;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -57,7 +57,7 @@ fn normalize_allocation(document: &mut CadDocument, next: u64) {
     document.header.handle_seed = next;
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn reconcile_block_edit_membership(&mut self, i: usize) {
         let Some(session) = self.tabs[i].active_block_edit_session() else {
             return;

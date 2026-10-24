@@ -2,7 +2,7 @@
 //! Count palette (COUNTLIST, COUNTLISTCLOSE), count fields (COUNTFIELD,
 //! UPDATEFIELD), count tables (COUNTTABLE) and the COUNT* variables.
 
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use crate::command::CadCommand;
 use crate::modules::annotate::count_cmd::{CountCommand, CountTableCommand, UpdateFieldCommand};
 use crate::modules::annotate::field_cmd::FieldPlaceCommand;
@@ -41,7 +41,7 @@ fn boundary_in_use(doc: &codec::CadDocument, boundary: Handle) -> bool {
     doc.fields.values().any(|f| f.code.contains(&needle))
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn dispatch_count(&mut self, cmd: &str, i: usize) -> Option<Task<Message>> {
         let cmd = cmd.trim();
         let (verb, rest) = cmd.split_once(char::is_whitespace).unwrap_or((cmd, ""));

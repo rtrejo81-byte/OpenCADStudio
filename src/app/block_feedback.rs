@@ -1,4 +1,4 @@
-use super::{block_actions::TEST_GRIP_START, OpenCADStudio};
+use super::{block_actions::TEST_GRIP_START, lgbcadstudio};
 use crate::scene::block_actions::{self as actions, feedback};
 use codec::{EntityType, Handle};
 use glam::DVec3;
@@ -10,7 +10,7 @@ pub(super) struct DependencyCache {
     segments: Arc<Vec<[DVec3; 2]>>,
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn dynamic_grip_tip(&self, handle: Handle, id: usize) -> Option<String> {
         if !self.block_editor_preferences.grip_tips {
             return None;
@@ -248,7 +248,7 @@ mod tests {
 
     #[test]
     fn block_feedback_uses_dependencies_and_transformed_value_markers_without_document_edits() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         app.tabs[i].scene.define_block_raw(

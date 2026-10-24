@@ -1,6 +1,6 @@
 use super::*;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn handle_match_entity_layer(&mut self, dest: Vec<Handle>, src: Handle) {
         let i = self.active_tab;
         self.tabs[i].active_cmd = None;

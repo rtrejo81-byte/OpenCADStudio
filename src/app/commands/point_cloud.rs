@@ -110,7 +110,7 @@ fn ensure_definition(
     (handle, min, max)
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(crate) fn attach_point_cloud(
         &mut self,
         i: usize,

@@ -15,9 +15,9 @@ use std::path::{Path, PathBuf};
 use super::external;
 use super::external::{RegistryEntry, ReleaseInfo};
 
-/// The curated registry, read from the OpenCADStudio repo's `main` branch.
+/// The curated registry, read from the lgbcadstudio repo's `main` branch.
 pub(crate) const REGISTRY_URL: &str =
-    "https://raw.githubusercontent.com/HakanSeven12/OpenCADStudio/main/plugins/registry.json";
+    "https://raw.githubusercontent.com/HakanSeven12/lgbcadstudio/main/plugins/registry.json";
 
 /// Fetch the curated plugin registry (`plugins/registry.json`).
 pub fn fetch_registry() -> Result<Vec<RegistryEntry>, String> {
@@ -107,7 +107,7 @@ fn agent() -> ureq::Agent {
     crate::network::agent(std::time::Duration::from_secs(15))
 }
 
-const UA: &str = concat!("OpenCADStudio/", env!("OCS_APP_VERSION"));
+const UA: &str = concat!("lgbcadstudio/", env!("OCS_APP_VERSION"));
 
 /// Fetch releases without consuming GitHub API quota. The public Atom feed
 /// supplies tags and the expanded-assets endpoint supplies download links.

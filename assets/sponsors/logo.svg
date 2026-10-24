@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- Background Radial Gradient -->
+    <radialGradient id="bgGrad" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#0f1926"/>
+      <stop offset="55%" stop-color="#05080f"/>
+      <stop offset="100%" stop-color="#010204"/>
+    </radialGradient>
+
+    <!-- Outer Border Glow Gradient -->
+    <linearGradient id="outerBorderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0088ff" stop-opacity="0.9"/>
+      <stop offset="30%" stop-color="#003366" stop-opacity="0.3"/>
+      <stop offset="70%" stop-color="#002244" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#0066cc" stop-opacity="0.7"/>
+    </linearGradient>
+
+    <!-- Silver Metal Gradient -->
+    <linearGradient id="silverGrad" x1="15%" y1="10%" x2="85%" y2="90%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="20%" stop-color="#e2e8f0"/>
+      <stop offset="50%" stop-color="#94a3b8"/>
+      <stop offset="80%" stop-color="#cbd5e1"/>
+      <stop offset="100%" stop-color="#64748b"/>
+    </linearGradient>
+
+    <!-- Blue Gradient for T Shadow Wing -->
+    <linearGradient id="blueWingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00d2ff"/>
+      <stop offset="40%" stop-color="#0088ff"/>
+      <stop offset="100%" stop-color="#0040aa"/>
+    </linearGradient>
+
+    <!-- Swoosh Orbit Gradient -->
+    <linearGradient id="swooshGrad" x1="0%" y1="40%" x2="100%" y2="60%">
+      <stop offset="0%" stop-color="#00e5ff"/>
+      <stop offset="40%" stop-color="#0088ff"/>
+      <stop offset="85%" stop-color="#0044cc"/>
+      <stop offset="100%" stop-color="#001a66"/>
+    </linearGradient>
+
+    <!-- Pencil Body Gradient -->
+    <linearGradient id="pencilGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="60%" stop-color="#cbd5e1"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+
+    <!-- Text Metal Gradient -->
+    <linearGradient id="textSilverGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="60%" stop-color="#e2e8f0"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+
+    <!-- Soft Drop Shadow Filter -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.8"/>
+    </filter>
+
+    <filter id="blueGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Base Rounded Container (Squircle App Icon) -->
+  <rect x="24" y="24" width="976" height="976" rx="210" ry="210" fill="url(#bgGrad)"/>
+  <rect x="24" y="24" width="976" height="976" rx="210" ry="210" fill="none" stroke="url(#outerBorderGrad)" stroke-width="6"/>
+
+  <!-- CAD Blueprint Target / Reticle -->
+  <g stroke="#00a8ff" stroke-width="3" opacity="0.85" fill="none">
+    <!-- Crosshair Lines -->
+    <line x1="512" y1="80" x2="512" y2="640"/>
+    <line x1="220" y1="360" x2="804" y2="360"/>
+    <!-- Concentric Target Circles -->
+    <circle cx="512" cy="360" r="240" stroke-width="2.5"/>
+    <circle cx="512" cy="360" r="236" opacity="0.3" stroke-dasharray="4 4"/>
+  </g>
+
+  <!-- Blue Back Wing / Projection of the 'T' -->
+  <path d="M 545 170 L 845 170 L 785 260 L 620 260 L 520 580 L 585 580 L 525 615 L 490 615 L 585 300 L 530 300 Z" fill="url(#blueWingGrad)" filter="url(#shadow)"/>
+
+  <!-- Main Silver Isometric 'T' Structure -->
+  <path d="M 225 170 L 765 170 L 685 235 L 485 235 L 385 615 L 505 615 L 455 615 L 485 520 L 525 300 L 425 300 Z" fill="url(#silverGrad)" filter="url(#shadow)"/>
+  
+  <!-- Silver 'T' Top Bevel Highlight -->
+  <polygon points="225,170 765,170 735,195 270,195" fill="#ffffff" opacity="0.7"/>
+
+  <!-- Orbiting Blue Swoosh Crescent (Behind Pen, In Front of T) -->
+  <path d="M 245 490 C 230 370 410 270 740 280 C 795 282 785 320 730 340 C 470 420 280 470 295 520 C 310 565 420 540 512 505 C 440 535 320 565 270 540 C 245 525 240 505 245 490 Z" fill="url(#swooshGrad)" filter="url(#blueGlow)"/>
+
+  <!-- CAD Stylus / Pencil -->
+  <g id="StylusPen" filter="url(#shadow)">
+    <!-- Pen Main Body -->
+    <polygon points="782,370 635,530 600,565 590,578 610,560 645,525 792,380" fill="url(#pencilGrad)"/>
+    <!-- Metallic Grip Bands -->
+    <line x1="625" y1="538" x2="640" y2="553" stroke="#1e293b" stroke-width="4"/>
+    <line x1="633" y1="530" x2="648" y2="545" stroke="#1e293b" stroke-width="4"/>
+    <!-- Pencil Tip & Lead -->
+    <polygon points="590,578 600,565 608,573" fill="#334155"/>
+    <polygon points="585,583 590,578 593,581" fill="#0f172a"/>
+    <!-- Top Cap Ring -->
+    <polygon points="770,358 790,378 780,388 760,368" fill="#e2e8f0"/>
+  </g>
+
+  <!-- Orbit Thin Extension Ring -->
+  <path d="M 725 310 C 765 370 750 480 620 560" fill="none" stroke="#00a8ff" stroke-width="3" opacity="0.8"/>
+
+  <!-- Brand Typography Section -->
+  <g id="Typography" filter="url(#shadow)">
+    <!-- "LGB" (White/Silver) -->
+    <text x="85" y="750" font-family="'Montserrat', 'Arial Black', 'Helvetica', sans-serif" font-weight="900" font-size="92" fill="url(#textSilverGrad)" letter-spacing="-1">LGB</text>
+
+    <!-- "CAD" (Cyan Blue) -->
+    <text x="315" y="750" font-family="'Montserrat', 'Arial Black', 'Helvetica', sans-serif" font-weight="900" font-size="92" fill="#00a8ff" letter-spacing="-1">CAD</text>
+
+    <!-- "Studio" (White/Silver) -->
+    <text x="585" y="750" font-family="'Montserrat', 'Arial Black', 'Helvetica', sans-serif" font-weight="800" font-size="92" fill="url(#textSilverGrad)" letter-spacing="-1">Studio</text>
+
+    <!-- Divider Line Left -->
+    <line x1="92" y1="825" x2="310" y2="825" stroke="#00a8ff" stroke-width="4.5" stroke-linecap="round"/>
+
+    <!-- Subtitle "by Trejo" (Cursive Calligraphy) -->
+    <text x="512" y="865" font-family="'Brush Script MT', 'Dancing Script', 'Caveat', cursive" font-size="96" font-style="italic" font-weight="bold" fill="#ffffff" text-anchor="middle">by Trejo</text>
+
+    <!-- Divider Line Right -->
+    <line x1="714" y1="825" x2="932" y2="825" stroke="#00a8ff" stroke-width="4.5" stroke-linecap="round"/>
+  </g>
+</svg>

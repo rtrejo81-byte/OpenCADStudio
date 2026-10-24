@@ -324,7 +324,7 @@ fn intersect_bodies(
     )
 }
 
-impl super::OpenCADStudio {
+impl super::lgbcadstudio {
     /// Add a solid and register its persistent B-rep.
     pub(super) fn add_solid_model(
         &mut self,

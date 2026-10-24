@@ -2,7 +2,7 @@
 //! SSM* / SS* system variables, the Sheet Set Manager palette and its
 //! dialogs, the drawing's sheet link written on save and located on open.
 
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use crate::command::{CadCommand, CmdOption, CmdResult};
 use crate::scene::model::wire_model::WireModel;
 use crate::ui::window::sheet_set::{
@@ -524,7 +524,7 @@ fn sheet_folder_of(db: &SheetSetDatabase, component: &str) -> String {
     db.path.as_deref().map(folder_of).unwrap_or_default()
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn dispatch_sheet_set(&mut self, cmd: &str, i: usize) -> Option<Task<Message>> {
         let upper = cmd.trim().to_ascii_uppercase();
         let (verb, arg) = match upper.split_once(char::is_whitespace) {

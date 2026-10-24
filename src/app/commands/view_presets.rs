@@ -2,7 +2,7 @@
 //! UCSORTHO), named views saved with the UCS of UCSVIEW, and the per-view
 //! settings of its sEttings option.
 
-use super::super::{Message, OpenCADStudio};
+use super::super::{Message, lgbcadstudio};
 use crate::command::CadCommand;
 use crate::modules::view::view_cmd::{self, DashViewCommand, ViewInfo, ViewNames};
 use codec::objects::ObjectType;
@@ -18,7 +18,7 @@ fn snapshot_name(view: &str) -> String {
     format!("ACAD_VIEWS_{view}")
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Names -VIEW checks its input against, taken from the drawing.
     pub(super) fn dash_view_names(&self, i: usize) -> ViewNames {
         let document = &self.tabs[i].scene.document;
@@ -485,7 +485,7 @@ impl OpenCADStudio {
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// The Background dialog for a named view, on the type typed at the
     /// prompt and filled from the view's background where it has one.
     fn open_view_background(&mut self, i: usize, view: &str, kind: &str) {
@@ -766,7 +766,7 @@ impl OpenCADStudio {
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// A restored view's visual style becomes the model tab's render mode
     /// (the closest of OCS's modes); a view without one leaves it.
     pub(crate) fn apply_view_render_mode(&mut self, i: usize, view: &codec::tables::View) {

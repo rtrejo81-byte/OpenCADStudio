@@ -1,6 +1,6 @@
 use super::*;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn dispatch_styleprops(&mut self, cmd: &str, i: usize) -> Option<Task<Message>> {
         match cmd {
             // View / grid variables held by the app rather than the header,
@@ -4493,10 +4493,10 @@ fn rename_symbol(doc: &mut codec::CadDocument, ty: &str, old: &str, new: &str) -
 
 #[cfg(test)]
 mod tests {
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
 
-    fn fresh_app() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn fresh_app() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app
     }
@@ -4837,7 +4837,7 @@ mod tests {
 
 #[cfg(test)]
 mod scale_validation_tests {
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
 
     /// A linetype scale of zero or less degenerates every dash pattern in the
     /// drawing, which is why the standalone commands reject it. Reaching the
@@ -4847,7 +4847,7 @@ mod scale_validation_tests {
     fn both_doors_to_ltscale_refuse_a_non_positive_value() {
         for name in ["LTSCALE", "CELTSCALE"] {
             for entry in [format!("{name} -5"), format!("SETVAR {name} -5")] {
-                let mut app = OpenCADStudio::new_for_test();
+                let mut app = lgbcadstudio::new_for_test();
                 app.automation_op(r#"{"op":"new"}"#);
                 let i = app.active_tab;
                 let before = if name == "LTSCALE" {
@@ -4875,7 +4875,7 @@ mod scale_validation_tests {
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// XDWGFADECTL: store it in the profile, show it on the ribbon and redraw
     /// every tab's referenced drawings.
     pub(in crate::app) fn set_xref_fade(&mut self, fade: i32) {

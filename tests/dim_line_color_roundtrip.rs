@@ -9,13 +9,13 @@ use codec::tables::BlockRecord;
 use codec::types::{Color, Vector3};
 use codec::xdata::XDataValue;
 use codec::{CadDocument, EntityType, Handle};
-use OpenCADStudio::entities::dim_override as dov;
-use OpenCADStudio::scene::Scene;
+use lgbcadstudio::entities::dim_override as dov;
+use lgbcadstudio::scene::Scene;
 
 fn roundtrip(doc: &CadDocument, ext: &str) -> CadDocument {
-    let bytes = OpenCADStudio::io::save_to_bytes(doc, ext, doc.version)
+    let bytes = lgbcadstudio::io::save_to_bytes(doc, ext, doc.version)
         .unwrap_or_else(|e| panic!("save to {ext}: {e}"));
-    OpenCADStudio::io::load_bytes(&format!("rt.{ext}"), bytes)
+    lgbcadstudio::io::load_bytes(&format!("rt.{ext}"), bytes)
         .unwrap_or_else(|e| panic!("reload {ext}: {e}"))
 }
 

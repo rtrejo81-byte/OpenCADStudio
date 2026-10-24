@@ -19,7 +19,7 @@ use clap::Parser;
 /// Open CAD Studio command-line options.
 #[derive(Parser, Debug, Default)]
 #[command(
-    name = "OpenCADStudio",
+    name = "lgbcadstudio",
     version = env!("OCS_FULL_VERSION"),
     long_version = concat!(
         env!("OCS_FULL_VERSION"),
@@ -80,9 +80,9 @@ pub struct Cli {
     #[arg(help = crate::t!("Connect AI clients to the running editor over MCP stdio.").into_owned(), long_help = None)]
     pub mcp: bool,
 
-    /// Export and synchronize AI agent MCP tool schemas to ~/.gemini/antigravity/mcp/opencadstudio/ and exit.
+    /// Export and synchronize AI agent MCP tool schemas to ~/.gemini/antigravity/mcp/lgbcadstudio/ and exit.
     #[arg(long = "sync-mcp-schemas")]
-    #[arg(help = crate::t!("Export and synchronize AI agent MCP tool schemas to ~/.gemini/antigravity/mcp/opencadstudio/ and exit.").into_owned(), long_help = None)]
+    #[arg(help = crate::t!("Export and synchronize AI agent MCP tool schemas to ~/.gemini/antigravity/mcp/lgbcadstudio/ and exit.").into_owned(), long_help = None)]
     pub sync_mcp_schemas: bool,
 
     /// TCP port for --serve (defaults to stdin/stdout).

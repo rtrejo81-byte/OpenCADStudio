@@ -1,5 +1,5 @@
 use super::helpers::{entity_type_key, entity_type_label, title_case_word};
-use super::{OpenCADStudio, VARIES_LABEL};
+use super::{lgbcadstudio, VARIES_LABEL};
 use crate::io::linetypes;
 use crate::scene::model::object::{GripDef, PropValue};
 use crate::scene::view::dispatch;
@@ -92,7 +92,7 @@ fn visual_style_properties_text(style: &codec::objects::VisualStyle) -> String {
         .join("\n")
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Rebuild the PropertiesPanel from the current entity selection.
     /// Preserves UI state (open pickers, edit buffer) across refreshes.
     /// Sections and title of the Properties panel's single-object page for
@@ -4553,9 +4553,9 @@ mod asym_scale_tests {
     // #47: the uniform-scale opt-out must be per-tab. Fresh documents restart
     // handle numbering (seed 1), so two tabs hand out identical handles — an
     // app-global set leaks one tab's opt-out into the other.
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
 
-    fn tab_with_insert(app: &mut OpenCADStudio) -> (usize, codec::Handle) {
+    fn tab_with_insert(app: &mut lgbcadstudio) -> (usize, codec::Handle) {
         app.tab_counter += 1;
         let n = app.tab_counter;
         app.tabs
@@ -4571,7 +4571,7 @@ mod asym_scale_tests {
 
     #[test]
     fn asym_scale_opt_out_does_not_leak_across_tabs() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let (a, ha) = tab_with_insert(&mut app);
         let (b, hb) = tab_with_insert(&mut app);
         assert_eq!(
@@ -4705,11 +4705,11 @@ mod insert_unit_scale_tests {
 
 #[cfg(test)]
 mod apply_property_op_tests {
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
     use codec::entities::Line;
     use codec::types::{Color, Vector3};
 
-    fn line_handle(app: &mut OpenCADStudio) -> codec::Handle {
+    fn line_handle(app: &mut lgbcadstudio) -> codec::Handle {
         let mut line = Line::new();
         line.start = Vector3::ZERO;
         line.end = Vector3::new(1.0, 0.0, 0.0);
@@ -4719,7 +4719,7 @@ mod apply_property_op_tests {
 
     #[test]
     fn empty_handles_does_not_invoke_or_dirty() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let i = app.active_tab;
         let before = app.tabs[i].dirty;
         let called = std::rc::Rc::new(std::cell::Cell::new(false));
@@ -4736,7 +4736,7 @@ mod apply_property_op_tests {
 
     #[test]
     fn applies_to_each_handle_sets_dirty_and_mutates() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let i = app.active_tab;
         let h1 = line_handle(&mut app);
         let h2 = line_handle(&mut app);
@@ -4765,7 +4765,7 @@ mod apply_property_op_tests {
 
     #[test]
     fn missing_entity_does_not_abort_loop() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let i = app.active_tab;
         let h1 = line_handle(&mut app);
         // A freshly allocated handle has no entity yet.
@@ -4806,11 +4806,11 @@ mod apply_property_op_tests {
 
 #[cfg(test)]
 mod chprop_integration_tests {
-    use crate::app::{Message, OpenCADStudio};
+    use crate::app::{Message, lgbcadstudio};
     use codec::entities::Line;
     use codec::types::{Color, LineWeight, Vector3};
 
-    fn line_handle(app: &mut OpenCADStudio) -> codec::Handle {
+    fn line_handle(app: &mut lgbcadstudio) -> codec::Handle {
         let mut line = Line::new();
         line.start = Vector3::ZERO;
         line.end = Vector3::new(1.0, 0.0, 0.0);
@@ -4830,7 +4830,7 @@ mod chprop_integration_tests {
     /// assertions deliberately check entity state only.
     #[test]
     fn prop_color_change_multiple_entities_undo_redo() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let i = app.active_tab;
         let h1 = line_handle(&mut app);
         let h2 = line_handle(&mut app);
@@ -4919,7 +4919,7 @@ mod chprop_integration_tests {
 
     #[test]
     fn property_target_resolvers_discard_stale_handles() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let i = app.active_tab;
         let existing = line_handle(&mut app);
         let stale = app.tabs[i].scene.document.allocate_handle();
@@ -4957,7 +4957,7 @@ mod chprop_integration_tests {
     #[ignore = "CLI CHPROP dispatch via run_command_line / automation-run does not mutate the entity in this test setup; the undo-ordering fix in the converted CLI site is covered at the helper level by `apply_property_op_tests::applies_to_each_handle_sets_dirty_and_mutates` and the strengthened `missing_entity_does_not_abort_loop`."]
     #[test]
     fn cli_chprop_undo_restores_previous_state() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let i = app.active_tab;
         let h = line_handle(&mut app);
         let original = app.tabs[i]
@@ -5004,7 +5004,7 @@ mod chprop_integration_tests {
     /// only the entity-level invariant.
     #[test]
     fn prop_change_on_locked_layer_is_ignored() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let i = app.active_tab;
         let h = line_handle(&mut app);
 
@@ -5053,7 +5053,7 @@ mod chprop_integration_tests {
     /// branch sets it after `apply_property_op`).
     #[test]
     fn ribbon_lineweight_updates_after_change() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _h = line_handle(&mut app);
         let _ = app.automation_op(r#"{"op":"select","type":"Line"}"#);
 
@@ -5199,7 +5199,7 @@ mod grip_limit_tests {
         use codec::types::Vector3;
 
         let select_n = |n: usize, limit: Option<i32>| -> usize {
-            let mut app = OpenCADStudio::new_for_test();
+            let mut app = lgbcadstudio::new_for_test();
             app.automation_op(r#"{"op":"new"}"#);
             if let Some(limit) = limit {
                 app.grip_object_limit = limit;
@@ -5247,14 +5247,14 @@ mod grip_limit_tests {
     /// round-trip test catches and a person does not.
     #[test]
     fn the_view_toggles_survive_a_save_and_load() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.show_viewcube = false;
         app.show_ucs_icon = false;
         app.ucs_icon_at_origin = false;
         app.selection_cycling = true;
 
         let saved = app.current_settings();
-        let mut restored = OpenCADStudio::new_for_test();
+        let mut restored = lgbcadstudio::new_for_test();
         restored.apply_settings(&saved);
 
         assert!(!restored.show_viewcube, "the ViewCube must stay off");
@@ -5269,14 +5269,14 @@ mod grip_limit_tests {
     /// missed one.
     #[test]
     fn the_selection_settings_survive_a_save_and_load() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.pick_add = false;
         app.pick_drag_rect = true;
         app.pick_box = 11;
         app.grip_object_limit = 0;
 
         let saved = app.current_settings();
-        let mut restored = OpenCADStudio::new_for_test();
+        let mut restored = lgbcadstudio::new_for_test();
         restored.apply_settings(&saved);
 
         assert!(!restored.pick_add);
@@ -5296,7 +5296,7 @@ mod grip_limit_tests {
         use codec::entities::{EntityType, Line};
         use codec::types::Vector3;
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.grip_object_limit = 0;
         let i = app.active_tab;
@@ -5395,11 +5395,11 @@ mod custom_class_title_tests {
     // "<Label> (<Native>)" form itself is covered by
     // plugin::entity_labels::display_type_title, and the live-manager
     // filtering by plugin::process::manager tests.
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
 
     #[test]
     fn single_entity_title_stays_native_without_a_loaded_plugin() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let i = app.active_tab;
         let mut entity = codec::EntityType::Line(codec::entities::Line::from_points(
             codec::types::Vector3::ZERO,

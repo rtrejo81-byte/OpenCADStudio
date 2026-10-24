@@ -1,4 +1,4 @@
-// ViewCube wgpu pipeline — OpenCADStudio-style interactive 3D navigation cube.
+// ViewCube wgpu pipeline — lgbcadstudio-style interactive 3D navigation cube.
 //
 // 26 selectable regions:  6 faces + 12 edges + 8 corners.
 // Phong shading + hover highlight passed as uniform.

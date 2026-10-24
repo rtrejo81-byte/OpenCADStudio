@@ -4,7 +4,7 @@
 // restores it. Regression guard for the "always reopens in Model / the first
 // paper layout" bugs.
 
-use OpenCADStudio::scene::Scene;
+use lgbcadstudio::scene::Scene;
 
 #[test]
 fn switching_to_paper_records_tilemode_and_ctab() {
@@ -17,7 +17,7 @@ fn switching_to_paper_records_tilemode_and_ctab() {
         "$TILEMODE should record paper space when a layout is active"
     );
     assert_eq!(
-        OpenCADStudio::io::saved_active_layout(&scene.document).as_deref(),
+        lgbcadstudio::io::saved_active_layout(&scene.document).as_deref(),
         Some("Layout1"),
         "CTAB must be created/updated so the exact paper tab round-trips (not \
          just the first paper layout)"
@@ -30,7 +30,7 @@ fn switching_to_paper_records_tilemode_and_ctab() {
         "$TILEMODE should record model space in the Model tab"
     );
     assert_eq!(
-        OpenCADStudio::io::saved_active_layout(&scene.document).as_deref(),
+        lgbcadstudio::io::saved_active_layout(&scene.document).as_deref(),
         Some("Model"),
     );
 }
@@ -41,16 +41,16 @@ fn active_paper_layout_survives_a_dxf_save_and_reload() {
     scene.set_current_layout("Layout1".to_string());
 
     // Full file round-trip: write to DXF bytes, read them back.
-    let bytes = OpenCADStudio::io::save_to_bytes(&scene.document, "dxf", scene.document.version)
+    let bytes = lgbcadstudio::io::save_to_bytes(&scene.document, "dxf", scene.document.version)
         .expect("save to DXF bytes");
-    let doc = OpenCADStudio::io::load_bytes("roundtrip.dxf", bytes).expect("reload DXF bytes");
+    let doc = lgbcadstudio::io::load_bytes("roundtrip.dxf", bytes).expect("reload DXF bytes");
 
     assert!(
         !doc.header.show_model_space,
         "$TILEMODE must persist paper space across a DXF save/reload"
     );
     assert_eq!(
-        OpenCADStudio::io::saved_active_layout(&doc).as_deref(),
+        lgbcadstudio::io::saved_active_layout(&doc).as_deref(),
         Some("Layout1"),
         "CTAB must persist the exact active tab across a DXF save/reload"
     );
@@ -62,18 +62,18 @@ fn ctab_is_created_when_absent_then_updated_in_place() {
     let doc = &mut scene.document;
 
     // A brand-new document carries no CTAB entry.
-    assert_eq!(OpenCADStudio::io::saved_active_layout(doc), None);
+    assert_eq!(lgbcadstudio::io::saved_active_layout(doc), None);
 
     // First write creates it; a second write must update in place, not stack a
     // duplicate entry that a reader could resolve to the stale value.
-    OpenCADStudio::io::set_saved_active_layout(doc, "Layout2");
+    lgbcadstudio::io::set_saved_active_layout(doc, "Layout2");
     assert_eq!(
-        OpenCADStudio::io::saved_active_layout(doc).as_deref(),
+        lgbcadstudio::io::saved_active_layout(doc).as_deref(),
         Some("Layout2")
     );
-    OpenCADStudio::io::set_saved_active_layout(doc, "Layout3");
+    lgbcadstudio::io::set_saved_active_layout(doc, "Layout3");
     assert_eq!(
-        OpenCADStudio::io::saved_active_layout(doc).as_deref(),
+        lgbcadstudio::io::saved_active_layout(doc).as_deref(),
         Some("Layout3")
     );
 }
@@ -103,9 +103,9 @@ fn entered_viewport_survives_a_save_and_reload() {
             scene.active_viewport = entered;
             scene.sync_active_viewport_to_document();
             let bytes =
-                OpenCADStudio::io::save_to_bytes(&scene.document, format, scene.document.version)
+                lgbcadstudio::io::save_to_bytes(&scene.document, format, scene.document.version)
                     .expect("save");
-            let doc = OpenCADStudio::io::load_bytes(&format!("roundtrip.{format}"), bytes)
+            let doc = lgbcadstudio::io::load_bytes(&format!("roundtrip.{format}"), bytes)
                 .expect("reload");
             let mut reopened = Scene::new();
             reopened.document = doc;

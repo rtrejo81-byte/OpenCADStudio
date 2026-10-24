@@ -1,7 +1,7 @@
-use super::{ModalKind, OpenCADStudio};
+use super::{ModalKind, lgbcadstudio};
 use crate::scene::pipeline::{GpuAdapter, GpuStatus};
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn queue_startup_prompts(&mut self) {
         #[cfg(not(target_arch = "wasm32"))]
         if !self.default_assoc_prompted {
@@ -180,14 +180,14 @@ mod tests {
 
     #[test]
     fn silencing_the_popup_is_per_verdict_and_survives_a_settings_round_trip() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.gpu_status = GpuStatus::NoRenderer;
         let _ = app.update(Message::GpuWarningSilence);
         assert_eq!(app.gpu_warning_silenced, "no-renderer");
         assert!(app.active_modal.is_none());
 
         let saved = serde_json::to_string(&app.current_config()).unwrap();
-        let mut restarted = OpenCADStudio::new_for_test();
+        let mut restarted = lgbcadstudio::new_for_test();
         restarted.apply_config(serde_json::from_str(&saved).unwrap());
         assert_eq!(restarted.gpu_warning_silenced, "no-renderer");
         // A different verdict is not covered by that choice.
@@ -201,7 +201,7 @@ mod tests {
 
     #[test]
     fn donation_prompt_persists_once_per_version() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         // Older settings have no donation version; headless construction never prompts.
         app.apply_config(serde_json::from_str::<AppConfig>("{}").unwrap());
         assert!(app.active_modal.is_none());
@@ -216,7 +216,7 @@ mod tests {
         let _ = app.update(Message::CloseModal);
         assert!(app.active_modal.is_none());
 
-        let mut restarted = OpenCADStudio::new_for_test();
+        let mut restarted = lgbcadstudio::new_for_test();
         restarted.apply_config(serde_json::from_str(&saved).unwrap());
         restarted.queue_startup_prompts();
         assert_eq!(restarted.donation_prompt_version, env!("OCS_APP_VERSION"));
@@ -236,7 +236,7 @@ mod tests {
     fn automation_sessions_skip_the_donation_prompt() {
         // First control contact drops a still-queued donation prompt and
         // stops later queueing while control stays enabled (#1349).
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.default_assoc_prompted = true;
         app.queue_startup_prompts();
         assert_eq!(app.active_modal, Some(ModalKind::DonationPrompt));
@@ -250,7 +250,7 @@ mod tests {
         assert_ne!(app.active_modal, Some(ModalKind::DonationPrompt));
 
         // A still-queued (not yet shown) prompt is dropped on first contact.
-        let mut queued = OpenCADStudio::new_for_test();
+        let mut queued = lgbcadstudio::new_for_test();
         queued.default_assoc_prompted = true;
         queued.donation_prompt_version = "previous-release".to_string();
         queued
@@ -262,7 +262,7 @@ mod tests {
 
         // A prompt already on screen is left for its reader; clients close
         // it themselves, and a session with no control traffic still prompts.
-        let mut human = OpenCADStudio::new_for_test();
+        let mut human = lgbcadstudio::new_for_test();
         human.default_assoc_prompted = true;
         human.queue_startup_prompts();
         assert_eq!(human.active_modal, Some(ModalKind::DonationPrompt));
@@ -270,7 +270,7 @@ mod tests {
 
     #[test]
     fn startup_dialogs_wait_their_turn_and_preserve_unseen_prompts() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.apply_config(AppConfig::default());
         app.queue_startup_prompts();
         assert_eq!(app.active_modal, Some(ModalKind::AssocPrompt));

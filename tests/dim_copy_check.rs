@@ -5,8 +5,8 @@ use codec::tables::BlockRecord;
 use codec::types::Vector3;
 use codec::{EntityType, Handle};
 use glam::DVec3;
-use OpenCADStudio::command::EntityTransform;
-use OpenCADStudio::scene::Scene;
+use lgbcadstudio::command::EntityTransform;
+use lgbcadstudio::scene::Scene;
 
 #[test]
 fn copy_dimension_duplicates_its_block() {

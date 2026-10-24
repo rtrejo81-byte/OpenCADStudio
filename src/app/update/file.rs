@@ -7,7 +7,7 @@ use super::{format_size, VIEWCUBE_HIT_SIZE};
 use crate::app::helpers::{
     parse_coord, polar_constrain_near, ucs_rotate_vec, ucs_to_wcs, ucs_z_axis, CoordKind,
 };
-use crate::app::{Message, OpenCADStudio, POLY_START_DELAY_MS};
+use crate::app::{Message, lgbcadstudio, POLY_START_DELAY_MS};
 use crate::modules::ModuleEvent;
 use crate::scene::model::object::GripApply;
 use crate::scene::pick::grip::{find_hit_grip, find_hit_grip_paper, find_hit_grip_rte, GripEdit};
@@ -702,7 +702,7 @@ fn plot_entity_layers(
     layers
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Persist exact ACIS bodies, and an edge cache with them, for solids that
     /// have no ACIS data before saving. A solid that has ACIS data keeps its
     /// own wireframe cache: display edges are not written into a solid OCS
@@ -4388,7 +4388,7 @@ impl OpenCADStudio {
                     .chars()
                     .map(|c| if c.is_alphanumeric() { c } else { '_' })
                     .collect();
-                std::env::temp_dir().join(format!("OpenCADStudio_{safe}_{}.sv$", self.tabs[i].id))
+                std::env::temp_dir().join(format!("lgbcadstudio_{safe}_{}.sv$", self.tabs[i].id))
             }
         }
     }
@@ -7608,7 +7608,7 @@ impl OpenCADStudio {
 
 #[cfg(test)]
 mod plot_paper_tests {
-    use crate::app::{Message, OpenCADStudio};
+    use crate::app::{Message, lgbcadstudio};
     use crate::ui::window::plot::PlotDlgMsg;
 
     /// Solids draw on screen as GPU meshes and a thickened wide polyline's band
@@ -7618,7 +7618,7 @@ mod plot_paper_tests {
         use codec::entities::{LwPolyline, LwVertex, Solid3D};
         use codec::types::Vector2;
         use codec::EntityType;
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         let base = crate::scene::model::solid_model::box_solid([0.0, 0.0, 2.5], 10.0, 10.0, 5.0)
@@ -7636,7 +7636,7 @@ mod plot_paper_tests {
         band.thickness = 3.0;
         let band = app.tabs[i].scene.add_entity(EntityType::LwPolyline(band));
 
-        let check = |app: &OpenCADStudio, space: &str| {
+        let check = |app: &lgbcadstudio, space: &str| {
             let page = app.layout_plot_page();
             let named = |handle: codec::Handle| {
                 let name = handle.value().to_string();
@@ -7661,8 +7661,8 @@ mod plot_paper_tests {
 
     /// A drawing on `Layout1` whose page setup names its sheet the way a
     /// Windows printer driver does — a bare `A4` with landscape dimensions.
-    fn app_with_printer_named_sheet() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn app_with_printer_named_sheet() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let _ = app.update(Message::LayoutSwitch("Layout1".into()));
         let i = app.active_tab;
@@ -7682,25 +7682,25 @@ mod plot_paper_tests {
         app
     }
 
-    fn layout_paper(app: &OpenCADStudio) -> (String, f64, f64) {
+    fn layout_paper(app: &lgbcadstudio) -> (String, f64, f64) {
         let ps = layout_settings(app);
         (ps.paper_size, ps.paper_width, ps.paper_height)
     }
 
-    fn layout_settings(app: &OpenCADStudio) -> codec::objects::PlotSettings {
+    fn layout_settings(app: &lgbcadstudio) -> codec::objects::PlotSettings {
         app.tabs[app.active_tab]
             .scene
             .plot_settings_for("Layout1")
             .unwrap()
     }
 
-    fn layout_rotation(app: &OpenCADStudio) -> codec::objects::PlotRotation {
+    fn layout_rotation(app: &lgbcadstudio) -> codec::objects::PlotRotation {
         layout_settings(app).rotation
     }
 
     /// Store the drawing's plot settings for `Layout1` after `edit` touched them.
     fn edit_layout_settings(
-        app: &mut OpenCADStudio,
+        app: &mut lgbcadstudio,
         edit: impl FnOnce(&mut codec::objects::PlotSettings),
     ) {
         let i = app.active_tab;
@@ -7712,7 +7712,7 @@ mod plot_paper_tests {
     #[test]
     fn a_new_drawing_starts_with_a_compatible_default_layout() {
         use codec::objects::{PlotRotation, PlotType, ScaledType};
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let _ = app.update(Message::LayoutSwitch("Layout1".into()));
         let ps = layout_settings(&app);
@@ -7726,7 +7726,7 @@ mod plot_paper_tests {
         // The sheet on screen is the landscape A4 the rotation describes.
         let ((x0, y0), (x1, y1)) = app.tabs[app.active_tab].scene.paper_limits().unwrap();
         assert_eq!((x1 - x0, y1 - y0), (297.0, 210.0));
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let _ = app.on_plot_dialog_open();
         assert_eq!(app.plot_dialog.orientation, "Landscape");
@@ -8021,8 +8021,8 @@ mod plot_paper_tests {
     /// Open the metric page-setup fixture written by the commercial
     /// application (see `tests/fixtures/plot/README.md`).
     #[cfg(not(target_arch = "wasm32"))]
-    fn app_with_fixture() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn app_with_fixture() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         let path = concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/tests/fixtures/plot/page-setups-metric.dxf"
@@ -8788,7 +8788,7 @@ mod plot_device_persistence_tests {
     /// open.
     #[test]
     fn reopening_the_plot_dialog_keeps_the_chosen_printer() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         // A real drawing's layout carries plot settings with no device; the
         // auto-applied setup used to reset the choice to the default.
         let mut ps = codec::objects::PlotSettings::default();
@@ -8816,7 +8816,7 @@ mod plot_device_persistence_tests {
     /// over them. Regression test for #1654.
     #[test]
     fn reopening_same_plot_context_keeps_recent_settings() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
 
         // First open seeds from the drawing/layout as usual.
         let _ = app.on_plot_dialog_open();
@@ -8846,7 +8846,7 @@ mod plot_device_persistence_tests {
     /// newly opened document instead of showing the startup drawing's values.
     #[test]
     fn newly_opened_document_forces_first_plot_dialog_to_read_layout() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let i = app.active_tab;
 
         app.tabs[i].scene.current_layout = "Layout1".into();
@@ -8903,7 +8903,7 @@ mod plot_device_persistence_tests {
     /// instead of replacing them with the active layout's page setup.
     #[test]
     fn print_all_options_keeps_persisted_plot_preferences_on_first_open() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
 
         // Simulate preferences restored from the previous application session.
         app.plot_dialog.paper = "ISO_A2_(420.00_x_594.00_MM)".into();
@@ -8952,7 +8952,7 @@ mod plot_device_persistence_tests {
     /// page setup over it.
     #[test]
     fn previous_snapshot_is_saved_back_to_its_origin_layout() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let i = app.active_tab;
 
         app.tabs[i].scene.current_layout = "Layout1".into();
@@ -9017,7 +9017,7 @@ mod plot_device_persistence_tests {
     /// first preview otherwise plots using raw layer colours.
     #[test]
     fn selected_ctb_is_resolved_when_active_table_is_stale() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
 
         app.plot_dialog.style_name = crate::io::plot_style::MONOCHROME_PLOT_STYLE.into();
         app.plot_dialog.apply_plot_styles = true;
@@ -9059,7 +9059,7 @@ mod plot_device_persistence_tests {
             default_paper: Some(a4),
         });
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.plot_dialog.to_file = false;
         app.plot_dialog.printer = Some("OCS Test Printer".into());
         app.plot_dialog.paper = a2.canonical.to_string();
@@ -9084,7 +9084,7 @@ mod plot_device_persistence_tests {
     /// saved preference: selecting its setup is an explicit device choice.
     #[test]
     fn layout_device_overrides_the_saved_preference() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.plot_dialog.printer = Some("Brother DCP-L2520D series".into());
         let mut ps = codec::objects::PlotSettings::default();
         ps.printer_name = "Godex G500".into();
@@ -9098,7 +9098,7 @@ mod plot_device_persistence_tests {
     /// plotting the same rectangle instead of reporting an empty area.
     #[test]
     fn persisted_window_seeds_the_dialog_on_reopen() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         assert!(app.plot_window.is_none());
         app.plot_dialog.area = "Window".into();
         app.plot_dialog.window = Some((-10.0, -5.0, 30.0, 15.0));
@@ -9110,7 +9110,7 @@ mod plot_device_persistence_tests {
     /// the dialog so it persists with the next config save.
     #[test]
     fn layout_window_is_mirrored_into_the_dialog() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let mut ps = codec::objects::PlotSettings::default();
         ps.plot_type = codec::objects::PlotType::Window;
         ps.set_plot_window(1.0, 2.0, 3.0, 4.0);
@@ -9122,7 +9122,7 @@ mod plot_device_persistence_tests {
     /// A layout pointing at a PDF device switches the dialog to file output.
     #[test]
     fn pdf_device_switches_to_file_output() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.plot_dialog.printer = Some("Brother DCP-L2520D series".into());
         let mut ps = codec::objects::PlotSettings::default();
         ps.printer_name = "Microsoft Print to PDF".into();
@@ -9135,7 +9135,7 @@ mod plot_device_persistence_tests {
 #[cfg(test)]
 mod background_task_tests {
     use super::background_task;
-    use crate::app::{Message, OpenCADStudio};
+    use crate::app::{Message, lgbcadstudio};
     use iced::futures::StreamExt;
     use iced::Task;
 
@@ -9171,7 +9171,7 @@ mod background_task_tests {
 
     #[test]
     fn worker_panic_is_reported_on_the_command_line() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let task = background_task(
             "STL export",
             || panic!("worker exploded"),
@@ -9191,10 +9191,10 @@ mod background_task_tests {
 
 #[cfg(test)]
 mod plot_style_panel_tests {
-    use crate::app::{Message, OpenCADStudio};
+    use crate::app::{Message, lgbcadstudio};
 
-    fn app_with_test_table() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn app_with_test_table() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         let mut table = crate::io::plot_style::PlotStyleTable::identity("Test.ctb");
         table.aci_entries[1].screening = 65;
         app.plot_dialog.style_name = table.name.clone();
@@ -9298,7 +9298,7 @@ mod plot_style_panel_tests {
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Web: one warning lists every unresolved xref and the way to fix it —
     /// dropping the files on the page registers their bytes, and reopening
     /// the drawing (or XRELOAD) then resolves them.

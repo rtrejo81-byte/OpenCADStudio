@@ -1,8 +1,8 @@
-// Plugin registry — external (dynamically-loaded) plugins only. OpenCADStudio
+// Plugin registry — external (dynamically-loaded) plugins only. lgbcadstudio
 // ships no built-in add-ons; every plugin is a cdylib loaded from the plugins
 // folder at startup (see `external`) and the marketplace installs them there.
 
-use crate::app::OpenCADStudio;
+use crate::app::lgbcadstudio;
 use crate::modules::{registry as core_registry, CadModule};
 
 /// Core ribbon tabs plus every loaded external add-on tab.
@@ -57,7 +57,7 @@ pub fn plugin_command_names(disabled: &rustc_hash::FxHashSet<String>) -> Vec<Str
 /// by exact name is retried a bounded number of times, healing spawn/
 /// handshake races; a command still refused after the retries gets a visible
 /// headline instead of a silent "unknown command".
-pub(crate) fn try_dispatch(app: &mut OpenCADStudio, tab: usize, cmd: &str) -> bool {
+pub(crate) fn try_dispatch(app: &mut lgbcadstudio, tab: usize, cmd: &str) -> bool {
     #[cfg(not(target_arch = "wasm32"))]
     {
         let disabled = app.disabled_plugin_ids();
@@ -90,7 +90,7 @@ pub(crate) fn try_dispatch(app: &mut OpenCADStudio, tab: usize, cmd: &str) -> bo
 /// One dispatch attempt against the live manager.
 #[cfg(not(target_arch = "wasm32"))]
 fn dispatch_once<'a>(
-    app: &'a mut OpenCADStudio,
+    app: &'a mut lgbcadstudio,
     tab: usize,
     cmd: &str,
     disabled: &rustc_hash::FxHashSet<String>,
@@ -110,7 +110,7 @@ fn dispatch_once<'a>(
 /// headline so the failure is never silent.
 #[cfg(not(target_arch = "wasm32"))]
 fn dispatch_with_boot_retry(
-    app: &mut OpenCADStudio,
+    app: &mut lgbcadstudio,
     tab: usize,
     cmd: &str,
     disabled: &rustc_hash::FxHashSet<String>,

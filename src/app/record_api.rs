@@ -5,7 +5,7 @@ use serde_json::{json, Map, Value};
 use std::collections::VecDeque;
 use std::sync::OnceLock;
 
-use super::{Message, OpenCADStudio};
+use super::{Message, lgbcadstudio};
 
 const COLLECTIONS: &[(&str, bool)] = &[
     ("entities", true),
@@ -1258,7 +1258,7 @@ fn replace_table_entry<T: TableEntry>(table: &mut Table<T>, handle: codec::Handl
     *target = edited;
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn record_capabilities(&self) -> Value {
         let document = &self.tabs[self.active_tab].scene.document;
         json!({
@@ -1700,7 +1700,7 @@ mod tests {
     use codec::types::{Handle, Vector3};
     use serde_json::{json, Value};
 
-    use super::OpenCADStudio;
+    use super::lgbcadstudio;
 
     /// Whole floats match their integer; integers past f64 precision never
     /// match the neighbouring float they round onto.
@@ -1729,7 +1729,7 @@ mod tests {
         ));
     }
 
-    fn execute(app: &mut OpenCADStudio, mut request: Value, id: &str) -> Value {
+    fn execute(app: &mut lgbcadstudio, mut request: Value, id: &str) -> Value {
         let state = app.automation_op(r#"{"protocol":1,"op":"state"}"#);
         let object = request.as_object_mut().unwrap();
         object.insert("protocol".into(), json!(1));
@@ -1741,7 +1741,7 @@ mod tests {
 
     #[test]
     fn entities_records_expose_the_reference_only_designation() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
 
@@ -1755,7 +1755,7 @@ mod tests {
         // The designation is plugin-mutated scene state: mark through the
         // same host API a plugin uses, so the read surface reflects the
         // live set rather than any stored marker.
-        fn mark(app: &mut OpenCADStudio, handle: Handle, on: bool) {
+        fn mark(app: &mut lgbcadstudio, handle: Handle, on: bool) {
             let i = app.active_tab;
             crate::app::plugin_host::HostSession::new(app, i)
                 .set_reference_only(handle, on)
@@ -1795,7 +1795,7 @@ mod tests {
 
     #[test]
     fn entities_records_display_type_stays_native_without_a_loaded_plugin() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
 
@@ -1825,7 +1825,7 @@ mod tests {
 
     #[test]
     fn records_query_and_edit_every_mutable_record_family() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
 
@@ -1948,7 +1948,7 @@ mod tests {
 
     #[test]
     fn set_properties_expected_matches_whole_number_floats_by_value() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         let insert = Insert::new("A_CPT", Vector3::new(12.0, 34.0, 5.0));
@@ -2009,7 +2009,7 @@ mod tests {
 
     #[test]
     fn record_schema_describes_absent_types_fields_enums_units_and_write_rules() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
 
         let catalog = app.record_schema(&json!({"collection":"entities"}));
@@ -2107,7 +2107,7 @@ mod tests {
 
     #[test]
     fn record_updates_reject_type_identity_and_compare_failures() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         let entity = app.tabs[i]

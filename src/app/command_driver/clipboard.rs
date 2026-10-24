@@ -1,6 +1,6 @@
 use super::*;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn handle_copy_to_clipboard(&mut self, handles: Vec<Handle>, base: glam::DVec3) {
         let i = self.active_tab;
         let count = self.copy_entities_to_clipboard(i, &handles, base);
@@ -1502,7 +1502,7 @@ mod paste_entities_kernel_tests {
 #[cfg(test)]
 mod headless_reuse_proof_tests {
     // Task 5 reuse proof — headless only. This module constructs NO
-    // `OpenCADStudio` value and touches no UI/scene state: only
+    // `lgbcadstudio` value and touches no UI/scene state: only
     // `codec::CadDocument`, entities, and the shared kernels
     // (`copy_to_clipboard_kernel`, `paste_entities_kernel`,
     // `match_layer_kernel`, `match_properties_kernel` + `MatchOpts`).

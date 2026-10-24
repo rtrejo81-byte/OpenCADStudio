@@ -1,4 +1,4 @@
-//! OpenCADStudio linetype catalog — loaded from `assets/linetypes/OpenCADStudio.lin`.
+//! lgbcadstudio linetype catalog — loaded from `assets/linetypes/lgbcadstudio.lin`.
 //!
 //! Call [`populate_document`] to add all standard linetypes to a new document.
 //! Linetypes that already exist in the document are skipped.
@@ -262,7 +262,7 @@ pub fn resolve_complex_lt(document: &CadDocument, name: &str) -> Option<ComplexL
     }
 }
 
-const LIN_SOURCE: &str = include_str!("../../assets/linetypes/OpenCADStudio.lin");
+const LIN_SOURCE: &str = include_str!("../../assets/linetypes/lgbcadstudio.lin");
 
 /// The bundled linetypes followed by the user's own `.lin` files.
 fn lin_source() -> &'static str {
@@ -298,7 +298,7 @@ pub fn extract_pattern(desc: &str) -> String {
 
 // ── Public API ────────────────────────────────────────────────────────────
 
-/// Add all standard OpenCADStudio linetypes to `doc`, skipping existing ones.
+/// Add all standard lgbcadstudio linetypes to `doc`, skipping existing ones.
 pub fn populate_document(doc: &mut CadDocument) {
     populate_document_from_source(doc, lin_source());
 }

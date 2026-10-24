@@ -1,4 +1,4 @@
-use super::{Message, OpenCADStudio};
+use super::{Message, lgbcadstudio};
 use crate::command::{CadCommand, CmdResult};
 use crate::scene::block_authoring::edit::{self, Part};
 use codec::Handle;
@@ -72,7 +72,7 @@ impl CadCommand for EditCommand {
         CmdResult::Cancel
     }
 }
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn commit_authoring_action_option(&mut self, field: &'static str) -> Task<Message> {
         use crate::scene::block_actions::options;
         let i = self.active_tab;

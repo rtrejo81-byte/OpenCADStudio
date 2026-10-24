@@ -211,7 +211,7 @@ pub fn build_step(meshes: &[&MeshModel]) -> Option<String> {
     let msb_id = alloc();
     writeln!(
         data,
-        "#{} = MANIFOLD_SOLID_BREP('OpenCADStudio_Solid',#{});",
+        "#{} = MANIFOLD_SOLID_BREP('lgbcadstudio_Solid',#{});",
         msb_id, shell_id
     )
     .ok();
@@ -229,7 +229,7 @@ pub fn build_step(meshes: &[&MeshModel]) -> Option<String> {
     writeln!(data, "#{} = GEOMETRIC_REPRESENTATION_CONTEXT(3);", gc_id).ok();
     writeln!(
         data,
-        "#{sr_id} = SHAPE_REPRESENTATION('OpenCADStudio_Shape',(#{}),#{gc_id});",
+        "#{sr_id} = SHAPE_REPRESENTATION('lgbcadstudio_Shape',(#{}),#{gc_id});",
         msb_id
     )
     .ok();

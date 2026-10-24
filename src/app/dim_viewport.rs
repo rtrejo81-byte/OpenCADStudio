@@ -1,7 +1,7 @@
 //! Paper-space dimension acquisition and measurement. Acquiring model geometry
 //! supplies a viewport scale; sheet-only dimensions retain paper units.
 
-use super::OpenCADStudio;
+use super::lgbcadstudio;
 use crate::command::{DimensionAssociationSource, DimensionPreview};
 use crate::entities::dim_override;
 use crate::scene::viewport_ref::{AcceptedSnap, MeasurementScale, SnapSourceRef, ViewportFrame};
@@ -17,7 +17,7 @@ pub(crate) enum DimensionMeasureSpace {
     ConflictingViewports,
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(crate) fn finish_command_click(&mut self, i: usize) {
         let mut selection = self.tabs[i].scene.selection.borrow_mut();
         selection.input.clear_left_buttons();
@@ -294,7 +294,7 @@ impl OpenCADStudio {
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(crate) fn viewport_dimension_snaps(
         &self,
         i: usize,

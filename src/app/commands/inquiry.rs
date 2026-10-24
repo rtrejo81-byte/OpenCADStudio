@@ -1,6 +1,6 @@
 use super::*;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Align every selected object or complete group by one edge or center.
     fn align_selected_bounds(&mut self, i: usize, command: &str) {
         use crate::command::EntityTransform;
@@ -1512,7 +1512,7 @@ fn arith_eval(expr: &str) -> Result<f64, String> {
     Ok(v)
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Open the attribute editor. If a single block with attributes is already
     /// selected it opens directly on that block; otherwise it starts the
     /// block-pick command and opens once a block is chosen (see
@@ -1637,7 +1637,7 @@ mod align_selected_bounds_tests {
     use codec::entities::{EntityType, Line};
     use codec::types::Vector3;
 
-    fn add_line(app: &mut OpenCADStudio, x1: f64, y1: f64, x2: f64, y2: f64) -> codec::Handle {
+    fn add_line(app: &mut lgbcadstudio, x1: f64, y1: f64, x2: f64, y2: f64) -> codec::Handle {
         app.tabs[app.active_tab]
             .scene
             .add_entity(EntityType::Line(Line::from_points(
@@ -1646,14 +1646,14 @@ mod align_selected_bounds_tests {
             )))
     }
 
-    fn line_start_x(app: &OpenCADStudio, handle: codec::Handle) -> f64 {
+    fn line_start_x(app: &lgbcadstudio, handle: codec::Handle) -> f64 {
         match app.tabs[app.active_tab].scene.document.get_entity(handle) {
             Some(EntityType::Line(l)) => l.start.x.min(l.end.x),
             other => panic!("expected a Line, got {other:?}"),
         }
     }
 
-    fn line_max_y(app: &OpenCADStudio, handle: codec::Handle) -> f64 {
+    fn line_max_y(app: &lgbcadstudio, handle: codec::Handle) -> f64 {
         match app.tabs[app.active_tab].scene.document.get_entity(handle) {
             Some(EntityType::Line(l)) => l.start.y.max(l.end.y),
             other => panic!("expected a Line, got {other:?}"),
@@ -1665,7 +1665,7 @@ mod align_selected_bounds_tests {
     /// (or panicking on the empty-bounds case).
     #[test]
     fn refuses_with_fewer_than_two_selected_objects() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let a = add_line(&mut app, 0.0, 0.0, 2.0, 1.0);
         app.tabs[app.active_tab].scene.select_entities(&[a]);
@@ -1680,7 +1680,7 @@ mod align_selected_bounds_tests {
     /// the topmost edge. Both are undoable as one step.
     #[test]
     fn aligns_left_and_top_edges_and_is_undoable() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let left = add_line(&mut app, 0.0, 0.0, 1.0, 1.0); // leftmost & topmost already
         let right = add_line(&mut app, 5.0, -3.0, 8.0, -2.0); // further right and lower
@@ -1732,7 +1732,7 @@ mod align_selected_bounds_tests {
     /// the *other* members of its own group.
     #[test]
     fn a_complete_group_aligns_as_one_rigid_unit() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let _ = app.automation_op(r#"{"op":"new"}"#);
         let a = add_line(&mut app, 5.0, 0.0, 6.0, 1.0);
         let b = add_line(&mut app, 7.0, 0.0, 8.0, 1.0);
@@ -1773,7 +1773,7 @@ mod find_replace_command_tests {
             "FINDALL ﬁ REPLACE fi",
             "FIND ŉ replace n",
         ] {
-            let mut app = OpenCADStudio::new_for_test();
+            let mut app = lgbcadstudio::new_for_test();
             let i = app.active_tab;
             let _ = app.dispatch_inquiry(cmd, i);
         }
@@ -1781,7 +1781,7 @@ mod find_replace_command_tests {
 
     #[test]
     fn dist_command_respects_drawing_units_precision() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         let i = app.active_tab;
         // Simulate changing linear precision to 0 via UNITS dialog apply
         app.drawing_units = Some(crate::ui::window::drawing_units::State {

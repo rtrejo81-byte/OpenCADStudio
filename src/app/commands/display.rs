@@ -1,6 +1,6 @@
 use super::*;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn dispatch_display(&mut self, cmd: &str, i: usize) -> Option<Task<Message>> {
         match cmd {
             // Interactive pan: left-drag pans the view until Esc. The only pan
@@ -703,7 +703,7 @@ impl OpenCADStudio {
                             }
                         }
                         "SET" => {
-                            let app = parts.get(1).copied().unwrap_or("OpenCADStudio");
+                            let app = parts.get(1).copied().unwrap_or("lgbcadstudio");
                             let val = parts.get(2).copied().unwrap_or("");
                             let editable: Vec<_> = selected_handles
                                 .iter()
@@ -2277,7 +2277,7 @@ pub(crate) fn table_to_csv(table: &codec::entities::Table) -> String {
         .join("\r\n")
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// The ADJUST family's object prompt, keeping only the kinds `mode`
     /// takes (see `xadjust::keeps`).
     fn start_adjust_selection(&mut self, i: usize, name: &str, mode: &str) {
@@ -2386,10 +2386,10 @@ impl OpenCADStudio {
 
 #[cfg(test)]
 mod tests {
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
 
-    fn fresh_app() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn fresh_app() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app
     }
@@ -2473,7 +2473,7 @@ mod tests {
 
     #[test]
     fn regen_rebuilds_the_mesh_map_rather_than_only_bumping_the_epoch() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
 
@@ -2497,11 +2497,11 @@ mod tests {
     fn the_isolines_slider_rebuilds_once_on_release_and_not_while_dragging() {
         use crate::app::Message;
 
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
 
-        let seed = |app: &mut OpenCADStudio, i: usize| {
+        let seed = |app: &mut lgbcadstudio, i: usize| {
             let stale = codec::Handle::new(0xBEEF);
             app.tabs[i].scene.meshes.insert(stale, stale_mesh());
             stale
@@ -2557,11 +2557,11 @@ mod tests {
 
 #[cfg(test)]
 mod printers_command_tests {
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
 
     #[test]
     fn printers_reports_the_default_and_the_list() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let before = app.command_line.history.len();
         let _ = app.run_command_line("PRINTERS");

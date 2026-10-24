@@ -4,18 +4,18 @@
 
 #![cfg(test)]
 
-use crate::app::OpenCADStudio;
+use crate::app::lgbcadstudio;
 use serde_json::{json, Value};
 
 /// Envelope mutation against the active document: fills `{doc}` with the
 /// document_id read from state, like every external client must.
-fn mutate(app: &mut OpenCADStudio, request: &str) -> Value {
+fn mutate(app: &mut lgbcadstudio, request: &str) -> Value {
     let state = app.automation_op(r#"{"protocol":1,"op":"state"}"#);
     let doc = state["document_id"].as_u64().unwrap();
     app.automation_op(&request.replacen("{doc}", &doc.to_string(), 1))
 }
 
-fn count_type(app: &mut OpenCADStudio, kind: &str) -> u64 {
+fn count_type(app: &mut lgbcadstudio, kind: &str) -> u64 {
     let q = app.automation_op(&format!(
         r#"{{"op":"query","type":"{kind}","detail":"summary"}}"#
     ));
@@ -24,7 +24,7 @@ fn count_type(app: &mut OpenCADStudio, kind: &str) -> u64 {
 
 #[test]
 fn query_where_filters_on_entity_properties() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     app.automation_op(r#"{"op":"run","cmd":"CIRCLE 0,0 1"}"#);
     app.automation_op(r#"{"op":"run","cmd":"CIRCLE 20,0 5"}"#);
@@ -50,7 +50,7 @@ fn query_where_filters_on_entity_properties() {
 
 #[test]
 fn close_op_guards_dirty_documents_and_discards() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let state = app.automation_op(r#"{"protocol":1,"op":"state"}"#);
     let doc = state["document_id"].as_u64().unwrap();
@@ -83,7 +83,7 @@ fn close_op_guards_dirty_documents_and_discards() {
 
 #[test]
 fn sysvar_round_trips_and_refuses_unknowns() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let state = app.automation_op(r#"{"protocol":1,"op":"state"}"#);
     let doc = state["document_id"].as_u64().unwrap();
@@ -133,7 +133,7 @@ fn sysvar_round_trips_and_refuses_unknowns() {
 
 #[test]
 fn sysvar_batches_validate_atomically_and_undo_as_one_step() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let state = app.automation_op(r#"{"protocol":1,"op":"state"}"#);
     let doc = state["document_id"].as_u64().unwrap();
@@ -185,7 +185,7 @@ fn sysvar_batches_validate_atomically_and_undo_as_one_step() {
 
 #[test]
 fn layout_create_and_page_setup_configure_sheets() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let state = app.automation_op(r#"{"protocol":1,"op":"state"}"#);
     let doc = state["document_id"].as_u64().unwrap();
@@ -234,7 +234,7 @@ fn layout_create_and_page_setup_configure_sheets() {
 
 #[test]
 fn new_from_template_and_dwt_save_round_trip() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     app.automation_op(r#"{"op":"run","cmd":"CIRCLE 5,5 2"}"#);
     let dwt = std::env::temp_dir().join(format!("ocs_tpl_{}.dwt", std::process::id()));
@@ -275,7 +275,7 @@ fn new_from_template_and_dwt_save_round_trip() {
 fn wblock_with_template_base_keeps_template_tables() {
     // The template drawing carries layer TPL; the exported entity set lands
     // in a copy of that template so TPL survives (Catalog §2.1).
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     mutate(
         &mut app,
@@ -329,7 +329,7 @@ fn wblock_with_template_base_keeps_template_tables() {
 
 #[test]
 fn entities_copy_to_another_open_document() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     app.automation_op(r#"{"op":"run","cmd":"CIRCLE 5,5 2"}"#);
     let handle = app.automation_op(r#"{"op":"query","type":"Circle","detail":"summary"}"#)
@@ -364,7 +364,7 @@ fn entities_copy_to_another_open_document() {
 
 #[test]
 fn group_create_and_selection_sets() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     app.automation_op(r#"{"op":"run","cmd":"LINE 0,0 1,0"}"#);
     app.automation_op(r#"{"op":"run","cmd":"CIRCLE 5,5 2"}"#);
@@ -413,7 +413,7 @@ fn group_create_and_selection_sets() {
 
 #[test]
 fn plot_per_page_writes_one_pdf_per_layout() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     app.automation_op(r#"{"op":"run","cmd":"LINE 0,0 100,80"}"#);
     let state = app.automation_op(r#"{"protocol":1,"op":"state"}"#);
@@ -440,7 +440,7 @@ fn plot_per_page_writes_one_pdf_per_layout() {
 
 #[test]
 fn entities_create_supports_control_and_fit_point_splines() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let control = mutate(
         &mut app,
@@ -474,7 +474,7 @@ fn entities_create_supports_control_and_fit_point_splines() {
 
 #[test]
 fn hatch_boundary_is_flattened_in_query() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let r = mutate(
         &mut app,
@@ -491,7 +491,7 @@ fn hatch_boundary_is_flattened_in_query() {
 
 #[test]
 fn diagnostic_layer_survives_plain_io_round_trip() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let r = mutate(
         &mut app,
@@ -519,7 +519,7 @@ fn diagnostic_layer_survives_plain_io_round_trip() {
 
 #[test]
 fn block_delete_and_define_replace_manage_definitions() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     app.automation_op(r#"{"op":"run","cmd":"LINE 0,0 1,0"}"#);
     app.automation_op(r#"{"op":"run","cmd":"CIRCLE 5,5 2"}"#);
@@ -604,7 +604,7 @@ fn block_delete_and_define_replace_manage_definitions() {
 
 #[test]
 fn wblock_normalize_shifts_the_export_to_the_origin() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     app.automation_op(r#"{"op":"run","cmd":"LINE 100,200 110,210"}"#);
     let state = app.automation_op(r#"{"protocol":1,"op":"state"}"#);
@@ -634,7 +634,7 @@ fn wblock_normalize_shifts_the_export_to_the_origin() {
 
 #[test]
 fn file_identity_is_stable_and_survives_a_round_trip() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let r1 = mutate(
         &mut app,
@@ -690,7 +690,7 @@ fn file_identity_is_stable_and_survives_a_round_trip() {
 
 #[test]
 fn state_reports_the_hand_seed() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let state = app.automation_op(r#"{"protocol":1,"op":"state"}"#);
     let before = u64::from_str_radix(state["hand_seed"].as_str().unwrap(), 16).unwrap();
@@ -702,7 +702,7 @@ fn state_reports_the_hand_seed() {
 
 #[test]
 fn text_search_op_queries_text_and_attributes() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let r = mutate(
         &mut app,
@@ -741,7 +741,7 @@ fn text_search_op_queries_text_and_attributes() {
 
 #[test]
 fn text_replace_op_batch_replaces_preserves_formatting_and_undoes() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let r = mutate(
         &mut app,
@@ -796,7 +796,7 @@ fn text_replace_op_batch_replaces_preserves_formatting_and_undoes() {
 
 #[test]
 fn text_audit_op_simulates_dry_run_checks_terms_and_dictionary() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let r = mutate(
         &mut app,
@@ -859,7 +859,7 @@ fn text_audit_op_simulates_dry_run_checks_terms_and_dictionary() {
 
 #[test]
 fn text_replace_op_supports_dry_run_without_mutating_or_undo() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let r = mutate(
         &mut app,
@@ -910,7 +910,7 @@ fn text_replace_op_supports_dry_run_without_mutating_or_undo() {
 
 #[test]
 fn text_audit_system_spellcheck_flags_misspelled_words() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let r = mutate(
         &mut app,

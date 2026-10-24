@@ -1,4 +1,4 @@
-//! OpenCADStudio COMMANDS benchmark suite (`harness = false`).
+//! lgbcadstudio COMMANDS benchmark suite (`harness = false`).
 //! Currently: EXPLODE (geometry pipeline + scene apply).
 
 #[path = "support/harness.rs"]
@@ -16,9 +16,9 @@ use codec::types::{Vector2, Vector3};
 use codec::{CadDocument, EntityType, Handle};
 
 use harness::BenchmarkRunner;
-use OpenCADStudio::modules::draw::modify::explode::{apply_explode_replacements, explode_batch};
-use OpenCADStudio::modules::draw::modify::flatten;
-use OpenCADStudio::scene::Scene;
+use lgbcadstudio::modules::draw::modify::explode::{apply_explode_replacements, explode_batch};
+use lgbcadstudio::modules::draw::modify::flatten;
+use lgbcadstudio::scene::Scene;
 
 const BLOCK_NAME: &str = "BENCH_BLOCK";
 const VERTS_PER_POLYLINE: usize = 50;
@@ -412,7 +412,7 @@ fn bench_flatten_scene_apply(runner: &mut BenchmarkRunner) {
 }
 
 fn main() {
-    println!("\nInitializing OpenCADStudio Command Benchmarks...");
+    println!("\nInitializing lgbcadstudio Command Benchmarks...");
     let mut runner = BenchmarkRunner::new(
         format!("{:^120}", "OPENCADSTUDIO COMMAND BENCHMARK REPORT"),
         "cad_command_metrics.json",

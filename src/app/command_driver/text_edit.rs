@@ -1,6 +1,6 @@
 use super::*;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn handle_open_mtext_editor(&mut self, result: CmdResult) {
         let i = self.active_tab;
         let CmdResult::OpenMTextEditor {

@@ -1,10 +1,10 @@
-use super::{Message, ModalKind, OpenCADStudio};
+use super::{Message, ModalKind, lgbcadstudio};
 use codec::entities::{Insert, Line};
 use codec::types::Vector3;
 use codec::{EntityType, Handle};
 
-fn fixture() -> (OpenCADStudio, Handle) {
-    let mut app = OpenCADStudio::new_for_test();
+fn fixture() -> (lgbcadstudio, Handle) {
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let i = app.active_tab;
     app.tabs[i].scene.define_block_raw(
@@ -24,18 +24,18 @@ fn fixture() -> (OpenCADStudio, Handle) {
     (app, reference)
 }
 
-fn begin(app: &mut OpenCADStudio, reference: Handle) {
+fn begin(app: &mut lgbcadstudio, reference: Handle) {
     let _ = app.dispatch_command(&format!("BEDIT_BEGIN:{}", reference.value()));
     assert!(app.tabs[app.active_tab].active_block_edit.is_some());
 }
 
-fn circle(app: &mut OpenCADStudio, x: f64) {
+fn circle(app: &mut lgbcadstudio, x: f64) {
     let result = app.automation_op(&format!(r#"{{"op":"run","cmd":"CIRCLE {x},0 2"}}"#));
     assert_eq!(result["ok"], true, "{result}");
     app.finish_pending_history(app.active_tab);
 }
 
-fn members(app: &OpenCADStudio) -> Vec<Handle> {
+fn members(app: &lgbcadstudio) -> Vec<Handle> {
     app.tabs[app.active_tab]
         .scene
         .document
@@ -46,7 +46,7 @@ fn members(app: &OpenCADStudio) -> Vec<Handle> {
         .clone()
 }
 
-fn main_depth(app: &OpenCADStudio) -> usize {
+fn main_depth(app: &lgbcadstudio) -> usize {
     let tab = &app.tabs[app.active_tab];
     tab.block_edit_history
         .as_ref()
@@ -54,12 +54,12 @@ fn main_depth(app: &OpenCADStudio) -> usize {
         .unwrap_or(tab.history.undo_stack.len())
 }
 
-fn feed(app: &mut OpenCADStudio, text: &str) {
+fn feed(app: &mut lgbcadstudio, text: &str) {
     let _ = app.update(Message::CommandInput(text.to_string()));
     let _ = app.update(Message::CommandSubmit);
 }
 
-fn edit_action_set(app: &mut OpenCADStudio, action: Handle, mode: &str, targets: Vec<Handle>) {
+fn edit_action_set(app: &mut lgbcadstudio, action: Handle, mode: &str, targets: Vec<Handle>) {
     let _ = app.dispatch_command("BACTIONBARMODE 0");
     app.tabs[app.active_tab].selected_authoring = Some(action);
     let _ = app.dispatch_command("BACTIONSET");
@@ -108,7 +108,7 @@ fn block_actions_topology_save_updates_values_members_properties_and_history() {
             value: actions::Value::Point(glam::DVec3::new(x, 0., 0.)),
         });
     }
-    let check = |app: &OpenCADStudio, end: f64, center: f64| {
+    let check = |app: &lgbcadstudio, end: f64, center: f64| {
         let doc = &app.tabs[app.active_tab].scene.document;
         for (insert, delta) in [(reference, 2.), (second, 4.)] {
             let EntityType::Insert(ins) = doc.get_entity(insert).unwrap() else {
@@ -456,7 +456,7 @@ fn block_actions_set_edit_refresh_local_history_discard_save_and_drawing_history
         .id;
     assert!(app.start_test_action_grip(reference, grip));
     feed(&mut app, "12,0");
-    let check = |app: &OpenCADStudio, start: f64, center: f64| {
+    let check = |app: &lgbcadstudio, start: f64, center: f64| {
         let doc = &app.tabs[app.active_tab].scene.document;
         let EntityType::Insert(ins) = doc.get_entity(reference).unwrap() else {
             panic!()
@@ -874,7 +874,7 @@ fn block_actions_rotate_flip_mouse_grips_authoring_history_and_reopen() {
         assert_eq!(app.tabs[source].history.undo_stack.len(), depth + 1);
     }
     let baseline = app.tabs[source].scene.document.clone();
-    let click = |app: &mut OpenCADStudio, world: glam::DVec3| {
+    let click = |app: &mut lgbcadstudio, world: glam::DVec3| {
         let scene = &app.tabs[app.active_tab].scene;
         let (w, h) = scene.selection.borrow().view.vp_size;
         let tile = scene.active_model_tile_bounds(w, h);
@@ -897,7 +897,7 @@ fn block_actions_rotate_flip_mouse_grips_authoring_history_and_reopen() {
         )));
         let _ = app.update(Message::ViewportLeftRelease);
     };
-    let check = |app: &OpenCADStudio, insert: Handle, expected: Vector3| {
+    let check = |app: &lgbcadstudio, insert: Handle, expected: Vector3| {
         let doc = &app.tabs[app.active_tab].scene.document;
         let EntityType::Insert(ins) = doc.get_entity(insert).unwrap() else {
             panic!()
@@ -1200,7 +1200,7 @@ fn authoring_edit_mouse_selection_endpoint_label_marker_history_and_reopen() {
         glam::DVec3::new(10., 7., 0.),
         1600. / 900.,
     );
-    let click = |app: &mut OpenCADStudio, point: Vector3| {
+    let click = |app: &mut lgbcadstudio, point: Vector3| {
         let scene = &app.tabs[app.active_tab].scene;
         let (w, h) = scene.selection.borrow().view.vp_size;
         let b = scene.active_model_tile_bounds(w, h);
@@ -1378,7 +1378,7 @@ fn erase_removes_selected_action_and_parameter_takes_its_actions() {
         actions::create(doc, def, Kind::Move, p, &targets, glam::DVec3::ZERO).unwrap()
     };
     let (first, second) = (action(), action());
-    let live = |app: &OpenCADStudio| {
+    let live = |app: &lgbcadstudio| {
         let doc = &app.tabs[app.active_tab].scene.document;
         actions::actions(doc, def).iter().map(|a| a.0).collect::<Vec<_>>()
     };
@@ -1443,7 +1443,7 @@ fn block_editor_renames_orientation_basepoint_and_visibility_parameters() {
     begin(&mut app, reference);
     let i = app.active_tab;
     let definition = app.tabs[i].active_block_edit_session().unwrap().br_handle;
-    let rename = |app: &mut OpenCADStudio, handle: Handle, name: &str| {
+    let rename = |app: &mut lgbcadstudio, handle: Handle, name: &str| {
         app.tabs[i].selected_authoring = Some(handle);
         let _ = app.update(Message::PropGeomInput {
             field: "authoring_name",
@@ -1637,7 +1637,7 @@ fn block_actions_mouse_selection_waits_for_enter_for_move_and_scale() {
                 1600. / 900.,
             );
         let _ = app.dispatch_command(command);
-        let click = |app: &mut OpenCADStudio, point: [f64; 3], modifiers: &str| {
+        let click = |app: &mut lgbcadstudio, point: [f64; 3], modifiers: &str| {
             let scene = &app.tabs[app.active_tab].scene;
             let (vw, vh) = scene.selection.borrow().view.vp_size;
             let tile = scene.active_model_tile_bounds(vw, vh);
@@ -2342,7 +2342,7 @@ fn block_actions_test_reference_transform_visibility_and_noop_history() {
     assert_eq!(app.tabs[i].scene.document, before);
 }
 
-fn authored_points(app: &OpenCADStudio) -> Vec<codec::objects::BlockPointParameter> {
+fn authored_points(app: &lgbcadstudio) -> Vec<codec::objects::BlockPointParameter> {
     let tab = &app.tabs[app.active_tab];
     let definition = tab
         .scene
@@ -2357,7 +2357,7 @@ fn authored_points(app: &OpenCADStudio) -> Vec<codec::objects::BlockPointParamet
         .collect()
 }
 
-fn distance_parameter_count(app: &OpenCADStudio) -> usize {
+fn distance_parameter_count(app: &lgbcadstudio) -> usize {
     let tab = &app.tabs[app.active_tab];
     let definition = tab
         .scene
@@ -2369,7 +2369,7 @@ fn distance_parameter_count(app: &OpenCADStudio) -> usize {
     crate::scene::block_distance_parameter::parameters(&tab.scene.document, definition).len()
 }
 
-fn orientation_parameter_count(app: &OpenCADStudio) -> usize {
+fn orientation_parameter_count(app: &lgbcadstudio) -> usize {
     let tab = &app.tabs[app.active_tab];
     let definition = tab
         .scene
@@ -2455,7 +2455,7 @@ fn lookup_basepoint_placement_history_test_block_and_saved_parent_undo() {
     assert!(block_basepoint::parameter(&app.tabs[i].scene.document, definition).is_some());
 }
 
-fn lookup_editor_fixture() -> (OpenCADStudio, Handle, Handle) {
+fn lookup_editor_fixture() -> (lgbcadstudio, Handle, Handle) {
     let (mut app, reference) = fixture();
     begin(&mut app, reference);
     let _ = app.dispatch_command("BACTIONBARMODE 0");
@@ -2467,7 +2467,7 @@ fn lookup_editor_fixture() -> (OpenCADStudio, Handle, Handle) {
         crate::scene::block_lookup::parameters(&app.tabs[i].scene.document, definition)[0].0;
     (app, definition, parameter)
 }
-fn edit_lookup(app: &mut OpenCADStudio) {
+fn edit_lookup(app: &mut lgbcadstudio) {
     use crate::ui::window::block_lookup::Action as A;
     let _ = app.update(Message::BlockLookup(A::Property(0)));
     let _ = app.update(Message::BlockLookup(A::AddProperty));
@@ -2970,7 +2970,7 @@ fn point_parameter_placement_discard_and_stale_context_leave_no_objects() {
     assert_eq!(app.tabs[i].scene.document, closed);
 }
 
-fn visibility_editor() -> (OpenCADStudio, crate::ui::window::block_visibility::Target) {
+fn visibility_editor() -> (lgbcadstudio, crate::ui::window::block_visibility::Target) {
     let (mut app, reference) = fixture();
     begin(&mut app, reference);
     let _ = app.run_command_line("BPARAMETER VISIBILITY 0,0");
@@ -2981,7 +2981,7 @@ fn visibility_editor() -> (OpenCADStudio, crate::ui::window::block_visibility::T
     (app, target)
 }
 
-fn visibility_action(app: &mut OpenCADStudio, action: crate::ui::window::block_visibility::Action) {
+fn visibility_action(app: &mut lgbcadstudio, action: crate::ui::window::block_visibility::Action) {
     let _ = app.update(Message::BlockVisibility(action));
 }
 
@@ -3112,7 +3112,7 @@ fn visibility_ribbon_mode_and_make_visible_cancel_do_not_change_saved_flags() {
     let before = app.tabs[i].scene.document.clone();
     let depth = app.tabs[i].history.undo_stack.len();
     let dirty = app.tabs[i].dirty;
-    let wires = |app: &OpenCADStudio| {
+    let wires = |app: &lgbcadstudio| {
         app.tabs[i]
             .scene
             .entity_wires()
@@ -4503,7 +4503,7 @@ fn save_after_session_undo_does_not_write_a_dangling_member() {
 
 #[test]
 fn locked_bedit_no_selection_opens_edit_block_definition_dialog() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let tab = app.active_tab;
     app.tabs[tab].scene.define_block_raw(
@@ -4538,7 +4538,7 @@ fn locked_bedit_no_selection_opens_edit_block_definition_dialog() {
 
 #[test]
 fn locked_bedit_dialog_select_existing_block() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let tab = app.active_tab;
     app.tabs[tab]
@@ -4569,7 +4569,7 @@ fn locked_bedit_dialog_select_existing_block() {
 
 #[test]
 fn locked_bedit_dialog_name_validation() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let tab = app.active_tab;
     app.tabs[tab].scene.deselect_all();
@@ -4593,7 +4593,7 @@ fn locked_bedit_dialog_name_validation() {
 
 #[test]
 fn locked_bedit_dialog_create_new_block_closes_without_saving() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let tab = app.active_tab;
     app.tabs[tab].scene.deselect_all();
@@ -4630,7 +4630,7 @@ fn locked_bedit_dialog_create_new_block_closes_without_saving() {
 
 #[test]
 fn locked_bedit_dialog_create_new_block_discard_dirty_leaves_no_block() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let tab = app.active_tab;
     app.tabs[tab].scene.deselect_all();
@@ -4662,7 +4662,7 @@ fn locked_bedit_dialog_create_new_block_discard_dirty_leaves_no_block() {
 
 #[test]
 fn locked_bedit_dialog_create_new_block_save_persists_and_undoes() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let tab = app.active_tab;
     app.tabs[tab].scene.deselect_all();
@@ -4754,7 +4754,7 @@ fn locked_bedit_discard_preserves_block_epoch_and_render_caches() {
     assert_eq!(app.tabs[tab].scene.block_epoch, epoch_before);
 }
 
-fn placed_visibility(app: &OpenCADStudio) -> &codec::objects::BlockVisibilityParameter {
+fn placed_visibility(app: &lgbcadstudio) -> &codec::objects::BlockVisibilityParameter {
     let tab = &app.tabs[app.active_tab];
     let definition = tab
         .scene

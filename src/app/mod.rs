@@ -497,7 +497,7 @@ pub enum RecentView {
 }
 
 /// What the Space / Enter keys currently mean at the command line. One
-/// decision point (`OpenCADStudio::text_entry_mode`) for every keyboard
+/// decision point (`lgbcadstudio::text_entry_mode`) for every keyboard
 /// route that used to re-derive the answer from editor state.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub(crate) enum TextEntryMode {
@@ -515,7 +515,13 @@ pub(crate) fn delobj_deletes_auxiliary(value: i16, creates_surface: bool) -> boo
     value == 2 || (value == 3 && !creates_surface)
 }
 
-pub(super) struct OpenCADStudio {
+pub(super) struct lgbcadstudio {
+// --- ESTADO PARA EL COMANDO NUMERA ---
+            pub(crate) numera_contador: f64,
+    pub(crate) numera_prefijo: String,
+    pub(crate) numera_sufijo: String,
+    pub(crate) numera_altura: f64,
+    pub(crate) awaiting_numera_point: bool,
     start: Instant,
     control: control::State,
     tabs: Vec<DocumentTab>,
@@ -1282,7 +1288,7 @@ pub(super) struct OpenCADStudio {
     /// Startup load failures keyed by plugin id. The Plugin Manager uses these
     /// to distinguish an installed-but-failed package from one awaiting restart.
     plugin_load_errors: rustc_hash::FxHashMap<String, String>,
-    /// Curated plugin registry fetched from the OpenCADStudio repo.
+    /// Curated plugin registry fetched from the lgbcadstudio repo.
     plugin_registry: Vec<crate::plugin::external::RegistryEntry>,
     /// True while the curated registry request is in flight.
     plugin_registry_loading: bool,
@@ -4757,7 +4763,7 @@ pub enum SystemClipboardText {
     ConversionFailed,
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Install the Start-page video list, decoding each thumbnail's JPEG into
     /// an image Handle exactly once (a fresh Handle per view frame would
     /// re-upload the texture every frame).
@@ -4784,6 +4790,12 @@ impl OpenCADStudio {
         // explicitly (File → New); we never auto-spawn Drawing1.
         let start_tab = DocumentTab::new_start();
         let mut app = Self {
+             numera_contador: 1.0,
+    numera_prefijo: String::new(),
+    numera_sufijo: String::new(),
+    numera_altura: 2.5,
+    
+            awaiting_numera_point: false,
             control: control::State::new(),
             start: Instant::now(),
             tabs: vec![start_tab],
@@ -5756,37 +5768,37 @@ pub fn run() -> iced::Result {
     // default font, is remapped to it before the first window opens.
     crate::sys::ui_font::apply(crate::sys::ui_font::detect().as_ref());
     iced::daemon(
-        OpenCADStudio::boot,
-        OpenCADStudio::update,
-        OpenCADStudio::view,
+        lgbcadstudio::boot,
+        lgbcadstudio::update,
+        lgbcadstudio::view,
     )
     .settings(iced::Settings {
         power_preference: iced::backend::PowerPreference::HighPerformance,
         ..iced::Settings::default()
     })
-    .subscription(OpenCADStudio::subscription)
-    .scale_factor(|state: &OpenCADStudio, _| f32::from(state.ui_scale_percent) / 100.0)
-    .title(|state: &OpenCADStudio, window_id: window::Id| {
+    .subscription(lgbcadstudio::subscription)
+    .scale_factor(|state: &lgbcadstudio, _| f32::from(state.ui_scale_percent) / 100.0)
+    .title(|state: &lgbcadstudio, window_id: window::Id| {
         let _ = window_id; // all dialogs are in-canvas modals now
         if let Some(tab) = state.tabs.get(state.active_tab) {
             let dot = if tab.dirty { "● " } else { "" };
             let name = tab.tab_display_name();
             format!(
-                "{}Open CAD Studio {} - {}",
+                "{}LGBCADStudio by Trejo {} - {}",
                 dot,
                 env!("OCS_APP_VERSION"),
                 name
             )
         } else {
-            concat!("Open CAD Studio ", env!("OCS_APP_VERSION")).to_string()
+            concat!("LGBCADStudio by Trejo ", env!("OCS_APP_VERSION")).to_string()
         }
     })
-    .theme(|state: &OpenCADStudio, _| state.active_theme.clone())
+    .theme(|state: &lgbcadstudio, _| state.active_theme.clone())
     .font(iced_aw::ICED_AW_FONT_BYTES)
     .run()
 }
 
-impl Drop for OpenCADStudio {
+impl Drop for lgbcadstudio {
     fn drop(&mut self) {
         #[cfg(target_arch = "wasm32")]
         crate::sys::set_unsaved_changes_warning(false);
@@ -5818,15 +5830,15 @@ pub fn run_web() -> iced::Result {
         }
     });
     iced::application(
-        OpenCADStudio::boot_web,
-        OpenCADStudio::update,
-        OpenCADStudio::view_main,
+        lgbcadstudio::boot_web,
+        lgbcadstudio::update,
+        lgbcadstudio::view_main,
     )
-    .subscription(OpenCADStudio::subscription)
-    .title(|_state: &OpenCADStudio| {
-        concat!("Open CAD Studio ", env!("OCS_APP_VERSION")).to_string()
+    .subscription(lgbcadstudio::subscription)
+    .title(|_state: &lgbcadstudio| {
+        concat!("LGBCADStudio by Trejo ", env!("OCS_APP_VERSION")).to_string()
     })
-    .theme(|state: &OpenCADStudio| state.active_theme.clone())
+    .theme(|state: &lgbcadstudio| state.active_theme.clone())
     .backend(iced::Backend::Hardware(iced::backend::Api::OpenGL))
     .font(iced_aw::ICED_AW_FONT_BYTES)
     .run()

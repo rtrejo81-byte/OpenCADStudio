@@ -121,7 +121,7 @@ pub(super) fn can_edit_text(mut handle: Handle, document: &codec::CadDocument) -
     }
 }
 
-impl super::OpenCADStudio {
+impl super::lgbcadstudio {
     /// Open the right in-place editor for `handle`: the plain box for single-
     /// line text entities, the rich MText editor for MText / MultiLeader. A
     /// Leader resolves to the entity it annotates. Returns the focus task for

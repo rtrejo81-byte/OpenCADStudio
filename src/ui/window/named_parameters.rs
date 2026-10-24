@@ -1,5 +1,5 @@
 //! Named-parameter table editor using buffered `(name, formula)` rows.
-//! edited in a working buffer (`OpenCADStudio::named_parameter_editor_rows`)
+//! edited in a working buffer (`lgbcadstudio::named_parameter_editor_rows`)
 //! and committed to `Scene::named_parameters` only on Apply — matching the
 //! alias editor's "closing discards unapplied edits" convention, which
 //! suits a formula table even better: `ParameterTable::set` validates (and
@@ -125,7 +125,7 @@ fn danger_style(theme: &Theme) -> iced::widget::text::Style {
 /// with the same name would otherwise silently collapse into "whichever one
 /// happens to `set` last wins," discarding the other's formula with no
 /// indication anything was lost. Both `preview` and the real Apply
-/// (`OpenCADStudio::apply_named_parameter_editor_rows`) check this first and
+/// (`lgbcadstudio::apply_named_parameter_editor_rows`) check this first and
 /// refuse every row in a name collision rather than guessing which one the
 /// user meant.
 pub(crate) fn duplicate_name_rows(rows: &[ParamEditorRow]) -> std::collections::HashSet<usize> {

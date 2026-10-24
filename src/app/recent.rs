@@ -3,7 +3,7 @@
 //! `localStorage`, in the "recent" section); this module mutates the in-memory
 //! list, persists it via `save_config`, and evicts matching web OPFS copies.
 
-use super::OpenCADStudio;
+use super::lgbcadstudio;
 use std::path::{Path, PathBuf};
 
 /// Bounds and default for how many recent files are kept.
@@ -11,7 +11,7 @@ pub(super) const RECENT_MIN: usize = 5;
 pub(super) const RECENT_MAX: usize = 100;
 pub(super) const RECENT_DEFAULT: usize = 20;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Record a freshly opened file at the top of the recents list. Returns
     /// the background task that decodes its thumbnail.
     pub(super) fn push_recent(&mut self, path: PathBuf) -> iced::Task<crate::app::Message> {

@@ -1,6 +1,6 @@
 use super::*;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(in crate::app) fn reject_locked_edit(&mut self, i: usize, handle: Handle) -> bool {
         let Some(layer) = self.tabs[i].scene.locked_layer_name(handle) else {
             return false;

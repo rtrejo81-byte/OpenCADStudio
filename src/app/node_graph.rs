@@ -3,7 +3,7 @@
 //! the control protocol's `set_property_value`) aimed at that entity. The
 //! `graph` crate evaluates; [`AppHost`] gives it the drawing.
 
-use super::{Message, OpenCADStudio};
+use super::{Message, lgbcadstudio};
 use crate::scene::model::object::PropSection;
 use crate::ui::node_graph::{Drag, GraphMsg, NodeRow, NodeSection, ObjectKind, RowWidget};
 use codec::Handle;
@@ -12,7 +12,7 @@ use iced::Task;
 use rustc_hash::FxHashMap as HashMap;
 use serde_json::{json, Value};
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// The Properties panel's single-object page for `handle`.
     fn graph_panel_sections(&self, i: usize, handle: Handle) -> Vec<PropSection> {
         let tab = &self.tabs[i];
@@ -368,7 +368,7 @@ impl OpenCADStudio {
 
 /// The drawing as the graph sees it.
 struct AppHost<'a> {
-    app: &'a mut OpenCADStudio,
+    app: &'a mut lgbcadstudio,
     i: usize,
     tasks: Vec<Task<Message>>,
 }

@@ -11,7 +11,7 @@
 
 use codec::objects::{ObjectType, PlotSettings};
 use codec::Handle;
-use OpenCADStudio::scene::Scene;
+use lgbcadstudio::scene::Scene;
 
 /// Break a document the way a foreign DWG does: dangle the header root pointer
 /// and re-home the real root under a non-dictionary owner, so neither the
@@ -69,9 +69,9 @@ fn page_setup_survives_a_dwg_roundtrip_after_root_repair() {
     scene.page_setup_save("Wide", PlotSettings::new("Wide"));
 
     // Full DWG write/read cycle: the repaired root must carry the setup across.
-    let bytes = OpenCADStudio::io::save_to_bytes(&scene.document, "dwg", scene.document.version)
+    let bytes = lgbcadstudio::io::save_to_bytes(&scene.document, "dwg", scene.document.version)
         .expect("save to DWG bytes");
-    let doc = OpenCADStudio::io::load_bytes("roundtrip.dwg", bytes).expect("reload DWG bytes");
+    let doc = lgbcadstudio::io::load_bytes("roundtrip.dwg", bytes).expect("reload DWG bytes");
 
     let mut reloaded = Scene::new();
     reloaded.document = doc;
@@ -107,7 +107,7 @@ fn ctab_is_created_against_a_repaired_root() {
     // used to silently drop the record.
     scene.set_current_layout("Layout1".to_string());
     assert_eq!(
-        OpenCADStudio::io::saved_active_layout(&scene.document).as_deref(),
+        lgbcadstudio::io::saved_active_layout(&scene.document).as_deref(),
         Some("Layout1"),
         "CTAB must persist even when the root pointer needed repair"
     );

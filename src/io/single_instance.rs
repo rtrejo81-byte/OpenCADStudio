@@ -38,7 +38,7 @@ use serde_json::{json, Value};
 /// Protocol tag. Bump the suffix on any wire-format change so a running older
 /// editor is recognised as a stranger and both processes degrade cleanly
 /// instead of misreading each other.
-const MAGIC: &str = "OpenCADStudio/si/2";
+const MAGIC: &str = "lgbcadstudio/si/2";
 
 /// Neither end blocks forever. Long enough to cover a busy primary's accept
 /// backlog, short enough that a wedged peer costs a visible pause and not a

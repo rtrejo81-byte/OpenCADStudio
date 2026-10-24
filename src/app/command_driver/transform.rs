@@ -1,6 +1,6 @@
 use super::*;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn handle_transform_selected(
         &mut self,
         mut handles: Vec<Handle>,

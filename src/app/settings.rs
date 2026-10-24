@@ -168,7 +168,7 @@ pub enum RightClickMode {
     /// repeats the last command when idle); holding the button longer than
     /// `right_click_hold_ms` opens the shortcut menu.
     TimeSensitive,
-    /// Original Open CAD Studio behaviour: while a command runs the first
+    /// Original LGBCADStudio by Trejo Studio behaviour: while a command runs the first
     /// right-click is Enter and a second consecutive one opens the menu;
     /// when idle a right-click opens the menu.
     EnterFirst,
@@ -694,7 +694,7 @@ pub struct UserSettings {
     // Ortho ($ORTHOMODE) and the running OSNAP set ($OSMODE) are per-drawing —
     // stored in the document header, not here (they used to be persisted app-
     // globally, which duplicated the file's own state).
-    /// Whether the one-time "make Open CAD Studio the default for .dwg/.dxf?"
+    /// Whether the one-time "make LGBCADStudio by Trejo Studio the default for .dwg/.dxf?"
     /// prompt has already been shown. Set once the user answers (either way),
     /// so we never nag again on subsequent launches.
     pub default_assoc_prompted: bool,
@@ -702,7 +702,7 @@ pub struct UserSettings {
     /// when a drawing opens (see `crate::io::font_repo`).
     #[serde(default = "default_check_missing_fonts")]
     pub check_missing_fonts: bool,
-    /// Custom font source base URL (empty = the OpenCADStudio community
+    /// Custom font source base URL (empty = the lgbcadstudio community
     /// repository). Each missing font is fetched as `{base}/{file_name}`,
     /// so an intranet folder or a private GitHub raw folder both work.
     #[serde(default)]

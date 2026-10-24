@@ -3446,7 +3446,7 @@ impl super::Scene {
 
     /// Handle remapping lives in each command that duplicates
     /// entities — `Scene::copy_entities`' `handle_map` (COPY/ARRAY/MIRROR,
-    /// `src/scene/modify.rs`) and `OpenCADStudio::finalize_paste`'s own
+    /// `src/scene/modify.rs`) and `lgbcadstudio::finalize_paste`'s own
     /// (clipboard paste, `src/app/command_driver.rs`) — rather than in one
     /// shared table, so each call site passes its own `handle_map` here
     /// after adding the duplicated entities.

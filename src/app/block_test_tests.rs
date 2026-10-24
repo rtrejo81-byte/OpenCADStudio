@@ -1,10 +1,10 @@
-use super::{Message, ModalKind, OpenCADStudio};
+use super::{Message, ModalKind, lgbcadstudio};
 use codec::entities::{Insert, Line};
 use codec::types::Vector3;
 use codec::{EntityType, Handle};
 
-fn fixture() -> (OpenCADStudio, usize, Handle) {
-    let mut app = OpenCADStudio::new_for_test();
+fn fixture() -> (lgbcadstudio, usize, Handle) {
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let i = app.active_tab;
     app.tabs[i].scene.define_block_raw(
@@ -175,7 +175,7 @@ fn block_test_initial_extents_include_dynamic_action_grips() {
 #[test]
 fn block_test_keytips_follow_context_and_offer_close() {
     let (mut app, source, _) = fixture();
-    let tab_tip = |app: &OpenCADStudio, target: &str| {
+    let tab_tip = |app: &lgbcadstudio, target: &str| {
         app.ribbon.keytips_json(false)["tips"]
             .as_array()
             .unwrap()
@@ -296,7 +296,7 @@ fn block_test_parent_close_cancel_keeps_test_and_discard_removes_it() {
 
 #[test]
 fn block_test_no_editor_is_refused() {
-    let mut app = OpenCADStudio::new_for_test();
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let count = app.tabs.len();
     let _ = app.open_block_test(app.active_tab);

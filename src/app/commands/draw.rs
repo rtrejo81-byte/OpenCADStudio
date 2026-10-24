@@ -1,6 +1,6 @@
 use super::*;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn dispatch_draw(&mut self, cmd: &str, i: usize) -> Option<Task<Message>> {
         match cmd {
             // ── Draw commands ──────────────────────────────────────────────
@@ -2769,12 +2769,12 @@ impl OpenCADStudio {
 
 #[cfg(test)]
 mod region_tests {
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
 
     #[test]
     fn region_respects_delobj_and_preserves_unconverted_sources() {
         for delete_sources in [false, true] {
-            let mut app = OpenCADStudio::new_for_test();
+            let mut app = lgbcadstudio::new_for_test();
             app.automation_op(r#"{"op":"new"}"#);
             app.automation_op(r#"{"op":"run","cmd":"CIRCLE 5,5 3"}"#);
             app.automation_op(r#"{"op":"run","cmd":"LINE 0,0 10,10"}"#);
@@ -2822,13 +2822,13 @@ mod region_tests {
 
 #[cfg(test)]
 mod degenerate_constraint_tests {
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
 
     /// Retaining a zero-length line's size used to hand the solver a NaN
     /// Jacobian, and its SVD fallback never returned.
     #[test]
     fn equal_constraint_with_a_zero_length_line_returns() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.automation_op(r#"{"op":"run","cmd":"LINE 0,0 0,0 "}"#);
         app.automation_op(r#"{"op":"run","cmd":"LINE 5,5 20,7 "}"#);

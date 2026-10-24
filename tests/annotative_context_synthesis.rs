@@ -7,8 +7,8 @@ use codec::entities::{EntityType, MText};
 use codec::objects::{Dictionary, ObjectContextKind, ObjectType, Scale};
 use codec::types::Vector3;
 use codec::{CadDocument, DxfVersion, Handle};
-use OpenCADStudio::io;
-use OpenCADStudio::scene::annotative;
+use lgbcadstudio::io;
+use lgbcadstudio::scene::annotative;
 
 #[test]
 fn empty_annotation_scales_is_not_annotative() {

@@ -17,7 +17,7 @@ use codec::{EntityType, Handle};
 
 use crate::scene::model::object::{GripDef, GripShape};
 
-use super::OpenCADStudio;
+use super::lgbcadstudio;
 
 /// Sentinel grip id for the visibility (lookup) grip, distinct from any
 /// entity's own grip ids so the click handler routes it to the dropdown.
@@ -64,7 +64,7 @@ struct StateMapping {
     visible_idx: HashSet<usize>,
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn apply_table_row(&mut self, insert: Handle, row: usize) {
         let i = self.active_tab;
         if self.reject_locked_edit(i, insert) {

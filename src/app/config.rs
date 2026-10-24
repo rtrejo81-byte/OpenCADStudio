@@ -1,5 +1,5 @@
 //! Consolidated user configuration. Native builds use one grouped JSON file
-//! (`<config>/OpenCADStudio/settings.json`); web builds keep the same JSON in
+//! (`<config>/lgbcadstudio/settings.json`); web builds keep the same JSON in
 //! `localStorage`. It holds every app preference except the command aliases,
 //! which use native `ocad.pgp` or a separate web storage key. Serialized via
 //! serde so the data is structured and grouped, replacing the former scattered

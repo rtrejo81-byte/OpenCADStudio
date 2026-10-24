@@ -12,7 +12,7 @@ pub(crate) enum PdfImportSource {
     File(pdf_import::PdfFileImport),
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(crate) fn run_pdf_import(&mut self, i: usize, source: PdfImportSource) {
         use codec::objects::ObjectType;
         let document = &self.tabs[i].scene.document;
@@ -222,7 +222,7 @@ impl OpenCADStudio {
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// PDFATTACH's end: every page's definition (created or reused, with the
     /// definitions dictionary) and underlay in one undo step.
     pub(crate) fn attach_pdf_pages(

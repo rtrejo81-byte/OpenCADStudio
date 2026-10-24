@@ -1,6 +1,6 @@
 use super::*;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Shared per-reference status reporting for XRELOAD and XREF Reload.
     /// Extracted verbatim from the XRELOAD arm — no behavior change.
     pub(in crate::app) fn report_xref_status(&mut self, info: &crate::io::xref::XrefInfo) {
@@ -1769,10 +1769,10 @@ impl OpenCADStudio {
 
 #[cfg(test)]
 mod tests {
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
 
-    fn fresh_app() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn fresh_app() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app
     }
@@ -1791,7 +1791,7 @@ mod tests {
     }
 
     /// Run one command line and return only the command-line text it appended.
-    fn run_capture(app: &mut OpenCADStudio, cmd: &str) -> String {
+    fn run_capture(app: &mut lgbcadstudio, cmd: &str) -> String {
         let start = app.command_line.history.len();
         let _ = app.run_command_line(cmd);
         app.command_line.history[start..]
@@ -1931,7 +1931,7 @@ mod tests {
         assert_eq!(app.tabs[0].dirty, dirty_before);
     }
 
-    fn add_dwg_xref(app: &mut OpenCADStudio, name: &str, saved: &str) {
+    fn add_dwg_xref(app: &mut lgbcadstudio, name: &str, saved: &str) {
         let i = app.active_tab;
         let mut br = codec::tables::BlockRecord::new(name);
         br.flags.is_xref = true;

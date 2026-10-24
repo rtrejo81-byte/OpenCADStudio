@@ -1239,8 +1239,8 @@ fn generate_version_info(out_dir: &Path) {
     let ocs = lockfile
         .packages
         .iter()
-        .find(|p| p.name.as_str() == "OpenCADStudio")
-        .expect("OpenCADStudio package in Cargo.lock");
+        .find(|p| p.name.as_str() == "lgbcadstudio")
+.expect("lgbcadstudio package in Cargo.lock");
     let opencadcodec = lockfile
         .packages
         .iter()

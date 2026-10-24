@@ -1,4 +1,4 @@
-//! Loopback REST channel hosted by the GUI process. `OpenCADStudio.exe
+//! Loopback REST channel hosted by the GUI process. `lgbcadstudio.exe
 //! "<file>" --http <port>` boots the normal editor AND serves this bridge, so
 //! a client gets the full REST surface of `--http` — create, move, plot,
 //! query, everything the headless server does — aimed at the drawing the
@@ -59,7 +59,7 @@ fn listen(
 ) -> std::io::Result<()> {
     let listener = TcpListener::bind(("127.0.0.1", port))?;
     bound_port.store(listener.local_addr()?.port(), Ordering::SeqCst);
-    eprintln!("OpenCADStudio GUI REST listening on http://127.0.0.1:{port}/api/v1");
+    eprintln!("lgbcadstudio GUI REST listening on http://127.0.0.1:{port}/api/v1");
     rest::announce_token();
     // One thread per connection: a `getpoint` or `user_select` request stays
     // open until the person answers, and must not block the other reads
@@ -352,7 +352,7 @@ fn compact(response: Value) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
     use iced::futures::StreamExt;
     use std::io::{BufRead, BufReader, Read, Write as _};
 
@@ -413,7 +413,7 @@ mod tests {
 
     #[test]
     fn bridge_serves_get_selection_over_http_and_refuses_unknown_paths() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.main_window = Some(iced::window::Id::unique());
         let _ = app.control_request(json!({"protocol":1,"op":"new","request_id":"n1"}));
         app.automation_op(r#"{"op":"run","cmd":"LINE 0,0 10,10"}"#);
@@ -481,7 +481,7 @@ mod tests {
     }
 
     /// Answer the next `count` envelopes the way the live GUI would.
-    fn drain(app: &mut OpenCADStudio, receiver: &mut mpsc::Receiver<Envelope>, count: usize) {
+    fn drain(app: &mut lgbcadstudio, receiver: &mut mpsc::Receiver<Envelope>, count: usize) {
         for _ in 0..count {
             let envelope = iced::futures::executor::block_on(receiver.next()).unwrap();
             let reply = app.control_request(envelope.request.clone()).0;
@@ -491,7 +491,7 @@ mod tests {
 
     #[test]
     fn bridge_parks_getpoint_without_blocking_other_reads() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.main_window = Some(iced::window::Id::unique());
         let _ = app.control_request(json!({"protocol":1,"op":"new","request_id":"n1"}));
         app.automation_op(r#"{"op":"run","cmd":"LINE 0,0 10,10"}"#);
@@ -560,7 +560,7 @@ mod tests {
     /// holding the session until the person happens to press Esc.
     #[test]
     fn bridge_cancels_a_parked_pick_when_the_client_disconnects() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.main_window = Some(iced::window::Id::unique());
         let _ = app.control_request(json!({"protocol":1,"op":"new","request_id":"n1"}));
 
@@ -629,7 +629,7 @@ mod tests {
 
     #[test]
     fn bridge_parks_user_select_until_the_person_answers() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.main_window = Some(iced::window::Id::unique());
         let _ = app.control_request(json!({"protocol":1,"op":"new","request_id":"n1"}));
         app.automation_op(r#"{"op":"run","cmd":"LINE 0,0 10,10"}"#);
@@ -649,7 +649,7 @@ mod tests {
         // screen: accept, pick, then press Enter (confirm) or Escape
         // (cancel), and read the final HTTP answer the client receives.
         fn park_and_answer(
-            app: &mut OpenCADStudio,
+            app: &mut lgbcadstudio,
             receiver: &mut mpsc::Receiver<Envelope>,
             port: u16,
             body: &str,
@@ -724,7 +724,7 @@ mod tests {
 
     #[test]
     fn bridge_runs_the_full_rest_surface_against_the_live_gui() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.main_window = Some(iced::window::Id::unique());
         let _ = app.control_request(json!({"protocol":1,"op":"new","request_id":"n1"}));
 

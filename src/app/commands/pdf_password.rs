@@ -1,12 +1,12 @@
 //! The Password Protected PDF window's state changes: the password checks,
 //! what runs once the file is unlocked and the messages when it is not.
 
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use crate::scene::model::pdf_password::{self, Check, Gate, Stage};
 use crate::ui::window::pdf_password_dialog::{PdfPasswordMsg, PdfPasswordState, PdfPasswordThen};
 use iced::Task;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Open the window on `path` at `stage`; `remembered` prints the notice
     /// of the password supplied earlier that opened the document.
     pub(in crate::app) fn open_pdf_password(

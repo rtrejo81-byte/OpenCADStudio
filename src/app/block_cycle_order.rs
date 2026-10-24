@@ -1,11 +1,11 @@
-use super::{Message, ModalKind, OpenCADStudio};
+use super::{Message, ModalKind, lgbcadstudio};
 use iced::Task;
 
 inventory::submit!(crate::command::CommandRegistration {
     names: &["BCYCLEORDER"]
 });
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(in crate::app) fn open_block_cycle_order(&mut self) -> Task<Message> {
         let tab = &self.tabs[self.active_tab];
         let Some(session) = tab.active_block_edit_session() else {

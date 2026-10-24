@@ -22,7 +22,7 @@ fn replace_identifier(source: &str, old: &str, new: &str) -> String {
     out
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Drops what removed dimensional constraints leave behind: their dynamic
     /// dimensions, and their parameters when no other constraint reads them.
     pub(crate) fn purge_dimensional_extras(

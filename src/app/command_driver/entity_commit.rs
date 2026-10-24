@@ -1,6 +1,6 @@
 use super::*;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn handle_commit_entity(
         &mut self,
         entity: codec::EntityType,

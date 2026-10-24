@@ -331,12 +331,12 @@ pub fn build_fbx(meshes: &[&MeshModel], unit_cm: f64) -> Option<Vec<u8>> {
             vec![
                 node("FBXHeaderVersion", vec![Prop::I32(1003)], Vec::new()),
                 node("FBXVersion", vec![Prop::I32(VERSION as i32)], Vec::new()),
-                node("Creator", vec![s("OpenCADStudio")], Vec::new()),
+                node("Creator", vec![s("lgbcadstudio")], Vec::new()),
             ],
         ),
         node("FileId", vec![Prop::Raw(FILE_ID.to_vec())], Vec::new()),
         node("CreationTime", vec![s(CREATION_TIME)], Vec::new()),
-        node("Creator", vec![s("OpenCADStudio")], Vec::new()),
+        node("Creator", vec![s("lgbcadstudio")], Vec::new()),
         node(
             "GlobalSettings",
             Vec::new(),

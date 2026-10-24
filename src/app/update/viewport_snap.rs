@@ -7,7 +7,7 @@ use iced::Point;
 
 use codec::types::Handle;
 
-use crate::app::OpenCADStudio;
+use crate::app::lgbcadstudio;
 use crate::scene::viewport_ref::{AcceptedSnap, ViewportFrame};
 use crate::snap::{SnapResult, SnapType};
 
@@ -15,7 +15,7 @@ use crate::snap::{SnapResult, SnapType};
 /// handful at most; the cap only stops a long polyline from growing forever.
 const MAX_ACCEPTED_SNAPS: usize = 64;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Snaps accepted by the active command's point steps, oldest first, in
     /// step order.
     pub(crate) fn accepted_snaps(&self) -> &[AcceptedSnap] {

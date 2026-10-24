@@ -66,7 +66,7 @@ fn ensure_draw_order_table(doc: &mut codec::CadDocument, block: codec::Handle) -
     handle
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(crate) fn dispatch_view(&mut self, cmd: &str, i: usize) -> Option<Task<Message>> {
         match cmd {
             "DONATE" => {
@@ -82,7 +82,7 @@ impl OpenCADStudio {
                 self.command_line
                     .push_info(crate::t!("Opening OCS Web...").as_ref());
                 return Some(crate::sys::open_url(
-                    "https://hakanseven12.github.io/OpenCADStudio/",
+                    "https://hakanseven12.github.io/lgbcadstudio/",
                     self.main_window,
                 ));
             }
@@ -92,7 +92,7 @@ impl OpenCADStudio {
                     crate::t!("Opening OCS Discussions for help and questions...").as_ref(),
                 );
                 return Some(crate::sys::open_url(
-                    "https://github.com/HakanSeven12/OpenCADStudio/discussions",
+                    "https://github.com/HakanSeven12/lgbcadstudio/discussions",
                     self.main_window,
                 ));
             }
@@ -317,14 +317,14 @@ impl OpenCADStudio {
                 }
             }
 
-            "REPORT" => {
+                      "REPORT" => {
                 // Pre-fill the GitHub issue body with version + platform so
                 // reports arrive with the basics already filled in. The rule
                 // is `***`: text typed right above a `---` line turns into a
                 // Markdown heading.
                 let body = format!(
                     "<!-- Describe the issue and the steps to reproduce it. -->\n\n\n\
-                     ***\n- Open CAD Studio: v{}\n- Revision: {} ({}, {})\n- Platform: {}\n",
+                     ***\n- LGBCADStudio by Trejo: v{}\n- Revision: {} ({}, {})\n- Platform: {}\n",
                     env!("OCS_FULL_VERSION"),
                     env!("OCS_GIT_REV"),
                     env!("OCS_COMMIT_DATE"),
@@ -332,14 +332,121 @@ impl OpenCADStudio {
                     crate::sys::platform_info(),
                 );
                 let url = format!(
-                    "https://github.com/HakanSeven12/OpenCADStudio/issues/new?body={}",
+                    "https://github.com/HakanSeven12/lgbcadstudio/issues/new?body={}",
                     crate::sys::percent_encode(&body)
                 );
                 self.command_line
                     .push_info(crate::t!("Opening feedback page...").as_ref());
                 return Some(crate::sys::open_url(&url, self.main_window));
             }
+                                        
+                                            // ── NUMERA — Numeración secuencial ──────────────────────────
+            "NUMERA" => {
+                // En lugar de un comando propio, usamos el TEXT nativo.
+                // Pero como el TEXT pide el punto y el texto por separado,
+                // vamos a hacerlo de forma interactiva: pedimos el punto,
+                // y luego lanzamos el TEXT.
+                self.command_line.push_info(
+                    crate::tf!("NUMERA  Punto para el número {}{}:", self.numera_prefijo, self.numera_contador).as_ref()
+                );
+                self.awaiting_numera_point = true;
+                return Some(self.focus_cmd_input());
+            }
+            // Los comandos de configuración
+            cmd if cmd.starts_with("NUMERA_PREFIJO ") => {
+                let nuevo = cmd.trim_start_matches("NUMERA_PREFIJO ").trim().to_string();
+                self.numera_prefijo = nuevo;
+                self.command_line.push_output(
+                    crate::tf!("Prefijo establecido: '{}'", self.numera_prefijo).as_ref()
+                );
+                return Some(Task::none());
+            }
+            cmd if cmd.starts_with("NUMERA_SUFIJO ") => {
+                let nuevo = cmd.trim_start_matches("NUMERA_SUFIJO ").trim().to_string();
+                self.numera_sufijo = nuevo;
+                self.command_line.push_output(
+                    crate::tf!("Sufijo establecido: '{}'", self.numera_sufijo).as_ref()
+                );
+                return Some(Task::none());
+            }
+            cmd if cmd.starts_with("NUMERA_ALTURA ") => {
+                if let Ok(nueva) = cmd.trim_start_matches("NUMERA_ALTURA ").trim().parse::<f64>() {
+                    self.numera_altura = nueva;
+                    self.command_line.push_output(
+                        crate::tf!("Altura establecida: {}", self.numera_altura).as_ref()
+                    );
+                }
+                return Some(Task::none());
+            }
+            "NUMERA_RESET" => {
+                self.numera_contador = 1.0;
+                self.command_line.push_output("Contador reiniciado a 1.");
+                return Some(Task::none());
+            }
+            // Cuando el usuario hace clic, lanzamos el comando TEXT con el número
+            "NUMERA_POINT" => {
+                let texto_rotulo = format!("{}{}{}", self.numera_prefijo, self.numera_contador, self.numera_sufijo);
+                
+                // Lanzamos el TEXT nativo. El CAD pedirá el punto y el texto.
+                // Pero como queremos que el texto sea el número, lo hacemos así:
+                let cmd_str = format!("TEXT {} {}", texto_rotulo, self.numera_altura);
+                self.numera_contador += 1.0;
+                
+                return Some(self.dispatch_command(&cmd_str));
+            }
+                                   // ── SUMANUM — Suma de números en textos ──────────────────────
+            "SUMANUM" => {
+                let cmd = crate::app::commands::sumanum::SumaNumCommand::new();
+                self.command_line.push_info(&cmd.prompt());
+                self.tabs[i].active_cmd = Some(Box::new(cmd));
+            }
+            // ── SUMANUM_EXECUTE — Procesar la suma real ─────────────────
+            cmd if cmd.starts_with("SUMANUM_EXECUTE") => {
+                let selected_handles: Vec<codec::Handle> = self.tabs[i]
+                    .scene
+                    .selected_entities()
+                    .iter()
+                    .map(|(h, _)| *h)
+                    .collect();
 
+                if selected_handles.is_empty() {
+                    self.command_line.push_info("No hay textos seleccionados.");
+                    return Some(Task::none());
+                }
+
+                let mut suma_total = 0.0;
+                let mut contador = 0;
+
+                self.command_line.push_output("--- VALORES ENCONTRADOS ---");
+
+                for handle in selected_handles {
+                    if let Some(codec::EntityType::Text(text_entity)) = self.tabs[i].scene.document.get_entity(handle) {
+                       let contenido = &text_entity.value;
+                        if let Some(numero) = extraer_numero_simple(contenido) {
+                            suma_total += numero;
+                            contador += 1;
+                            self.command_line.push_output(&crate::tf!("  {} = {:.2}", contenido, numero));
+                        } else {
+                            self.command_line.push_output(&crate::tf!("  {} = (sin número)", contenido));
+                        }
+                    } else if let Some(codec::EntityType::MText(mtext_entity)) = self.tabs[i].scene.document.get_entity(handle) {
+                       let contenido = &mtext_entity.value;
+                        if let Some(numero) = extraer_numero_simple(contenido) {
+                            suma_total += numero;
+                            contador += 1;
+                            self.command_line.push_output(&crate::tf!("  {} = {:.2}", contenido, numero));
+                        } else {
+                            self.command_line.push_output(&crate::tf!("  {} = (sin número)", contenido));
+                        }
+                    }
+                }
+
+                self.command_line.push_output("---------------------------");
+                self.command_line.push_output(&crate::tf!("TEXTOS PROCESADOS: {}", contador));
+                self.command_line.push_output(&crate::tf!("SUMA TOTAL: {:.2}", suma_total));
+                self.command_line.push_output("--- POWERED BY ROBERTO TREJO ---");
+                return Some(Task::none());
+            }
             "ABOUT" => {
                 return Some(Task::done(Message::AboutOpen));
             }
@@ -352,7 +459,7 @@ impl OpenCADStudio {
                 self.command_line
                     .push_info(crate::t!("Opening release notes...").as_ref());
                 return Some(crate::sys::open_url(
-                    "https://github.com/HakanSeven12/OpenCADStudio/releases",
+                    "https://github.com/HakanSeven12/lgbcadstudio/releases",
                     self.main_window,
                 ));
             }
@@ -1902,12 +2009,12 @@ fn assign_back_group_keys(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
     use codec::objects::ObjectType;
     use codec::EntityType;
 
-    fn fresh_app() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn fresh_app() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app
     }
@@ -2445,7 +2552,7 @@ mod tests {
         assert!(!has_hatch, "Undo must revert the SortEntitiesTable entry");
     }
 
-    fn effective_sort_map(app: &OpenCADStudio) -> rustc_hash::FxHashMap<u64, u64> {
+    fn effective_sort_map(app: &lgbcadstudio) -> rustc_hash::FxHashMap<u64, u64> {
         let i = app.active_tab;
         let block_handle = app.tabs[i].scene.current_layout_block_handle_pub();
         app.tabs[i]
@@ -3227,4 +3334,50 @@ mod tests {
                 |command| command.name() == "DRAWORDER" && command.is_selection_gathering()
             ));
     }
+}
+fn extraer_numero_simple(texto: &str) -> Option<f64> {
+    let mut num_str = String::new();
+    let mut punto_encontrado = false;
+    let mut encontrado = false;
+    let mut en_codigo = false; // Bandera para saber si estamos dentro de un código \...;
+
+    for c in texto.chars() {
+        // Detectar inicio de código de formato
+        if c == '\\' {
+            en_codigo = true;
+            continue;
+        }
+        // Detectar fin de código de formato
+        if c == ';' && en_codigo {
+            en_codigo = false;
+            continue;
+        }
+        // Si estamos dentro de un código, ignorar todo
+        if en_codigo {
+            continue;
+        }
+
+        // Si es un dígito, lo guardamos
+        if c.is_ascii_digit() {
+            num_str.push(c);
+            encontrado = true;
+        } 
+        // Si es un punto y no hemos encontrado uno antes, lo guardamos
+        else if c == '.' && !punto_encontrado {
+            num_str.push(c);
+            punto_encontrado = true;
+            encontrado = true;
+        } 
+        // Si ya encontramos un número y aparece otro carácter, paramos
+        else if encontrado {
+            break;
+        }
+    }
+    
+    // Si no encontramos nada, devolvemos None
+    if num_str.is_empty() {
+        return None;
+    }
+    
+    num_str.parse::<f64>().ok()
 }

@@ -1,8 +1,8 @@
-use super::OpenCADStudio;
+use super::lgbcadstudio;
 use crate::ui::window::drafting_settings::{DraftingSettingsState, DraftingSettingsTab};
 
 impl DraftingSettingsState {
-    pub(crate) fn from_app(app: &OpenCADStudio) -> Self {
+    pub(crate) fn from_app(app: &lgbcadstudio) -> Self {
         let snap_x = app.snapper.snap_spacing_x;
         let snap_y = app.snapper.snap_spacing_y;
         // The dialog has no stored "equal" flag, so infer it: equal when
@@ -45,7 +45,7 @@ impl DraftingSettingsState {
     }
 }
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Turn Dynamic Input on or off with DYNMODE in step: off keeps the mode
     /// negative (temporarily off), on restores it, or 3 when there was none.
     pub(in crate::app) fn set_dyn_input(&mut self, on: bool) {

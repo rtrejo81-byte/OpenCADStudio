@@ -6,14 +6,14 @@ use codec::entities::AttributeDefinition;
 use codec::{EntityType, Handle};
 use iced::Task;
 
-use crate::app::{Message, OpenCADStudio};
+use crate::app::{Message, lgbcadstudio};
 use crate::modules::insert::block_cmdline::BlockTable;
 use crate::scene::view::dispatch::{apply_common_prop, apply_geom_prop};
 use crate::ui::window::attman_dialog::{
     self as dialog, AttManBlock, AttManMsg, AttManRow, AttManState, EditTab,
 };
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// Open the dialog on the block of the first preselected attributed
     /// reference, else on the first attributed block.
     pub(in crate::app) fn open_attman(

@@ -1,4 +1,4 @@
-// OpenCADStudio hatch pattern catalog — built from `assets/patterns/OpenCADStudio.pat`.
+// lgbcadstudio hatch pattern catalog — built from `assets/patterns/lgbcadstudio.pat`.
 //
 // Each `PatternEntry` wraps a parsed PAT pattern with:
 //   - `gpu`       — `HatchPattern::Pattern(families)` for the shader

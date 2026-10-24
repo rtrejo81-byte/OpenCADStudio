@@ -5,7 +5,7 @@ use super::*;
 use crate::ui::ribbon::UnderlayContext;
 use codec::entities::{Underlay, UnderlayDisplayFlags};
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     /// The selected underlays when they are all of one kind, or nothing
     /// when anything else (or another kind) is selected.
     fn selected_pdf_underlays(&self, i: usize) -> Vec<(codec::Handle, Underlay)> {

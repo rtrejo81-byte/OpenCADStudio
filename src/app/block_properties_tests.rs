@@ -1,12 +1,12 @@
-use super::{Message, OpenCADStudio};
+use super::{Message, lgbcadstudio};
 use crate::scene::model::object::{PropValue, Property};
 use codec::entities::{Insert, Line};
 use codec::types::Vector3;
 use codec::{CadDocument, EntityType};
 use std::io::Cursor;
 
-fn fixture() -> OpenCADStudio {
-    let mut app = OpenCADStudio::new_for_test();
+fn fixture() -> lgbcadstudio {
+    let mut app = lgbcadstudio::new_for_test();
     app.automation_op(r#"{"op":"new"}"#);
     let i = app.active_tab;
     app.tabs[i].scene.define_block_raw(
@@ -27,7 +27,7 @@ fn fixture() -> OpenCADStudio {
     app
 }
 
-fn row(app: &OpenCADStudio, field: &str) -> Property {
+fn row(app: &lgbcadstudio, field: &str) -> Property {
     app.tabs[app.active_tab]
         .properties
         .sections
@@ -38,7 +38,7 @@ fn row(app: &OpenCADStudio, field: &str) -> Property {
         .clone()
 }
 
-fn edit(app: &mut OpenCADStudio, field: &str, value: &str) {
+fn edit(app: &mut lgbcadstudio, field: &str, value: &str) {
     let property = row(app, field);
     let _ = app
         .set_property_value(property, &serde_json::json!(value))

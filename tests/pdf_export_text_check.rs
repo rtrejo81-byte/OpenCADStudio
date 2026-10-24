@@ -11,10 +11,10 @@
 use codec::entities::{Dimension, DimensionLinear, Text};
 use codec::types::Vector3;
 use codec::EntityType;
-use OpenCADStudio::io::pdf_export::{
+use lgbcadstudio::io::pdf_export::{
     export_pdf, PdfPageInput, PdfPlotOptions, PlotContent, PlotWire,
 };
-use OpenCADStudio::scene::Scene;
+use lgbcadstudio::scene::Scene;
 
 #[test]
 fn text_and_dim_reach_pdf_export() {

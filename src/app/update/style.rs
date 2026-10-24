@@ -6,7 +6,7 @@ use super::{format_size, VIEWCUBE_HIT_SIZE};
 use crate::app::helpers::{
     parse_coord, polar_constrain_near, ucs_rotate_vec, ucs_to_wcs, ucs_z_axis, CoordKind,
 };
-use crate::app::{Message, OpenCADStudio, POLY_START_DELAY_MS};
+use crate::app::{Message, lgbcadstudio, POLY_START_DELAY_MS};
 use crate::modules::ModuleEvent;
 use crate::scene::model::object::GripApply;
 use crate::scene::pick::grip::{find_hit_grip, find_hit_grip_paper, find_hit_grip_rte, GripEdit};
@@ -20,7 +20,7 @@ use codec::{EntityType as AcadEntityType, Handle};
 use iced::time::Instant;
 use iced::{mouse, Point, Task};
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(in crate::app) fn selected_dimstyle_is_read_only(&self) -> bool {
         let Some(style) = self.tabs[self.active_tab]
             .scene
@@ -1331,10 +1331,10 @@ impl OpenCADStudio {
 #[cfg(test)]
 mod ds_set_handle_tests {
     // #41: picking the first arrowhead must not touch the second.
-    use crate::app::OpenCADStudio;
+    use crate::app::lgbcadstudio;
 
-    fn app_with_arrow_blocks() -> OpenCADStudio {
-        let mut app = OpenCADStudio::new_for_test();
+    fn app_with_arrow_blocks() -> lgbcadstudio {
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         let i = app.active_tab;
         for name in ["ARROW_A", "ARROW_B"] {

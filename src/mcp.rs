@@ -1,6 +1,6 @@
 //! Client-neutral MCP adapter for the live desktop editor.
 //!
-//! `OpenCADStudio --mcp` speaks MCP over stdio. All drawing work is forwarded
+//! `lgbcadstudio --mcp` speaks MCP over stdio. All drawing work is forwarded
 //! to the authenticated GUI control bridge; this module contains no geometry.
 
 use crate::mcp_ops::{batch_bindings, validate_execute_request};
@@ -950,7 +950,7 @@ fn sessions(launch_if_none: bool) -> Result<Vec<Value>, String> {
                     if claimed {
                         release_startup_lock(&directory);
                     }
-                    return Err(format!("OpenCADStudio exited while starting ({status})"));
+                    return Err(format!("lgbcadstudio exited while starting ({status})"));
                 }
             }
             thread::sleep(Duration::from_millis(200));
@@ -963,7 +963,7 @@ fn sessions(launch_if_none: bool) -> Result<Vec<Value>, String> {
             release_startup_lock(&directory);
         }
         if available.is_empty() {
-            return Err("OpenCADStudio is still starting; call ocs_sessions again".into());
+            return Err("lgbcadstudio is still starting; call ocs_sessions again".into());
         }
     }
     Ok(available
@@ -2445,8 +2445,8 @@ pub(crate) fn tool_definitions() -> Value {
     json!([
         {
             "name":"ocs_sessions",
-            "description":"List real OpenCADStudio GUI sessions and documents. Launch the installed editor if none is running. On first use, announce the build to the user from the `bridge` object in each result (OpenCADStudio version, build_rev, tool_schema digest); announce again if a later call reports a different build.",
-            "inputSchema":{"type":"object","properties":{"launch_if_none":{"type":"boolean","default":true,"description":"Launch OpenCADStudio when no live session exists."}},"additionalProperties":false},
+            "description":"List real lgbcadstudio GUI sessions and documents. Launch the installed editor if none is running. On first use, announce the build to the user from the `bridge` object in each result (lgbcadstudio version, build_rev, tool_schema digest); announce again if a later call reports a different build.",
+            "inputSchema":{"type":"object","properties":{"launch_if_none":{"type":"boolean","default":true,"description":"Launch lgbcadstudio when no live session exists."}},"additionalProperties":false},
             "outputSchema":{"type":"object","properties":{"result":{"type":"array","items":{"type":"object","properties":{"ok":{"const":true},"session_id":{"type":"string"},"document_id":{"type":"integer"},"revision":{"type":"integer"},"selection":{"type":"array","items":{"type":"string"}},"documents":{"type":"array"}},"required":["ok","session_id","document_id","revision","selection","documents"],"additionalProperties":true}}},"required":["result"],"additionalProperties":false},
             "title":"List OCS sessions","annotations":{"readOnlyHint":false,"destructiveHint":false,"idempotentHint":true,"openWorldHint":false}
         },
@@ -2570,7 +2570,7 @@ fn response(id: Value, result: Value) -> Value {
 /// surfaced via `capabilities.experimental` and the in-band `bridge` stamp.
 fn server_info() -> Value {
     json!({
-        "name":"OpenCADStudio",
+        "name":"lgbcadstudio",
         "title":"Open CAD Studio",
         "version":env!("OCS_APP_VERSION"),
     })
@@ -2581,7 +2581,7 @@ fn server_info() -> Value {
 /// states, `hello`/`capabilities` responses) under the `bridge` key.
 fn bridge_identity() -> Value {
     json!({
-        "name":"OpenCADStudio",
+        "name":"lgbcadstudio",
         "version":env!("OCS_APP_VERSION"),
         "build_rev":env!("OCS_GIT_REV"),
         "build_profile":env!("OCS_BUILD_PROFILE"),
@@ -2778,7 +2778,7 @@ fn handle_message(
                     "capabilities":{
                         "tools":{"listChanged":false},
                         "resources":{"subscribe":false,"listChanged":false},
-                        "experimental":{"opencadstudio.build":bridge_identity()}
+                        "experimental":{"lgbcadstudio.build":bridge_identity()}
                     },
                     "serverInfo":server_info(),
                     "instructions":INSTRUCTIONS
@@ -2984,7 +2984,7 @@ fn handle_message(
     })
 }
 
-/// Synchronize agent tool schemas and instructions to ~/.gemini/antigravity/mcp/opencadstudio/.
+/// Synchronize agent tool schemas and instructions to ~/.gemini/antigravity/mcp/lgbcadstudio/.
 /// Returns true if the target directory was found or created and schemas were written.
 pub fn sync_agent_tool_schemas() -> bool {
     let home = std::env::var("USERPROFILE")
@@ -3000,7 +3000,7 @@ pub fn sync_agent_tool_schemas() -> bool {
     if !mcp_root.exists() {
         return false;
     }
-    let base_dir = mcp_root.join("opencadstudio");
+    let base_dir = mcp_root.join("lgbcadstudio");
     if let Err(_) = std::fs::create_dir_all(&base_dir) {
         return false;
     }
@@ -3320,7 +3320,7 @@ mod tests {
             .is_object());
         assert_eq!(
             discovered["result"]["_meta"]["io.modelcontextprotocol/serverInfo"]["name"],
-            "OpenCADStudio"
+            "lgbcadstudio"
         );
 
         let listed = handle_message(
@@ -3394,8 +3394,8 @@ mod tests {
             info.as_object().unwrap().keys().collect::<Vec<_>>(),
             ["name", "title", "version"]
         );
-        assert_eq!(info["name"], "OpenCADStudio");
-        let build = &initialized["result"]["capabilities"]["experimental"]["opencadstudio.build"];
+        assert_eq!(info["name"], "lgbcadstudio");
+        let build = &initialized["result"]["capabilities"]["experimental"]["lgbcadstudio.build"];
         assert_eq!(build["tool_schema"], Value::String(tool_schema_digest()));
         assert!(build["build_rev"].as_str().is_some());
         assert!(build["build_profile"].as_str().is_some());
@@ -4951,7 +4951,7 @@ mod tests {
             .join(".gemini")
             .join("antigravity")
             .join("mcp")
-            .join("opencadstudio");
+            .join("lgbcadstudio");
         if base_dir.exists() {
             assert!(
                 synced,
@@ -5002,14 +5002,14 @@ mod tests {
         // Agents never see MCP serverInfo, so the build announcement must
         // ride on payloads they do see: session states and hello/capabilities.
         let identity = bridge_identity();
-        assert_eq!(identity["name"], "OpenCADStudio");
+        assert_eq!(identity["name"], "lgbcadstudio");
         assert!(identity["version"].as_str().is_some());
         assert!(identity["build_rev"].as_str().is_some());
         assert!(identity["build_profile"].as_str().is_some());
         assert_eq!(identity["tool_schema"], Value::String(tool_schema_digest()));
 
         let stamped = with_bridge_identity(json!({"ok": true, "session_id": "s"}));
-        assert_eq!(stamped["bridge"]["name"], "OpenCADStudio");
+        assert_eq!(stamped["bridge"]["name"], "lgbcadstudio");
         assert_eq!(stamped["ok"], true);
         // Non-objects pass through untouched.
         assert_eq!(with_bridge_identity(json!([1, 2])), json!([1, 2]));

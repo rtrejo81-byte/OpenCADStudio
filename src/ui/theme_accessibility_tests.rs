@@ -1,7 +1,7 @@
 //! Centralized UI Theme Accessibility & Contrast Test Suite.
 //!
 //! Evaluates WCAG 2.1 contrast ratios across all 22 built-in themes for every
-//! major OpenCADStudio UI domain:
+//! major lgbcadstudio UI domain:
 //! - Core Theme Palettes (base, weak, strong, weakest)
 //! - Ribbon Bar (tabs, buttons, dropdown popups, contextual layout tab)
 //! - Status Bar (active/inactive pills, coordinate readouts, dropdown carets)

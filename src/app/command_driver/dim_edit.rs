@@ -1,6 +1,6 @@
 use super::*;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn handle_edit_dimension_break(
         &mut self,
         dimensions: Vec<Handle>,

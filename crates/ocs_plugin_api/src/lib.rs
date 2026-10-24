@@ -1,7 +1,7 @@
 //! # Open CAD Studio plugin API
 //!
 //! The stable, semver-versioned contract an add-on package targets instead of
-//! the `OpenCADStudio` binary internals. It is intentionally **dependency
+//! the `lgbcadstudio` binary internals. It is intentionally **dependency
 //! free** (no `iced`, no `opencadcodec`) so engine crates and external tooling can
 //! depend on it cheaply.
 //!

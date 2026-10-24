@@ -1,9 +1,9 @@
-use super::{Message, ModalKind, OpenCADStudio};
+use super::{Message, ModalKind, lgbcadstudio};
 use crate::scene::block_visibility as visibility;
 use crate::ui::window::block_visibility::{Action, NewVisibility, RibbonContext, State, Target};
 use iced::Task;
 
-impl OpenCADStudio {
+impl lgbcadstudio {
     pub(super) fn block_visibility_context(&self) -> Option<RibbonContext> {
         let tab = self.tabs.get(self.active_tab)?;
         let definition = tab.active_block_edit_session()?.br_handle;

@@ -436,7 +436,7 @@ mod tests {
             .into_iter()
             .filter(|language| *language != Language::System)
         {
-            let loader = FluentLanguageLoader::new("opencadstudio", "en-US".parse().unwrap());
+            let loader = FluentLanguageLoader::new("lgbcadstudio", "en-US".parse().unwrap());
             load_language(&loader, language).expect("Fluent resources must parse");
             let attributes: BTreeSet<String> =
                 loader.with_message_iter(&language.requested()[0], |messages| {
@@ -462,7 +462,7 @@ mod tests {
 
     #[test]
     fn every_catalog_covers_and_formats_the_source_catalog() {
-        let loader = FluentLanguageLoader::new("opencadstudio", "en-US".parse().unwrap());
+        let loader = FluentLanguageLoader::new("lgbcadstudio", "en-US".parse().unwrap());
         load_language(&loader, Language::EnUs).expect("English Fluent resources must parse");
         let keys = |loader: &FluentLanguageLoader, language: Language| {
             loader.with_message_iter(&language.requested()[0], |messages| {
@@ -487,7 +487,7 @@ mod tests {
         let source = keys(&loader, Language::EnUs);
         assert!(!source.is_empty());
 
-        let english = Localizations::get("en-US/opencadstudio.ftl").unwrap();
+        let english = Localizations::get("en-US/lgbcadstudio.ftl").unwrap();
         let english = std::str::from_utf8(&english.data).unwrap();
         let variables: Vec<_> = english
             .split('$')
@@ -528,13 +528,13 @@ mod tests {
         };
         for language in Language::ALL.into_iter().filter(|l| *l != Language::System) {
             let resource =
-                Localizations::get(&format!("{}/opencadstudio.ftl", language.requested()[0]))
+                Localizations::get(&format!("{}/lgbcadstudio.ftl", language.requested()[0]))
                     .unwrap();
             let text = std::str::from_utf8(&resource.data).unwrap();
             if let Err((_, errors)) = fluent_syntax::parser::parse(text) {
                 panic!("Invalid Fluent syntax in {language:?}: {errors:?}");
             }
-            let localized = FluentLanguageLoader::new("opencadstudio", "en-US".parse().unwrap());
+            let localized = FluentLanguageLoader::new("lgbcadstudio", "en-US".parse().unwrap());
             load_language(&localized, language).expect("Fluent resources must parse");
             let actual = keys(&localized, language);
             let extra: Vec<_> = actual.difference(&source).collect();
@@ -565,7 +565,7 @@ mod tests {
 
     #[test]
     fn greek_language_setting_round_trips() {
-        let loader = FluentLanguageLoader::new("opencadstudio", "en-US".parse().unwrap());
+        let loader = FluentLanguageLoader::new("lgbcadstudio", "en-US".parse().unwrap());
         load_language(&loader, Language::ElGr).expect("Greek Fluent resources must parse");
         assert_eq!(loader.get_attr("language", "greek"), "Ελληνικά");
         assert_eq!(serde_json::to_string(&Language::ElGr).unwrap(), "\"el-GR\"");

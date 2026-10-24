@@ -1,4 +1,4 @@
-use crate::app::OpenCADStudio;
+use crate::app::lgbcadstudio;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
@@ -137,7 +137,7 @@ pub(crate) struct VisionGrounding {
 }
 
 pub(crate) fn compute_grounding(
-    app: &OpenCADStudio,
+    app: &lgbcadstudio,
     vp_logical_width: f32,
     vp_logical_height: f32,
     image_width: u32,
@@ -622,7 +622,7 @@ mod tests {
 
     #[test]
     fn test_compute_grounding_identifies_visible_entities() {
-        let mut app = OpenCADStudio::new_for_test();
+        let mut app = lgbcadstudio::new_for_test();
         app.automation_op(r#"{"op":"new"}"#);
         app.automation_op(r#"{"op":"run","cmd":"CIRCLE 0,0 5"}"#);
         app.automation_op(r#"{"op":"run","cmd":"LINE -10,-10 10,10"}"#);

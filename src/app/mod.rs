@@ -1345,6 +1345,9 @@ pub(super) struct lgbcadstudio {
     update_notice_body: Option<String>,
     /// In-memory clipboard: cloned entities waiting to be pasted.
     clipboard: Vec<codec::EntityType>,
+    /// Secuencia del portapapeles de Windows en el momento de copiar: si
+    /// cambia, otra aplicación escribió en él después.
+    clipboard_seq: u32,
     /// Entities removed by the most recent ERASE, kept so OOPS can restore them.
     oops_cache: Vec<Arc<codec::EntityType>>,
     /// Paste anchor: lower-left corner of the clipboard entities' bounding box
@@ -5161,6 +5164,7 @@ impl lgbcadstudio {
             update_notice_version: None,
             update_notice_body: None,
             clipboard: Vec::new(),
+            clipboard_seq: 0,
             oops_cache: Vec::new(),
             clipboard_base: glam::DVec3::ZERO,
             clipboard_deps: ClipboardDeps::default(),

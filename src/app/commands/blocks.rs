@@ -46,6 +46,9 @@ impl lgbcadstudio {
         self.clipboard_base = base;
         self.clipboard = entities;
         self.clipboard_deps = deps;
+        // Recordar el estado del portapapeles del sistema en este instante:
+        // si más tarde cambia, lo copiado fuera es lo que toca pegar.
+        self.clipboard_seq = crate::sys::clipboard_sequence();
         count
     }
 
@@ -344,7 +347,17 @@ impl lgbcadstudio {
             }
 
             "PASTE" | "PASTECLIP" => {
-                if self.clipboard.is_empty() {
+                // Si otra aplicación reescribió el portapapeles después de
+                // nuestro copiado, lo que el usuario quiere pegar es eso (una
+                // imagen de Excel, texto…), no las entidades internas viejas.
+                let externo = !self.clipboard.is_empty()
+                    && crate::sys::clipboard_sequence() != self.clipboard_seq;
+                if self.clipboard.is_empty() || externo {
+                    // Una imagen copiada fuera (Excel, Visio, captura) es la
+                    // intención clara; el texto del mismo recorte es ruido.
+                    if let Some(task) = self.paste_system_image_if_any() {
+                        return Some(task);
+                    }
                     return Some(self.read_system_clipboard_for_paste());
                 } else {
                     let wires = self.tabs[i].scene.wires_for_entities(&self.clipboard);

@@ -1687,3 +1687,21 @@ pub mod clipboard_dib {
         Some((width, height, pixels))
     }
 }
+/// Número de secuencia del portapapeles de Windows. Cambia cada vez que
+/// cualquier aplicación lo reescribe, así que sirve para saber si lo que hay
+/// ahora mismo es lo último que copió este programa o algo de fuera.
+#[cfg(target_os = "windows")]
+pub fn clipboard_sequence() -> u32 {
+    #[link(name = "user32")]
+    extern "system" {
+        fn GetClipboardSequenceNumber() -> u32;
+    }
+    unsafe { GetClipboardSequenceNumber() }
+}
+
+/// Fuera de Windows no hay secuencia: se comporta como el portapapeles
+/// interno de siempre.
+#[cfg(not(target_os = "windows"))]
+pub fn clipboard_sequence() -> u32 {
+    0
+}

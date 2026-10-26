@@ -2262,6 +2262,32 @@ impl lgbcadstudio {
         }
     }
 
+    /// Si el portapapeles del sistema trae una imagen, la pega y devuelve la
+    /// tarea. Se usa cuando el usuario copió algo fuera de la app: una imagen
+    /// de Excel o de Visio gana sobre el texto que también trae el recorte.
+    pub(in crate::app) fn paste_system_image_if_any(&mut self) -> Option<Task<Message>> {
+        #[cfg(target_os = "windows")]
+        {
+            let rgba = crate::sys::clipboard_dib::read_rgba()?;
+            let folders: Vec<std::path::PathBuf> = self.tabs[self.active_tab]
+                .current_path
+                .as_ref()
+                .and_then(|path| path.parent().map(std::path::Path::to_path_buf))
+                .filter(|folder| !folder.as_os_str().is_empty())
+                .into_iter()
+                .chain(crate::config::config_dir().map(|dir| dir.join("pasted")))
+                .collect();
+            match save_pasted_image(Some(rgba), folders) {
+                Ok((name, bytes)) => Some(self.paste_clipboard_image(name, bytes)),
+                Err(_) => None,
+            }
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            None
+        }
+    }
+
     /// Attach a clipboard image (a pasted screenshot) the way the IMAGE
     /// command's pick does: register the bytes name-keyed, decode for the
     /// file's true pixel size, then commit the entity — but placed directly
@@ -5575,7 +5601,7 @@ mod tab_close_tests {
 /// Codifica la imagen del portapapeles como PNG y la deja en la primera
 /// carpeta donde se pueda escribir. El error nombra el paso que falló, para
 /// que el mensaje del comando sirva aunque el problema sea de permisos.
-fn save_pasted_image(
+pub(in crate::app) fn save_pasted_image(
     rgba: Option<(u32, u32, Vec<u8>)>,
     folders: Vec<std::path::PathBuf>,
 ) -> Result<(String, Vec<u8>), String> {

@@ -294,30 +294,77 @@ impl Grippable for RasterImage {
             self.size.y,
         );
         vec![
-            square_grip(0, glam::DVec3::from(corners[0])),
-            center_grip(1, glam::DVec3::from(corners[1])),
-            center_grip(2, glam::DVec3::from(corners[2])),
-            center_grip(3, glam::DVec3::from(corners[3])),
+            square_grip(0, glam::DVec3::from_array(corners[0])),
+            square_grip(1, glam::DVec3::from_array(corners[1])),
+            square_grip(2, glam::DVec3::from_array(corners[2])),
+            square_grip(3, glam::DVec3::from_array(corners[3])),
         ]
     }
 
     fn apply_grip(&mut self, grip_id: usize, apply: GripApply) {
-        if grip_id == 0 {
+        let corners = image_corners(
+            &self.insertion_point,
+            &self.u_vector,
+            &self.v_vector,
+            self.size.x,
+            self.size.y,
+        );
+        let grip = grip_id % 4;
+        if grip == 0 {
+            // Esquina de inserción: mueve la imagen entera.
             match apply {
                 GripApply::Translate(d) => {
-                    self.insertion_point.x += d.x as f64;
-                    self.insertion_point.y += d.y as f64;
-                    self.insertion_point.z += d.z as f64;
+                    self.insertion_point.x += d.x;
+                    self.insertion_point.y += d.y;
+                    self.insertion_point.z += d.z;
                 }
                 GripApply::Absolute(p) => {
-                    self.insertion_point.x = p.x as f64;
-                    self.insertion_point.y = p.y as f64;
-                    self.insertion_point.z = p.z as f64;
+                    self.insertion_point.x = p.x;
+                    self.insertion_point.y = p.y;
+                    self.insertion_point.z = p.z;
                 }
             }
+            return;
         }
-        // Corner grips 1-3 are display-only (resizing changes u/v vectors,
-        // which requires careful normalization — deferred).
+
+        // Esquinas 1-3: redimensionar. La esquina opuesta se queda donde
+        // está y la imagen escala proporcional (aspecto y giro intactos).
+        let actual = glam::DVec3::from_array(corners[grip]);
+        let objetivo = match apply {
+            GripApply::Absolute(p) => p,
+            GripApply::Translate(d) => actual + d,
+        };
+        let fijo = glam::DVec3::from_array(corners[(grip + 2) % 4]);
+        let rel_actual = actual - fijo;
+        let rel_nuevo = objetivo - fijo;
+        let distancia = rel_actual.length();
+        if !(distancia > 1.0e-9) || !rel_nuevo.is_finite() {
+            return;
+        }
+        let escala = (rel_nuevo.length() / distancia).clamp(1.0e-6, 1.0e6);
+        self.u_vector.x *= escala;
+        self.u_vector.y *= escala;
+        self.u_vector.z *= escala;
+        self.v_vector.x *= escala;
+        self.v_vector.y *= escala;
+        self.v_vector.z *= escala;
+
+        // Reposicionar la inserción para que la esquina opuesta no se mueva:
+        // inserción = fija - (a·U·ancho + b·V·alto) de esa esquina.
+        let (a, b) = match (grip + 2) % 4 {
+            1 => (1.0_f64, 0.0_f64),
+            2 => (1.0_f64, 1.0_f64),
+            3 => (0.0_f64, 1.0_f64),
+            _ => (0.0_f64, 0.0_f64),
+        };
+        let ancho = self.size.x;
+        let alto = self.size.y;
+        self.insertion_point.x =
+            fijo.x - (self.u_vector.x * ancho * a + self.v_vector.x * alto * b);
+        self.insertion_point.y =
+            fijo.y - (self.u_vector.y * ancho * a + self.v_vector.y * alto * b);
+        self.insertion_point.z =
+            fijo.z - (self.u_vector.z * ancho * a + self.v_vector.z * alto * b);
     }
 }
 

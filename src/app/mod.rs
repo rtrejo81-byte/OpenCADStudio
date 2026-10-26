@@ -1,5 +1,6 @@
 mod alias;
 mod automation;
+mod basemap;
 pub(crate) mod control;
 pub(crate) fn automation_action_names() -> &'static [&'static str] {
     control::action_names()
@@ -2619,6 +2620,8 @@ pub enum Message {
     PasteShortcut,
     /// Which text input held focus when `PasteShortcut` arrived.
     PasteShortcutResolved(PasteFocus),
+    /// Imagen satelital descargada y lista para insertar (SATELITE).
+    SateliteReady(Result<crate::app::basemap::Satelite, String>),
     /// Completion of the system text clipboard read PASTESPEC starts.
     PasteSpecial(Option<String>),
     /// Completion of a system text clipboard read requested by PASTECLIP.

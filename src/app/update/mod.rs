@@ -7353,6 +7353,58 @@ impl lgbcadstudio {
                 }
             },
 
+            // Imagen satelital descargada: se inserta georreferenciada en la
+            // capa SATELITE, semitransparente y con los vectores U/V ajustados
+            // a las dimensiones reales del área.
+            Message::SateliteReady(resultado) => match resultado {
+                Ok(satelite) => {
+                    let i = self.active_tab;
+                    crate::scene::model::image_model::register_source(
+                        &satelite.nombre,
+                        std::sync::Arc::new(satelite.bytes.clone()),
+                    );
+                    self.tabs[i].scene.ensure_layer("SATELITE");
+                    let mut imagen = codec::entities::RasterImage::with_size(
+                        &satelite.nombre,
+                        codec::types::Vector3::new(satelite.min_x, satelite.min_y, 0.0),
+                        satelite.px_ancho as f64,
+                        satelite.px_alto as f64,
+                        satelite.ancho,
+                        satelite.alto,
+                    );
+                    imagen.common.layer = "SATELITE".to_string();
+                    imagen.common.transparency = codec::types::Transparency::from_percent(45.0);
+                    imagen.flags = codec::entities::ImageDisplayFlags::SHOW_IMAGE
+                        | codec::entities::ImageDisplayFlags::USE_CLIPPING_BOUNDARY;
+                    self.push_undo_snapshot(i, "SATELITE");
+                    if self
+                        .commit_entity_handle_preserve_layer(codec::EntityType::RasterImage(
+                            imagen,
+                        ))
+                        .is_some()
+                    {
+                        self.tabs[i].dirty = true;
+                        self.refresh_properties();
+                        self.command_line.push_output(
+                            &crate::tf!(
+                                "SATELITE  Imagen {}×{} px · {:.0}×{:.0} m · © Esri, Maxar, Earthstar Geographics",
+                                satelite.px_ancho,
+                                satelite.px_alto,
+                                satelite.ancho,
+                                satelite.alto
+                            ),
+                        );
+                    } else {
+                        self.command_line
+                            .push_error("SATELITE  No se pudo insertar la imagen.");
+                    }
+                    Task::none()
+                }
+                Err(motivo) => {
+                    self.command_line.push_error(&motivo);
+                    Task::none()
+                }
+            },
             Message::SelectAllShortcut => {
                 let i = self.active_tab;
                 if self.mtext_editor.as_ref().is_some_and(|e| e.show_preview) {

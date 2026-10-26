@@ -413,6 +413,50 @@ impl lgbcadstudio {
                     ),
                 );
                 return Some(Task::none());
+            }            // ── SATELITE — imagen satelital georreferenciada (Esri) ──────
+            "SATELITE" | "BASEMAP" => {
+                let cmd = super::satelite::SateliteCommand::new();
+                self.command_line.push_info(&cmd.prompt());
+                self.tabs[i].active_cmd = Some(Box::new(cmd));
+            }
+            cmd if cmd.starts_with("SATELITE_FETCH ") => {
+                let valores: Vec<f64> = cmd["SATELITE_FETCH ".len()..]
+                    .split_whitespace()
+                    .filter_map(|valor| valor.parse().ok())
+                    .collect();
+                if valores.len() != 4 {
+                    self.command_line
+                        .push_error("SATELITE  Área inválida.");
+                    return Some(Task::none());
+                }
+                let pedido = crate::app::basemap::Pedido {
+                    min_x: valores[0],
+                    min_y: valores[1],
+                    max_x: valores[2],
+                    max_y: valores[3],
+                };
+                let carpeta = self.tabs[i]
+                    .current_path
+                    .as_ref()
+                    .and_then(|ruta| ruta.parent().map(std::path::Path::to_path_buf))
+                    .filter(|carpeta| !carpeta.as_os_str().is_empty())
+                    .or_else(|| crate::config::config_dir().map(|dir| dir.join("satelite")))
+                    .unwrap_or_else(std::env::temp_dir);
+                self.command_line
+                    .push_info("SATELITE  Descargando la imagen… (unos segundos)");
+                let tarea = Task::perform(
+                    async move {
+                        std::thread::spawn(move || {
+                            crate::app::basemap::descargar(&pedido, &carpeta)
+                        })
+                        .join()
+                        .unwrap_or_else(|_| {
+                            Err("La descarga falló de forma inesperada.".to_string())
+                        })
+                    },
+                    Message::SateliteReady,
+                );
+                return Some(tarea);
             }            // ── RENUMERA — renumeración de NAPs ──────────────────────────
             "RENUMERA" | "FTTH_RENUMERA_NAP" => {
                 // Los bloques destino tienen que existir en el dibujo.

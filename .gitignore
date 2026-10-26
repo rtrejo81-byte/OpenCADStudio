@@ -47,3 +47,6 @@ __pycache__/
 
 # Salida del lanzador de diagnostico (diagnostico_log.cmd)
 salida.log
+
+# Fuentes SHX (Autodesk): no se publican en el repositorio.
+*.shx

@@ -7439,7 +7439,13 @@ impl Scene {
         {
             let sets = self.resident_wire_sets.borrow();
             if let Some(set) = sets.get(&key) {
-                if set.epoch == self.geometry_epoch {
+                // Mientras se navega (zoom/pan/orbita) se sirve el conjunto
+                // residente tal cual aunque la época haya cambiado: mover la
+                // vista no cambia las líneas del modelo, y reconstruir 4.700
+                // entidades por cuadro es lo que hacía lento el layout. Al
+                // asentarse la cámara, la época vuelve a mandar y se reconstruye
+                // una sola vez.
+                if set.epoch == self.geometry_epoch || self.navigating_lod() {
                     self.last_model_wire_gen.set(set.gen);
                     return Arc::clone(&set.wires);
                 }

@@ -3473,17 +3473,16 @@ impl lgbcadstudio {
             // El atributo visible puede llamarse NOMBRE o NAME según el bloque
             // (en los planos reales conviven ambos) y el tag puede traer
             // espacios de relleno. Se informa cuántos se actualizaron.
+            // Los bloques de NAP traen la etiqueta visible en NOMBRE, CODIGO o
+            // NAME segun el plano; se prueban en ese orden y se escribe el
+            // primero que exista.
             let mut escrito = false;
-            for attribute in &mut insert.attributes {
-                if attribute.tag.trim().eq_ignore_ascii_case("NOMBRE") {
-                    attribute.value = nombre.clone();
-                    escrito = true;
+            for etiqueta in ["NOMBRE", "CODIGO", "NAME"] {
+                if escrito {
                     break;
                 }
-            }
-            if !escrito {
                 for attribute in &mut insert.attributes {
-                    if attribute.tag.trim().eq_ignore_ascii_case("NAME") {
+                    if attribute.tag.trim().eq_ignore_ascii_case(etiqueta) {
                         attribute.value = nombre.clone();
                         escrito = true;
                         break;

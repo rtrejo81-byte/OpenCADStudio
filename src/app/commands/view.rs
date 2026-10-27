@@ -3500,6 +3500,11 @@ impl lgbcadstudio {
             .collect();
         self.tabs[i].scene.bump_entities(&cambios);
         self.tabs[i].dirty = true;
+        // Refresco explícito aquí (capa de aplicación, sin préstamos activos):
+        // el cambio se ve en el cuadro siguiente sin mover la vista.
+        self.tabs[i]
+            .scene
+            .request_refresh(crate::scene::ViewportRefreshScope::All);
         self.refresh_properties();
         if let Some(pd) = pending {
             self.commit_undo_delta(i, pd);

@@ -4330,10 +4330,6 @@ impl Scene {
         self.invalidate_dependency_index();
         // Can't name the changed handles → force every journal consumer to rebuild.
         self.push_geometry_delta(epoch, Vec::new(), true);
-        // Un cambio de geometría debe verse en el SIGUIENTE cuadro: forzar el
-        // refresco de todas las ventanas evita tener que mover la vista una vez
-        // más para que el lienzo muestre lo editado.
-        self.request_refresh(ViewportRefreshScope::All);
     }
 
     /// Stable per-viewport identity (mirrors the tag used by the renderer so
@@ -4353,7 +4349,13 @@ impl Scene {
     /// and add them to the pending force set. `All` unions over `Active` so the
     /// superset always wins (never shrinks a prior `All`). No DB / undo touch.
     pub fn request_refresh(&self, scope: ViewportRefreshScope) {
-        let mut set = self.pending_refresh.borrow_mut();
+        // `try_borrow_mut`: si el conjunto ya esta prestado (p. ej. se pide un
+        // refresco desde dentro del consumo del anterior) se ignora en vez de
+        // entrar en panico. Un panico aqui congela la ventana entera: el ciclo
+        // de actualizacion muere y ni Escape responde.
+        let Ok(mut set) = self.pending_refresh.try_borrow_mut() else {
+            return;
+        };
         if let ViewportRefreshScope::All = scope {
             set.clear();
             // All: every current tile in Model, else sheet + every paper content vp.
@@ -4425,8 +4427,7 @@ impl Scene {
         self.has_face3d.set(None);
         self.invalidate_dependency_index();
         self.push_geometry_delta(epoch, Vec::new(), true);
-        // Igual que `bump_geometry`: el cuadro siguiente ya muestra el cambio.
-        self.request_refresh(ViewportRefreshScope::All);
+
     }
 
     /// Invalidate the cached document render environment (fog parameters and image).

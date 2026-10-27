@@ -3418,6 +3418,20 @@ impl Scene {
     /// rebuild. Every `geometry_epoch` bump must call this exactly once so the
     /// journal never has a gap (a gap would let a consumer serve stale geometry).
     fn push_geometry_delta(&self, epoch: u64, changes: Vec<(Handle, ChangeKind)>, full: bool) {
+        // Diagnóstico (solo con PERF): qué entidades cambian y con qué
+        // frecuencia. Un cambio por cuadro mientras solo se mueve la vista
+        // explica que el cache residente nunca acierte.
+        if !full && changes.len() <= 6 && crate::perf::enabled() {
+            let lista: String = changes
+                .iter()
+                .map(|(handle, kind)| {
+                    let marca = if matches!(kind, ChangeKind::Removed) { 'R' } else { 'M' };
+                    format!("{:X}{marca}", handle.value())
+                })
+                .collect::<Vec<_>>()
+                .join(",");
+            crate::perf_record!("[perf] geom-delta epoch={} n={} {}", epoch, changes.len(), lista);
+        }
         let pending_categories = std::mem::take(&mut *self.pending_removed_categories.borrow_mut());
         let removed_categories = if full {
             HashMap::default()

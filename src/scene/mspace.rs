@@ -2,7 +2,7 @@
 use super::*;
 
 impl Scene {
-    // ── MSPACE helpers ───────────────────────────────────────────────────
+    // â”€â”€ MSPACE helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /// Convert a **paper-space** world coordinate to **model-space** using the
     /// geometry of the currently active viewport.  Returns the input unchanged
@@ -17,7 +17,7 @@ impl Scene {
             Some(codec::EntityType::Viewport(vp)) => vp,
             _ => return paper_pt,
         };
-        // Uses the viewport's own `view_target` — kept valid by
+        // Uses the viewport's own `view_target` â€” kept valid by
         // `normalize_active_viewport_view` on entry, which folds a stale UTM
         // saved view onto the auto-fit centre so the display, pan/zoom and this
         // inverse all agree. Cheap (no per-call camera rebuild).
@@ -60,19 +60,19 @@ impl Scene {
     }
 
     /// In-viewport (MSPACE) editing frame: the active floating viewport's own
-    /// camera — *exactly* the one the GPU renders its content with
-    /// ([`camera_for_viewport`]) — together with the viewport's full screen
+    /// camera â€” *exactly* the one the GPU renders its content with
+    /// ([`camera_for_viewport`]) â€” together with the viewport's full screen
     /// rectangle in canvas pixels ([`viewport_screen_rect`]).
     ///
-    /// This is the unified editing adapter (the "süzgeç"). Inside a viewport,
+    /// This is the unified editing adapter (the "sÃ¼zgeÃ§"). Inside a viewport,
     /// editing IS model-space: treat the returned camera as *the* camera, the
-    /// returned rect as *the* pane, and the cursor relative to that rect — then
+    /// returned rect as *the* pane, and the cursor relative to that rect â€” then
     /// the existing model-space snap / hit-test / grip / preview / plane-pick
     /// code runs unchanged and lands on the same pixels the GPU draws. Results
     /// come back as model coordinates directly (no paper round-trip).
     ///
     /// Because the camera is the real GPU camera, this tracks the viewport's
-    /// pan / zoom / twist / oblique view correctly — unlike a linear
+    /// pan / zoom / twist / oblique view correctly â€” unlike a linear
     /// paper-projection, whose auto-fit / saved-view / crop divergence left the
     /// snap stale after pan/zoom. Returns `None` when not editing inside a
     /// floating viewport, or the camera / rect cannot be derived.
@@ -222,7 +222,7 @@ impl Scene {
 /// Exponential for the same reason [`crate::scene::view::camera::Camera::zoom`]
 /// is. The subtraction this replaced (`1 - 0.15 * steps`) reached zero at
 /// 6.67 steps and went negative past it, so from ZOOMFACTOR 360 up every
-/// notch inside a viewport bottomed out on the clamp — a tenfold jump a
+/// notch inside a viewport bottomed out on the clamp â€” a tenfold jump a
 /// notch, and a sensitivity setting that stopped doing anything over the top
 /// third of its range.
 ///
@@ -240,7 +240,7 @@ mod viewport_zoom_tests {
 
     /// One notch, at each ZOOMFACTOR the application can hold (the step is
     /// the factor over the default 60). Every one of them has to shrink the
-    /// view, and a higher setting has to shrink it further — which is exactly
+    /// view, and a higher setting has to shrink it further â€” which is exactly
     /// what stopped being true above 360 while the factor was a subtraction.
     #[test]
     fn a_notch_shrinks_the_view_further_at_every_zoom_factor() {
@@ -356,8 +356,8 @@ mod clip_tests {
 impl Scene {
     /// Fold the active viewport's saved view onto the effective camera (the
     /// auto-fit centre for stale UTM views) and persist it into `view_target` /
-    /// `view_height`. Called on entering MSPACE so pan/zoom, paper↔model and the
-    /// rendered content all share one valid view — otherwise a stale `(0,0,0)`
+    /// `view_height`. Called on entering MSPACE so pan/zoom, paperâ†”model and the
+    /// rendered content all share one valid view â€” otherwise a stale `(0,0,0)`
     /// target left the camera auto-fitting to the model centre while the cursor
     /// math used the origin, and pan toggled the two (jitter).
     pub fn normalize_active_viewport_view(&mut self) {
@@ -377,7 +377,7 @@ impl Scene {
                 vp.view_height = eff_h;
             }
         }
-        self.notify_viewport_changed(vp_handle);
+        self.note_viewport_view_changed();
     }
 
     /// Fit model-space bounds into the active floating viewport without moving
@@ -418,7 +418,7 @@ impl Scene {
                 viewport.custom_scale = viewport.height / viewport.view_height;
             }
         }
-        self.notify_viewport_changed(viewport_handle);
+        self.note_viewport_view_changed();
         self.camera_generation += 1;
         true
     }
@@ -470,7 +470,7 @@ impl Scene {
             vp.view_target.y += model_delta.y as f64;
             vp.view_target.z += model_delta.z as f64;
         }
-        self.notify_viewport_changed(vp_handle);
+        self.note_viewport_view_changed();
     }
 
     /// Zoom the active viewport's model-space view by `steps` notches.
@@ -478,6 +478,15 @@ impl Scene {
     /// `cursor_paper`: optional paper-space XY of the cursor; when supplied the
     /// model point under the cursor is kept stationary (AutoCAD-style zoom).
     /// No-op when there is no active viewport.
+    /// La vista de una ventana cambió (encuadre, zoom, pan, giro). Eso **no** es
+    /// un cambio de geometría: basta con pedir un cuadro nuevo. Marcar la
+    /// entidad como modificada subía la época y tiraba el cache residente del
+    /// modelo, que re-teselaba todas las entidades en cada paso de zoom — la
+    /// causa del lag en los layouts. Las cotas asociadas se recolocan en el
+    /// siguiente regenerado.
+    fn note_viewport_view_changed(&mut self) {
+        self.camera_generation += 1;
+    }
     pub fn zoom_active_viewport(&mut self, steps: f32, cursor_paper: Option<glam::Vec2>) {
         let vp_handle = match self.active_viewport {
             Some(h) => h,
@@ -519,7 +528,7 @@ impl Scene {
                 }
             }
         }
-        self.notify_viewport_changed(vp_handle);
+        self.note_viewport_view_changed();
     }
 
     /// Orbit the active viewport's view direction by the given screen-pixel delta.
@@ -538,7 +547,7 @@ impl Scene {
         // yaw_pitch_to_quat(y,p)*Z = (cos(p)*sin(y), -cos(p)*cos(y), sin(p))
         // `camera_for_viewport` reconstructs the rotation so that
         // `rotation * Z == view_direction` exactly (its `yaw = atan2(x, -y)`
-        // cancels the sign). Store `eye` directly so the orbit round-trips —
+        // cancels the sign). Store `eye` directly so the orbit round-trips â€”
         // negating Y here made each drag step read back a Y-mirrored camera,
         // flipping the model between a rotation and its opposite every frame.
         let eye = cam.rotation * glam::Vec3::Z;
@@ -574,7 +583,7 @@ impl Scene {
 
         // camera_from_view rebuilds the rotation with its OWN yaw convention
         // (atan2(x, -y)) and applies roll = -twist, which is *not* the camera's
-        // internal yaw/roll convention — so `-tmp.roll()` does not round-trip.
+        // internal yaw/roll convention â€” so `-tmp.roll()` does not round-trip.
         // Instead reproduce the decoder's zero-twist basis here, then measure
         // the signed roll about the view axis that carries its up onto the
         // desired UCS up. Store twist = -roll (the decoder negates it back).
@@ -597,11 +606,11 @@ impl Scene {
             vp.view_direction.z = dir.z as f64;
             vp.twist_angle = twist;
         }
-        self.notify_viewport_changed(vp_handle);
+        self.note_viewport_view_changed();
     }
 
     /// Mutate the active viewport's camera through a closure, then re-encode the
-    /// result to the stored `(view_direction, twist_angle)` — the same decode
+    /// result to the stored `(view_direction, twist_angle)` â€” the same decode
     /// the ViewCube snap uses. Lets the home / roll / nudge controls drive a
     /// floating viewport just like the model camera. Returns `false` if there is
     /// no active (unlocked) viewport.
@@ -640,7 +649,7 @@ impl Scene {
             changed = true;
         }
         if changed {
-            self.notify_viewport_changed(vp_handle);
+            self.note_viewport_view_changed();
         }
         changed
     }
@@ -699,8 +708,8 @@ impl Scene {
     }
 
     /// Current gaze direction (canonical +Z eye dir, world space) of whichever
-    /// camera owns the ViewCube — the active floating viewport in MSPACE, else
-    /// the main camera. Used by the ViewCube "already there → flip to opposite"
+    /// camera owns the ViewCube â€” the active floating viewport in MSPACE, else
+    /// the main camera. Used by the ViewCube "already there â†’ flip to opposite"
     /// check, which must test the camera the cube actually reflects (the paper
     /// camera always looks straight down, so testing it flipped every snap).
     pub fn active_gaze_dir(&self) -> glam::Vec3 {
@@ -819,7 +828,7 @@ impl Scene {
         self.camera.borrow().view_rotation_mat() * self.viewcube_ucs_mat()
     }
 
-    /// The UCS→world rotation the ViewCube should compose with the camera —
+    /// The UCSâ†’world rotation the ViewCube should compose with the camera â€”
     /// the active UCS in model space, identity everywhere else. Render,
     /// hit-test, and click-snap all go through this so they stay in lock-step.
     pub fn viewcube_ucs_mat(&self) -> glam::Mat4 {
@@ -835,7 +844,7 @@ impl Scene {
     /// Return the handle of the user viewport whose *visible* on-screen
     /// rectangle (clamped to the canvas) contains the given screen-pixel point.
     /// Viewport activation goes through this so a click only enters a viewport
-    /// when it lands on the part the user can actually see — clicking the empty
+    /// when it lands on the part the user can actually see â€” clicking the empty
     /// area beside a viewport that runs off-screen no longer matches its full
     /// (partly off-canvas) paper rect and switches to it by mistake.
     pub fn viewport_at_screen_point(&self, px: f32, py: f32, canvas: (f32, f32)) -> Option<Handle> {
@@ -855,7 +864,7 @@ impl Scene {
                 let x1 = (rect.x + rect.width).min(canvas.0);
                 let y1 = (rect.y + rect.height).min(canvas.1);
                 if x1 <= x0 || y1 <= y0 {
-                    return None; // fully off-canvas → nothing to click
+                    return None; // fully off-canvas â†’ nothing to click
                 }
                 if px >= x0 && px <= x1 && py >= y0 && py <= y1 {
                     Some((vp.common.handle, (x1 - x0) * (y1 - y0)))

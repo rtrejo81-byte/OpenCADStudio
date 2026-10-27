@@ -906,6 +906,14 @@ impl lgbcadstudio {
                 handles,
             } => {
                 let i = self.active_tab;
+                // Cerrar el comando interactivo antes de aplicar, igual que hace
+                // `handle_dispatch`: si se deja activo, el prompt sigue pidiendo
+                // bloques y cada Escape vuelve a aplicar la cola (el comando no
+                // se podía abandonar).
+                self.tabs[i].active_cmd = None;
+                self.tabs[i].snap_result = None;
+                self.tabs[i].scene.clear_preview_wire();
+                self.restore_pre_cmd_tangent();
                 return self.renumerar_aplicar(i, distrito, huawei, inicio, handles);
             }
             CmdResult::EditTableCell { handle, point } => {

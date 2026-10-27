@@ -377,6 +377,7 @@ impl lgbcadstudio {
                 }
                 let pending = self.begin_undo(i, "RENUMERA", handles.len(), true);
                 let mut aplicados = 0usize;
+                let mut atributos = 0usize;
                 for (indice, handle) in handles.iter().enumerate() {
                     let numero = inicio + indice as u32;
                     let destino = super::renumera::bloque_destino(huawei, numero);
@@ -387,10 +388,30 @@ impl lgbcadstudio {
                         continue;
                     };
                     insert.block_name = destino.to_string();
+                    // El atributo visible puede llamarse NOMBRE o NAME segun el
+                    // bloque (en los planos reales conviven ambos), y el tag
+                    // puede traer espacios de relleno. Se prueban por orden y se
+                    // informa cuantos se actualizaron, para que quede claro si el
+                    // bloque no tenia ninguno de los dos.
+                    let mut escrito = false;
                     for attribute in &mut insert.attributes {
-                        if attribute.tag.eq_ignore_ascii_case("NOMBRE") {
+                        if attribute.tag.trim().eq_ignore_ascii_case("NOMBRE") {
                             attribute.value = nombre.clone();
+                            escrito = true;
+                            break;
                         }
+                    }
+                    if !escrito {
+                        for attribute in &mut insert.attributes {
+                            if attribute.tag.trim().eq_ignore_ascii_case("NAME") {
+                                attribute.value = nombre.clone();
+                                escrito = true;
+                                break;
+                            }
+                        }
+                    }
+                    if escrito {
+                        atributos += 1;
                     }
                     aplicados += 1;
                 }
@@ -406,8 +427,9 @@ impl lgbcadstudio {
                 }
                 self.command_line.push_output(
                     &crate::tf!(
-                        "RENUMERA  {} bloque(s) renumerado(s) · distrito {} · desde {}.",
+                        "RENUMERA  {} bloque(s) renumerado(s) - {} atributo(s) actualizado(s) - distrito {} - desde {}.",
                         aplicados,
+                        atributos,
                         distrito,
                         inicio
                     ),

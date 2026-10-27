@@ -10836,12 +10836,28 @@ impl Scene {
         // correctness without expanding every nearby entity: regenerate that
         // handle, then retain only the exact wire ordinals the base index
         // reported.
-        for (handle, ordinals) in misses {
-            let entity_wires = self.wire_models_for(&[handle]);
-            for ordinal in ordinals {
-                if let Some(wire) = entity_wires.get(ordinal as usize) {
-                    base_slots.insert((handle.value(), ordinal), wires.len() as u32);
-                    wires.push(wire.clone());
+        if !misses.is_empty() {
+            // Una sola pasada para todos los fallos. Antes se llamaba a
+            // `wire_models_for` por entidad: con ~10.000 claves y la memo
+            // vacía (justo después de editar) eso costaba segundos por cada
+            // hover o clic.
+            let pendientes: Vec<Handle> = misses.keys().copied().collect();
+            let todas = self.wire_models_for(&pendientes);
+            let mut por_entidad: HashMap<u64, Vec<&WireModel>> = HashMap::default();
+            for wire in &todas {
+                if let Some(handle) = pipeline::wire_gpu::fast_parse_u64(&wire.name) {
+                    por_entidad.entry(handle).or_default().push(wire);
+                }
+            }
+            for (handle, ordinals) in misses {
+                let Some(lista) = por_entidad.get(&handle.value()) else {
+                    continue;
+                };
+                for ordinal in ordinals {
+                    if let Some(wire) = lista.get(ordinal as usize) {
+                        base_slots.insert((handle.value(), ordinal), wires.len() as u32);
+                        wires.push((*wire).clone());
+                    }
                 }
             }
         }

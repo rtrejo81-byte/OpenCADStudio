@@ -3459,6 +3459,7 @@ impl lgbcadstudio {
         let pending = self.begin_undo(i, "RENUMERA", handles.len(), true);
         let mut aplicados = 0usize;
         let mut atributos = 0usize;
+        let mut tags_vistos: Vec<String> = Vec::new();
         for (indice, handle) in handles.iter().enumerate() {
             let numero = inicio + indice as u32;
             let destino = super::renumera::bloque_destino(huawei, numero);
@@ -3491,6 +3492,15 @@ impl lgbcadstudio {
             }
             if escrito {
                 atributos += 1;
+            } else if tags_vistos.is_empty() {
+                // Diagnóstico: sin atributos no hay nada que renombrar y conviene
+                // que el usuario lo vea, en lugar de "0 atributo(s)" sin motivo.
+                let todos: Vec<String> = insert
+                    .attributes
+                    .iter()
+                    .map(|a| a.tag.trim().to_string())
+                    .collect();
+                tags_vistos = todos;
             }
             aplicados += 1;
         }
@@ -3518,6 +3528,16 @@ impl lgbcadstudio {
                 inicio
             ),
         );
+        if atributos == 0 && aplicados > 0 {
+            let detalle = if tags_vistos.is_empty() {
+                "los bloques no tienen atributos".to_string()
+            } else {
+                format!("tags vistos: {}", tags_vistos.join(", "))
+            };
+            self.command_line.push_info(
+                &format!("RENUMERA  No se escribio ningun atributo: {detalle}."),
+            );
+        }
         Task::none()
     }
 }

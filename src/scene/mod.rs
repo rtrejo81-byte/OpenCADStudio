@@ -10981,6 +10981,24 @@ impl Scene {
                 Some(parts) => changed_index.snap_candidate_keys(parts),
                 None => changed_index.query_wire_keys_xy(aabb),
             };
+            // El armado del overlay CLONA las líneas de cada clave: con ~8.700
+            // claves eso costaba 3-5 s por movimiento del mouse y la aplicación
+            // se sentía pegada. Cuando la zona es muy densa se consulta el
+            // snapshot tal cual (1-3 ms) en vez de reconstruir; el resalte
+            // pierde algún candidato en zonas extremas, pero recupera el uso.
+            const MAX_CLAVES_OVERLAY: usize = 2500;
+            if keys.len() > MAX_CLAVES_OVERLAY || changed_keys.len() > MAX_CLAVES_OVERLAY {
+                if let Some(source) = self.interaction_source_for_index(base_epoch, &base) {
+                    if crate::perf::enabled() {
+                        crate::perf_record!(
+                            "[perf] interaction-overlay skip keys={} changed={} (zona densa)",
+                            keys.len(),
+                            changed_keys.len()
+                        );
+                    }
+                    return direct(&base, source);
+                }
+            }
             let t_local = iced::time::Instant::now();
             let (local, base_slots, changed_slots) = self.interaction_overlay_wires(
                 keys.iter().copied(),
@@ -11149,6 +11167,24 @@ impl Scene {
                 Some(parts) => changed_index.snap_candidate_keys(parts),
                 None => changed_index.query_wire_keys_screen(screen_rect, view_rot, eye, bounds),
             };
+            // El armado del overlay CLONA las líneas de cada clave: con ~8.700
+            // claves eso costaba 3-5 s por movimiento del mouse y la aplicación
+            // se sentía pegada. Cuando la zona es muy densa se consulta el
+            // snapshot tal cual (1-3 ms) en vez de reconstruir; el resalte
+            // pierde algún candidato en zonas extremas, pero recupera el uso.
+            const MAX_CLAVES_OVERLAY: usize = 2500;
+            if keys.len() > MAX_CLAVES_OVERLAY || changed_keys.len() > MAX_CLAVES_OVERLAY {
+                if let Some(source) = self.interaction_source_for_index(base_epoch, &base) {
+                    if crate::perf::enabled() {
+                        crate::perf_record!(
+                            "[perf] interaction-overlay skip keys={} changed={} (zona densa)",
+                            keys.len(),
+                            changed_keys.len()
+                        );
+                    }
+                    return direct(&base, source);
+                }
+            }
             let t_local = iced::time::Instant::now();
             let (local, base_slots, changed_slots) = self.interaction_overlay_wires(
                 keys.iter().copied(),

@@ -1521,6 +1521,15 @@ impl DimensionPreview {
 /// Returned by every `CadCommand` method to tell main.rs what to do.
 #[allow(dead_code)]
 pub enum CmdResult {
+    /// Escribe la renumeración de NAPs que el comando encoló. Se despacha como
+    /// valor, no como cadena: el verbo textual nunca alcanzaba su manejador y
+    /// al pulsar Enter la cola se perdía sin aplicar nada.
+    RenumeraApply {
+        distrito: String,
+        huawei: bool,
+        inicio: u32,
+        handles: Vec<Handle>,
+    },
    
     SetBlockActionBars {
         document: u64,

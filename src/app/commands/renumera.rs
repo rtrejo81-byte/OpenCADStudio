@@ -138,19 +138,12 @@ impl RenumeraCommand {
         if self.cola.is_empty() {
             return CmdResult::Cancel;
         }
-        let handles: Vec<String> = self
-            .cola
-            .iter()
-            .map(|(handle, _, _)| format!("{:X}", handle.value()))
-            .collect();
-        let tecnologia = if self.huawei { "H" } else { "C" };
-        CmdResult::Dispatch(format!(
-            "RENUMERA_APPLY {} {} {} {}",
-            self.distrito,
-            tecnologia,
-            self.siguiente.saturating_sub(self.cola.len() as u32),
-            handles.join(",")
-        ))
+        CmdResult::RenumeraApply {
+            distrito: self.distrito.clone(),
+            huawei: self.huawei,
+            inicio: self.siguiente.saturating_sub(self.cola.len() as u32),
+            handles: self.cola.iter().map(|(handle, _, _)| *handle).collect(),
+        }
     }
 }
 impl CadCommand for RenumeraCommand {

@@ -899,6 +899,15 @@ impl lgbcadstudio {
             CmdResult::Dispatch(cmd) => {
                 dispatched = self.handle_dispatch(cmd);
             }
+            CmdResult::RenumeraApply {
+                distrito,
+                huawei,
+                inicio,
+                handles,
+            } => {
+                let i = self.active_tab;
+                return self.renumerar_aplicar(i, distrito, huawei, inicio, handles);
+            }
             CmdResult::EditTableCell { handle, point } => {
                 if let Some(task) = self.handle_edit_table_cell(handle, point) {
                     return task;

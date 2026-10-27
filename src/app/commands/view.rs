@@ -355,10 +355,7 @@ impl lgbcadstudio {
                 let resto = &cmd["RENUMERA_APPLY ".len()..];
                 let mut partes = resto.split_whitespace();
                 let distrito = partes.next().unwrap_or("SYP01").to_string();
-                let huawei = !partes
-                    .next()
-                    .unwrap_or("H")
-                    .eq_ignore_ascii_case("C");
+                let huawei = !partes.next().unwrap_or("H").eq_ignore_ascii_case("C");
                 let inicio: u32 = partes
                     .next()
                     .and_then(|valor| valor.parse().ok())
@@ -370,72 +367,8 @@ impl lgbcadstudio {
                     .filter_map(|texto| u64::from_str_radix(texto, 16).ok())
                     .map(codec::Handle::new)
                     .collect();
-                if handles.is_empty() {
-                    self.command_line
-                        .push_error("RENUMERA  No hay bloques que renumerar.");
-                    return Some(Task::none());
-                }
-                let pending = self.begin_undo(i, "RENUMERA", handles.len(), true);
-                let mut aplicados = 0usize;
-                let mut atributos = 0usize;
-                for (indice, handle) in handles.iter().enumerate() {
-                    let numero = inicio + indice as u32;
-                    let destino = super::renumera::bloque_destino(huawei, numero);
-                    let nombre = super::renumera::nombre_nap(&distrito, numero);
-                    let Some(codec::EntityType::Insert(insert)) =
-                        self.tabs[i].scene.document.get_entity_mut(*handle)
-                    else {
-                        continue;
-                    };
-                    insert.block_name = destino.to_string();
-                    // El atributo visible puede llamarse NOMBRE o NAME segun el
-                    // bloque (en los planos reales conviven ambos), y el tag
-                    // puede traer espacios de relleno. Se prueban por orden y se
-                    // informa cuantos se actualizaron, para que quede claro si el
-                    // bloque no tenia ninguno de los dos.
-                    let mut escrito = false;
-                    for attribute in &mut insert.attributes {
-                        if attribute.tag.trim().eq_ignore_ascii_case("NOMBRE") {
-                            attribute.value = nombre.clone();
-                            escrito = true;
-                            break;
-                        }
-                    }
-                    if !escrito {
-                        for attribute in &mut insert.attributes {
-                            if attribute.tag.trim().eq_ignore_ascii_case("NAME") {
-                                attribute.value = nombre.clone();
-                                escrito = true;
-                                break;
-                            }
-                        }
-                    }
-                    if escrito {
-                        atributos += 1;
-                    }
-                    aplicados += 1;
-                }
-                let cambios: Vec<_> = handles
-                    .iter()
-                    .map(|handle| (*handle, crate::scene::ChangeKind::Modified))
-                    .collect();
-                self.tabs[i].scene.bump_entities(&cambios);
-                self.tabs[i].dirty = true;
-                self.refresh_properties();
-                if let Some(pd) = pending {
-                    self.commit_undo_delta(i, pd);
-                }
-                self.command_line.push_output(
-                    &crate::tf!(
-                        "RENUMERA  {} bloque(s) renumerado(s) - {} atributo(s) actualizado(s) - distrito {} - desde {}.",
-                        aplicados,
-                        atributos,
-                        distrito,
-                        inicio
-                    ),
-                );
-                return Some(Task::none());
-            }            // ── SATELITE — imagen satelital georreferenciada (Esri) ──────
+                return Some(self.renumerar_aplicar(i, distrito, huawei, inicio, handles));
+            }
             "SATELITE" | "BASEMAP" => {
                 let cmd = super::satelite::SateliteCommand::new();
                 self.command_line.push_info(&cmd.prompt());
@@ -3501,5 +3434,85 @@ mod tests {
             .is_some_and(
                 |command| command.name() == "DRAWORDER" && command.is_selection_gathering()
             ));
+    }
+}
+
+/// Escritura de la renumeración de NAPs, separada del enrutado por texto:
+/// la llaman tanto el verbo interno `RENUMERA_APPLY` como el comando
+/// interactivo a través de `CmdResult::RenumeraApply`. Antes solo existía
+/// como cadena de comando y el despacho nunca la alcanzaba, así que la cola
+/// se armaba y al pulsar Enter no pasaba nada.
+impl lgbcadstudio {
+    pub(crate) fn renumerar_aplicar(
+        &mut self,
+        i: usize,
+        distrito: String,
+        huawei: bool,
+        inicio: u32,
+        handles: Vec<codec::Handle>,
+    ) -> Task<Message> {
+        if handles.is_empty() {
+            self.command_line
+                .push_error("RENUMERA  No hay bloques que renumerar.");
+            return Task::none();
+        }
+        let pending = self.begin_undo(i, "RENUMERA", handles.len(), true);
+        let mut aplicados = 0usize;
+        let mut atributos = 0usize;
+        for (indice, handle) in handles.iter().enumerate() {
+            let numero = inicio + indice as u32;
+            let destino = super::renumera::bloque_destino(huawei, numero);
+            let nombre = super::renumera::nombre_nap(&distrito, numero);
+            let Some(codec::EntityType::Insert(insert)) =
+                self.tabs[i].scene.document.get_entity_mut(*handle)
+            else {
+                continue;
+            };
+            insert.block_name = destino.to_string();
+            // El atributo visible puede llamarse NOMBRE o NAME según el bloque
+            // (en los planos reales conviven ambos) y el tag puede traer
+            // espacios de relleno. Se informa cuántos se actualizaron.
+            let mut escrito = false;
+            for attribute in &mut insert.attributes {
+                if attribute.tag.trim().eq_ignore_ascii_case("NOMBRE") {
+                    attribute.value = nombre.clone();
+                    escrito = true;
+                    break;
+                }
+            }
+            if !escrito {
+                for attribute in &mut insert.attributes {
+                    if attribute.tag.trim().eq_ignore_ascii_case("NAME") {
+                        attribute.value = nombre.clone();
+                        escrito = true;
+                        break;
+                    }
+                }
+            }
+            if escrito {
+                atributos += 1;
+            }
+            aplicados += 1;
+        }
+        let cambios: Vec<_> = handles
+            .iter()
+            .map(|handle| (*handle, crate::scene::ChangeKind::Modified))
+            .collect();
+        self.tabs[i].scene.bump_entities(&cambios);
+        self.tabs[i].dirty = true;
+        self.refresh_properties();
+        if let Some(pd) = pending {
+            self.commit_undo_delta(i, pd);
+        }
+        self.command_line.push_output(
+            &crate::tf!(
+                "RENUMERA  {} bloque(s) renumerado(s) - {} atributo(s) actualizado(s) - distrito {} - desde {}.",
+                aplicados,
+                atributos,
+                distrito,
+                inicio
+            ),
+        );
+        Task::none()
     }
 }

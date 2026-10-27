@@ -2839,6 +2839,7 @@ pub struct Scene {
     /// `request_refresh` and drained per-id by `refresh_consume` from whichever
     /// builder owns that instance. Never touches geometry_epoch/block_epoch.
     pending_refresh: std::cell::RefCell<rustc_hash::FxHashSet<u64>>,
+    overlay_cache: std::cell::RefCell<Option<OverlayCache>>,
     /// Wall time (ms) of the most recent wire re-tessellation
     /// on a wire-cache miss in `model_tile_wires_arc` / `paper_sheet_wires_arc`.
     /// Stays at the last value while the cache is hit (idle pan/zoom on a warm
@@ -3178,6 +3179,7 @@ impl Scene {
             last_world_per_pixel: std::cell::Cell::new(0.0),
             viewcube_hover: std::cell::Cell::new(None),
             pending_refresh: std::cell::RefCell::new(rustc_hash::FxHashSet::default()),
+            overlay_cache: std::cell::RefCell::new(None),
             last_tess_ms: std::cell::Cell::new(0.0),
             last_tess_wires: std::cell::Cell::new(0),
             last_model_wire_gen: std::cell::Cell::new(0),
@@ -10809,6 +10811,38 @@ impl Scene {
         HashMap<(u64, u32), u32>,
         HashMap<(u64, u32), u32>,
     ) {
+        // Cache por época: si el dibujo no cambió y las claves son las mismas,
+        // se reusa el armado anterior. Sin esto, con la memo de teselación fría
+        // se re-teselaban miles de entidades en CADA movimiento del mouse
+        // (3 s por consulta en un plano de 63.000 líneas).
+        let base_keys: Vec<(u64, u32)> = base_keys.into_iter().collect();
+        let changed_keys: Vec<(u64, u32)> = changed_keys.into_iter().collect();
+        let mut firma: u64 = 0xCBF2_9CE4_8422_2325;
+        let mut mezclar = |valor: u64, firma: &mut u64| {
+            *firma ^= valor;
+            *firma = firma.wrapping_mul(0x0000_0100_0000_01B3);
+        };
+        for (handle, ordinal) in &base_keys {
+            mezclar(*handle, &mut firma);
+            mezclar(*ordinal as u64, &mut firma);
+        }
+        for (handle, ordinal) in &changed_keys {
+            mezclar(handle.wrapping_mul(31).wrapping_add(7), &mut firma);
+            mezclar(*ordinal as u64 ^ 0x9E37_79B9, &mut firma);
+        }
+        for (handle, _) in changes {
+            mezclar(handle.value() ^ 0xC0FF_EE00, &mut firma);
+        }
+        mezclar(changed_wires.len() as u64, &mut firma);
+        if let Some(cache) = self.overlay_cache.borrow().as_ref() {
+            if cache.epoch == self.geometry_epoch && cache.firma == firma {
+                return (
+                    Arc::clone(&cache.wires),
+                    cache.base_slots.clone(),
+                    cache.changed_slots.clone(),
+                );
+            }
+        }
         let changed: HashSet<Handle> = changes.iter().map(|(handle, _)| *handle).collect();
         let memo = self.resident_tess_memo.borrow();
         let mut wires = Vec::new();
@@ -10876,7 +10910,16 @@ impl Scene {
                 *ordinal += 1;
             }
         }
-        (Arc::new(wires), base_slots, changed_slots)
+        let resultado = (Arc::new(wires), base_slots, changed_slots);
+        let mut cache = self.overlay_cache.borrow_mut();
+        *cache = Some(OverlayCache {
+            epoch: self.geometry_epoch,
+            firma,
+            wires: Arc::clone(&resultado.0),
+            base_slots: resultado.1.clone(),
+            changed_slots: resultado.2.clone(),
+        });
+        resultado
     }
 
     fn indexed_interaction_candidates_xy(
@@ -16240,4 +16283,15 @@ mod world_box_handle_tests {
         assert!(!handles.contains(&far_block), "far block copy joined the box");
         assert!(!handles.contains(&far_line), "far line joined the box");
     }
+}
+
+/// Armado de la capa de resalte reutilizable. Se guarda por época de geometría
+/// y firma de las claves implicadas: mientras el dibujo no cambie, un hover o
+/// un clic sobre la misma zona reusa los cables ya resueltos.
+struct OverlayCache {
+    epoch: u64,
+    firma: u64,
+    wires: Arc<Vec<WireModel>>,
+    base_slots: HashMap<(u64, u32), u32>,
+    changed_slots: HashMap<(u64, u32), u32>,
 }

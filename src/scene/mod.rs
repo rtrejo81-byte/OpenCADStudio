@@ -7453,13 +7453,13 @@ impl Scene {
         {
             let sets = self.resident_wire_sets.borrow();
             if let Some(set) = sets.get(&key) {
-                // Mientras se navega (zoom/pan/orbita) se sirve el conjunto
-                // residente tal cual aunque la época haya cambiado: mover la
-                // vista no cambia las líneas del modelo, y reconstruir 4.700
-                // entidades por cuadro es lo que hacía lento el layout. Al
-                // asentarse la cámara, la época vuelve a mandar y se reconstruye
-                // una sola vez.
-                if set.epoch == self.geometry_epoch || self.navigating_lod() {
+                // Solo se sirve el conjunto si está al día. Servirlo durante la
+                // navegación "aunque fuera viejo" se probó y era un fallo: tras
+                // pegar o editar, el cache antiguo no tenía lo nuevo y el
+                // contenido desaparecía al mover el zoom. Ya no hace falta:
+                // mover la vista no toca la época (ver
+                // `note_viewport_view_changed`), así que el acierto es normal.
+                if set.epoch == self.geometry_epoch {
                     self.last_model_wire_gen.set(set.gen);
                     return Arc::clone(&set.wires);
                 }

@@ -4499,14 +4499,13 @@ impl Scene {
         // stays at alpha=0, so the alpha-blended blit reveals the container
         // background (model bg, or the desk colour in a paper layout).
         let bg_color = [0.0, 0.0, 0.0, 0.0];
-        // Alivio durante la navegación: con muchas ventanas (un layout de 15
-        // ventanas re-teselaba 37.000 entidades por ventana y por cuadro) se
-        // dibuja el papel y la ventana activa, y el resto vuelve al asentarse
-        // la cámara. Sin esto, mover la vista cuesta segundos por cuadro.
-        let navegando = self.current_layout != "Model" && self.navigating_lod();
+        // Todas las ventanas se dibujan también mientras se navega: mover la
+        // vista de una ventana ya no invalida la geometría (ver
+        // `note_viewport_view_changed`), así que cada una reutiliza su cache
+        // residente y el cuadro queda en milisegundos. Esconder las demás solo
+        // servía cuando reconstruirlas costaba segundos, y provocaba parpadeo.
         let viewports: Vec<ViewportData> = instances
             .iter()
-            .filter(|inst| !navegando || inst.paper_sheet || inst.active)
             .filter_map(|inst| {
                 let force = self.refresh_consume(self.instance_id_for(inst));
                 self.viewport_data_for(

@@ -4330,6 +4330,10 @@ impl Scene {
         self.invalidate_dependency_index();
         // Can't name the changed handles → force every journal consumer to rebuild.
         self.push_geometry_delta(epoch, Vec::new(), true);
+        // Un cambio de geometría debe verse en el SIGUIENTE cuadro: forzar el
+        // refresco de todas las ventanas evita tener que mover la vista una vez
+        // más para que el lienzo muestre lo editado.
+        self.request_refresh(ViewportRefreshScope::All);
     }
 
     /// Stable per-viewport identity (mirrors the tag used by the renderer so
@@ -4421,6 +4425,8 @@ impl Scene {
         self.has_face3d.set(None);
         self.invalidate_dependency_index();
         self.push_geometry_delta(epoch, Vec::new(), true);
+        // Igual que `bump_geometry`: el cuadro siguiente ya muestra el cambio.
+        self.request_refresh(ViewportRefreshScope::All);
     }
 
     /// Invalidate the cached document render environment (fog parameters and image).

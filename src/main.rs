@@ -77,6 +77,12 @@ fn main() -> iced::Result {
         // Diagnóstico: volcado del OLE2FRAME de un DWG, para comparar la
         // estructura que escribe AutoCAD con la que escribe la aplicación.
         if let Some(ruta) = &args.ole_dump {
+            // La app es subsistema Windows: stdout no llega a la consola. El
+            // volcado se escribe junto al archivo analizado.
+            let destino = ruta.with_extension("ole.txt");
+            let archivo = std::fs::File::create(&destino).expect("no se pudo crear el volcado");
+            let mut salida = std::io::BufWriter::new(archivo);
+            use std::io::Write as _;
             let bytes = std::fs::read(ruta).expect("no se pudo leer el DWG");
             let doc = codec::io::dwg::DwgReader::from_stream(std::io::Cursor::new(bytes))
                 .read()
@@ -91,12 +97,12 @@ fn main() -> iced::Result {
                     continue;
                 };
                 let handle = codec::Handle::new(valor);
-                println!("== OLE2FRAME handle {:X} ==", handle.value());
-                println!("version: {}", frame.version);
-                println!("source_application: {:?}", frame.source_application);
-                println!("ole_object_type: {:?}", frame.ole_object_type);
-                println!("dwg_mode: {} lock_aspect: {}", frame.dwg_mode, frame.lock_aspect);
-                println!("envelope: {:?}", frame.envelope);
+                let _ = writeln!(salida, "== OLE2FRAME handle {:X} ==", handle.value());
+                let _ = writeln!(salida, "version: {}", frame.version);
+                let _ = writeln!(salida, "source_application: {:?}", frame.source_application);
+                let _ = writeln!(salida, "ole_object_type: {:?}", frame.ole_object_type);
+                let _ = writeln!(salida, "dwg_mode: {} lock_aspect: {}", frame.dwg_mode, frame.lock_aspect);
+                let _ = writeln!(salida, "envelope: {:?}", frame.envelope);
                 println!(
                     "storage: leading={} trailing={} compuesto={}",
                     frame.storage.leading_records.len(),
@@ -109,8 +115,8 @@ fn main() -> iced::Result {
                         texto.truncate(6000);
                         texto.push('…');
                     }
-                    println!("--- compuesto ---");
-                    println!("{texto}");
+                    let _ = writeln!(salida, "--- compuesto ---");
+                    let _ = writeln!(salida, "{texto}");
                 }
             }
             return Ok(());
@@ -138,7 +144,7 @@ fn main() -> iced::Result {
             .expect("no se pudo agregar el objeto");
             codec::DwgWriter::write_to_file(std::path::Path::new(&paths[1]), &doc)
                 .expect("no se pudo guardar el DWG");
-            println!("ok: {}", paths[1].display());
+            let _ = paths;
             return Ok(());
         }
 

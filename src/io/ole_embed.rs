@@ -115,10 +115,56 @@ pub fn build_embedded_ole(
     upper_left: Vector3,
     lower_right: Vector3,
 ) -> Ole2Frame {
-    // OLE 1.0 native: 4-byte little-endian payload length, then the raster.
-    let mut native = Vec::with_capacity(4 + image.bytes.len());
-    let _ = native.write(&(image.bytes.len() as u32).to_le_bytes());
-    native.extend_from_slice(&image.bytes);
+    // Un OLE que AutoCAD y nanoCAD dibujan es un "Picture (Enhanced Metafile)":
+    // CLSID + \x01Ole + \x01CompObj + CONTENTS, y CONTENTS lleva un EMF (no un
+    // PNG). Ver docs/ole2-hallazgos.md.
+    const CLSID_PICTURE: [u8; 16] = [
+        25, 3, 0, 0, 0, 0, 0, 0, 192, 0, 0, 0, 0, 0, 0, 70,
+    ];
+    /// Marca con la que AutoCAD y nanoCAD abren el envoltorio.
+    const MARCA_AUTOCAD: u16 = 0x5580;
+    /// Registro de 30 bytes del envoltorio, copiado del objeto de nanoCAD.
+    const EXTENSION: [u8; 30] = [
+        241, 102, 175, 79, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+        214, 7, 0,
+    ];
+
+    // 1) El raster se decodifica y se envuelve en un EMF.
+    let emf = match image::load_from_memory(&image.bytes) {
+        Ok(decodificado) => {
+            let rgba = decodificado.to_rgba8();
+            let (ancho, alto) = rgba.dimensions();
+            crate::io::emf::emf_from_rgba(ancho, alto, rgba.as_raw())
+        }
+        Err(_) => Vec::new(),
+    };
+
+    // 2) Flujos del archivo compuesto.
+    let ole_header: Vec<u8> = vec![1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let mut comp_obj: Vec<u8> = vec![
+        1, 0, 254, 255, 3, 10, 0, 0, 255, 255, 255, 255,
+    ];
+    comp_obj.extend_from_slice(&CLSID_PICTURE);
+    let nombre = "Picture (Enhanced Metafile)";
+    comp_obj.extend_from_slice(&((nombre.len() + 1) as u32).to_le_bytes());
+    comp_obj.extend_from_slice(nombre.as_bytes());
+    comp_obj.push(0);
+    comp_obj.extend_from_slice(&[255, 255, 255, 255]);
+    comp_obj.extend_from_slice(&14u32.to_le_bytes());
+    comp_obj.extend_from_slice(&0u32.to_le_bytes());
+    comp_obj.extend_from_slice(&[244, 57, 178, 113]);
+    comp_obj.extend_from_slice(&[0u8; 12]);
+
+    let flujo = |nombre: &str, datos: &[u8]| {
+        CompoundEntry::Stream(CompoundStream {
+            name: nombre.to_string(),
+            class_id: [0; 16],
+            state_bits: 0,
+            creation_time: 0,
+            modified_time: 0,
+            content: CompoundStreamContent::Binary(BinaryRecord::split(datos, 4096)),
+        })
+    };
 
     let file = CompoundFile {
         minor_version: 0x003E,
@@ -126,40 +172,28 @@ pub fn build_embedded_ole(
         transaction_signature: 0,
         root: CompoundStorage {
             name: "Root Entry".to_string(),
-            class_id: [0; 16],
+            class_id: CLSID_PICTURE,
             state_bits: 0,
             creation_time: 0,
             modified_time: 0,
-            entries: vec![CompoundEntry::Stream(CompoundStream {
-                name: OLE10NATIVE.to_string(),
-                class_id: [0; 16],
-                state_bits: 0,
-                creation_time: 0,
-                modified_time: 0,
-                content: CompoundStreamContent::Binary(BinaryRecord::split(&native, 4096)),
-            })],
+            entries: vec![
+                flujo("\u{1}Ole", &ole_header),
+                flujo("\u{1}CompObj", &comp_obj),
+                flujo("CONTENTS", &emf),
+            ],
         },
     };
 
     let mut ole = Ole2Frame::new();
     ole.ole_object_type = OleObjectType::Embedded;
-    ole.source_application = "lgbcadstudio".to_string();
+    ole.version = 2;
+    ole.source_application = String::new();
+    ole.lock_aspect = 1;
     ole.upper_left_corner = upper_left;
     ole.lower_right_corner = lower_right;
-    // AutoCAD marca el envoltorio con 0x5580 y añade un registro de extensión
-    // de 30 bytes (la presentación del objeto). Comparando su DXF con el
-    // nuestro, ese registro y la marca eran la única diferencia: sin ellos
-    // AutoCAD acepta el objeto pero no lo dibuja.
-    const MARCA_AUTOCAD: u16 = 0x5580;
-    const EXTENSION_AUTOCAD: [u8; 30] = [
-        0x13, 0x69, 0x83, 0x4F, 0x01, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x01, 0x00,
-        0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x24,
-        0x0B, 0x00,
-    ];
-    let _ = GEOMETRY_MARKER;
     ole.envelope = OleFrameEnvelope::Geometry {
         marker: MARCA_AUTOCAD,
-        extension_records: codec::compound_file::BinaryRecord::split(&EXTENSION_AUTOCAD, 4096),
+        extension_records: BinaryRecord::split(&EXTENSION, 4096),
     };
     ole.storage = StructuredStoragePayload {
         leading_records: Vec::new(),

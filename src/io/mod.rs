@@ -1,3 +1,4 @@
+pub mod emf;
 // I/O module — open, save, and export CAD documents.
 //
 // All file reading/writing goes through opencadcodec.

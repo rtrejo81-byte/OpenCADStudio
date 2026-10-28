@@ -2300,7 +2300,36 @@ impl lgbcadstudio {
                 .push_error(crate::tr!("common", "no-drawing-open-use-new-or-open-first").as_ref());
             return Task::none();
         }
-        crate::scene::model::image_model::register_source(&name, std::sync::Arc::new(bytes));
+        let bytes = std::sync::Arc::new(bytes);
+        crate::scene::model::image_model::register_source(&name, std::sync::Arc::clone(&bytes));
+        // Referencia para el DWG: si el PNG quedó junto al plano se guarda SOLO
+        // el nombre del archivo. AutoCAD resuelve así la imagen relativa a la
+        // carpeta del dibujo; con una ruta absoluta mostraba el texto de la ruta
+        // cuando el plano se abría en otro equipo o carpeta.
+        let referencia = {
+            let ruta = std::path::Path::new(&name);
+            let junto_al_plano = self.tabs[self.active_tab]
+                .current_path
+                .as_ref()
+                .and_then(|path| path.parent())
+                .zip(ruta.parent())
+                .is_some_and(|(plano, imagen)| plano == imagen);
+            if junto_al_plano {
+                ruta.file_name()
+                    .and_then(|nombre| nombre.to_str())
+                    .unwrap_or(&name)
+                    .to_string()
+            } else {
+                name.clone()
+            }
+        };
+        if referencia != name {
+            crate::scene::model::image_model::register_source(&referencia, bytes);
+        } else {
+            self.command_line.push_info(
+                "La imagen quedó fuera de la carpeta del plano: AutoCAD necesitará esa misma ruta para verla. Guarda el plano y la imagen en la misma carpeta para que viaje con el DWG.",
+            );
+        }
         if !std::path::Path::new(&name).exists() {
             // Ninguna carpeta dejó escribir el PNG; la imagen se dibuja desde
             // lo registrado en memoria, pero el DWG no tendrá archivo al que
@@ -2327,7 +2356,7 @@ impl lgbcadstudio {
         let height = width / aspect;
         let origin = self.tabs[i].last_cursor_world;
         let mut image = codec::entities::RasterImage::with_size(
-            &name,
+            &referencia,
             codec::types::Vector3::new(origin.x, origin.y, origin.z),
             pixels_w as f64,
             pixels_h as f64,
@@ -5611,9 +5640,27 @@ pub(in crate::app) fn save_pasted_image(
                 .to_string(),
         );
     };
-    let Some(image) = image::RgbaImage::from_raw(width, height, pixels) else {
+    let Some(mut image) = image::RgbaImage::from_raw(width, height, pixels) else {
         return Err("La imagen del portapapeles tiene un tamaño inválido.".to_string());
     };
+    // Fondo blanco: una captura de Excel o Visio puede traer zonas con alfa y
+    // en presentación se transparentan sobre el papel. Se compone sobre blanco
+    // antes de codificar, así la imagen siempre se lee.
+    for pixel in image.pixels_mut() {
+        let [rojo, verde, azul, alfa] = pixel.0;
+        if alfa == 0 {
+            *pixel = image::Rgba([255, 255, 255, 255]);
+            continue;
+        }
+        if alfa == 255 {
+            continue;
+        }
+        let a = alfa as u32;
+        let sobre_blanco = |canal: u8| -> u8 {
+            (((canal as u32) * a + 255 * (255 - a)) / 255) as u8
+        };
+        *pixel = image::Rgba([sobre_blanco(rojo), sobre_blanco(verde), sobre_blanco(azul), 255]);
+    }
     let mut png = std::io::Cursor::new(Vec::new());
     if image.write_to(&mut png, image::ImageFormat::Png).is_err() {
         return Err("No se pudo codificar la imagen como PNG.".to_string());

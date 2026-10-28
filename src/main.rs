@@ -76,6 +76,41 @@ fn main() -> iced::Result {
 
         // Diagnóstico: volcado del OLE2FRAME de un DWG, para comparar la
         // estructura que escribe AutoCAD con la que escribe la aplicación.
+        // Diagnóstico: extraer el flujo CONTENTS (la imagen OLE) a un archivo,
+        // para comparar el EMF que genera AutoCAD/nanoCAD con el nuestro.
+        if let Some(paths) = &args.ole_extract {
+            let bytes = std::fs::read(&paths[0]).expect("no se pudo leer el DWG");
+            let doc = codec::io::dwg::DwgReader::from_stream(std::io::Cursor::new(bytes))
+                .read()
+                .expect("no se pudo abrir el DWG");
+            let limite = doc.next_handle().max(0x0020_0000);
+            for valor in 1..limite {
+                let Some(entity) = doc.get_entity(codec::Handle::new(valor)) else {
+                    continue;
+                };
+                let codec::entities::EntityType::Ole2Frame(frame) = entity else {
+                    continue;
+                };
+                if let Some(compound) = &frame.storage.compound_file {
+                    for entry in &compound.root.entries {
+                        if let codec::compound_file::CompoundEntry::Stream(stream) = entry {
+                            if stream.name.eq_ignore_ascii_case("CONTENTS") {
+                                let datos = match &stream.content {
+                                    codec::compound_file::CompoundStreamContent::Binary(
+                                        records,
+                                    ) => codec::compound_file::BinaryRecord::join(records),
+                                    _ => Vec::new(),
+                                };
+                                std::fs::write(&paths[1], &datos).expect("no se pudo escribir");
+                                return Ok(());
+                            }
+                        }
+                    }
+                }
+            }
+            return Ok(());
+        }
+
         if let Some(ruta) = &args.ole_dump {
             // La app es subsistema Windows: stdout no llega a la consola. El
             // volcado se escribe junto al archivo analizado.

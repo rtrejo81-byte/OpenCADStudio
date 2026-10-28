@@ -135,6 +135,10 @@ pub struct Cli {
     #[arg(long, value_names = ["IN"], hide = true)]
     pub ole_dump: Option<std::path::PathBuf>,
 
+    /// Internal: extract the CONTENTS stream of a DWG's OLE frame.
+    #[arg(long, value_names = ["DWG", "OUT"], num_args = 2, hide = true)]
+    pub ole_extract: Option<Vec<std::path::PathBuf>>,
+
     /// Internal: build a DWG that holds only an embedded OLE picture.
     /// Used to isolate AutoCAD compatibility questions.
     #[arg(long, value_names = ["PNG", "OUT"], num_args = 2, hide = true)]

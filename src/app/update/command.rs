@@ -2268,6 +2268,32 @@ impl lgbcadstudio {
     pub(in crate::app) fn paste_system_image_if_any(&mut self) -> Option<Task<Message>> {
         #[cfg(target_os = "windows")]
         {
+            // Preferencia 1: el metarchivo VECTORIAL del portapapeles. Es lo que
+            // Excel y Visio publican además del bitmap, y es lo único que los
+            // CAD dibujan dentro de un objeto OLE (ver docs/ole2-hallazgos.md).
+            if let Some((emf, ancho, alto)) = crate::sys::clipboard_dib::read_enhmetafile() {
+                let i = self.active_tab;
+                if !self.tabs[i].is_start {
+                    let origen = self.tabs[i].last_cursor_world;
+                    let ancho_mundo = (ancho as f64 / 100.0).max(1.0);
+                    let alto_mundo = (alto as f64 / 100.0).max(1.0);
+                    let marco = crate::io::ole_embed::build_embedded_emf(
+                        emf,
+                        codec::types::Vector3::new(origen.x, origen.y + alto_mundo, origen.z),
+                        codec::types::Vector3::new(origen.x + ancho_mundo, origen.y, origen.z),
+                    );
+                    self.command_line.push_output(
+                        &format!(
+                            "Imagen pegada incrustada (metarchivo vectorial {ancho}x{alto} px). Viaja dentro del DWG."
+                        ),
+                    );
+                    return Some(self.apply_cmd_result(
+                        crate::command::CmdResult::CommitAndExit(codec::EntityType::Ole2Frame(
+                            Box::new(marco),
+                        )),
+                    ));
+                }
+            }
             let rgba = crate::sys::clipboard_dib::read_rgba()?;
             let folders: Vec<std::path::PathBuf> = self.tabs[self.active_tab]
                 .current_path

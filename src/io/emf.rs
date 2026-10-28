@@ -22,12 +22,14 @@ const PLANTILLA: [u8; TAM_CABECERA] = [
 ];
 
 /// Convierte píxeles RGBA en un EMF que los dibuja a width × height píxeles.
-#[cfg(not(target_os = "windows"))]
-pub fn emf_from_rgba(width: u32, height: u32, rgba: &[u8]) -> Vec<u8> {
+pub fn emf_manual(width: u32, height: u32, rgba: &[u8]) -> Vec<u8> {
     let ancho = width.max(1);
     let alto = height.max(1);
     // DIB de 32 bits (B,G,R,X) de abajo hacia arriba: cada fila se invierte.
-    let mut bits = Vec::with_capacity((ancho * alto * 4) as usize);
+    // 24 bits (B,G,R) sin canal alfa: es el formato que cualquier contexto de
+    // dispositivo puede dibujar, incluidos los monocromos de impresión.
+    let ancho_fila = ((ancho * 3 + 3) / 4) * 4;
+    let mut bits = vec![0u8; (ancho_fila * alto) as usize];
     for y in 0..alto {
         let fila = alto - 1 - y;
         for x in 0..ancho {
@@ -37,7 +39,10 @@ pub fn emf_from_rgba(width: u32, height: u32, rgba: &[u8]) -> Vec<u8> {
             } else {
                 (255, 255, 255)
             };
-            bits.extend_from_slice(&[b, g, r, 0]);
+            let destino = (y * ancho_fila + x * 3) as usize;
+            bits[destino] = b;
+            bits[destino + 1] = g;
+            bits[destino + 2] = r;
         }
     }
 
@@ -110,13 +115,17 @@ pub fn emf_from_rgba(width: u32, height: u32, rgba: &[u8]) -> Vec<u8> {
     use windows_sys::Win32::Foundation::RECT;
     use windows_sys::Win32::Graphics::Gdi::{
         CloseEnhMetaFile, CreateCompatibleDC, CreateEnhMetaFileW, DeleteDC, DeleteEnhMetaFile,
-        GetEnhMetaFileBits, StretchDIBits, BITMAPINFO, BITMAPINFOHEADER, DIB_RGB_COLORS, SRCCOPY,
+        GetEnhMetaFileBits, SetMapMode, SetViewportExtEx, SetWindowExtEx, StretchDIBits,
+        BITMAPINFO, BITMAPINFOHEADER, DIB_RGB_COLORS, MM_ANISOTROPIC, SRCCOPY,
     };
 
     let ancho = width.max(1);
     let alto = height.max(1);
     // Bits en B,G,R,X de abajo hacia arriba.
-    let mut bits = Vec::with_capacity((ancho * alto * 4) as usize);
+    // 24 bits (B,G,R) sin canal alfa: es el formato que cualquier contexto de
+    // dispositivo puede dibujar, incluidos los monocromos de impresión.
+    let ancho_fila = ((ancho * 3 + 3) / 4) * 4;
+    let mut bits = vec![0u8; (ancho_fila * alto) as usize];
     for y in 0..alto {
         let fila = alto - 1 - y;
         for x in 0..ancho {
@@ -126,7 +135,10 @@ pub fn emf_from_rgba(width: u32, height: u32, rgba: &[u8]) -> Vec<u8> {
             } else {
                 (255, 255, 255)
             };
-            bits.extend_from_slice(&[b, g, r, 0]);
+            let destino = (y * ancho_fila + x * 3) as usize;
+            bits[destino] = b;
+            bits[destino + 1] = g;
+            bits[destino + 2] = r;
         }
     }
 
@@ -152,9 +164,9 @@ pub fn emf_from_rgba(width: u32, height: u32, rgba: &[u8]) -> Vec<u8> {
                 biWidth: ancho as i32,
                 biHeight: alto as i32,
                 biPlanes: 1,
-                biBitCount: 32,
+                biBitCount: 24,
                 biCompression: 0,
-                biSizeImage: ancho * alto * 4,
+                biSizeImage: ancho_fila * alto,
                 biXPelsPerMeter: 0,
                 biYPelsPerMeter: 0,
                 biClrUsed: 0,
@@ -162,6 +174,12 @@ pub fn emf_from_rgba(width: u32, height: u32, rgba: &[u8]) -> Vec<u8> {
             },
             bmiColors: [Default::default(); 1],
         };
+        // Registros que los metarchivos de los CAD suelen incluir: modo de mapa
+        // y extensión de la ventana. Sin ellos algunos reproductores OLE no
+        // escalan el contenido y el dibujo queda fuera del marco.
+        SetMapMode(hdc, MM_ANISOTROPIC);
+        SetWindowExtEx(hdc, ancho as i32, alto as i32, std::ptr::null_mut());
+        SetViewportExtEx(hdc, ancho as i32, alto as i32, std::ptr::null_mut());
         StretchDIBits(
             hdc,
             0,
@@ -190,4 +208,78 @@ pub fn emf_from_rgba(width: u32, height: u32, rgba: &[u8]) -> Vec<u8> {
         DeleteEnhMetaFile(metarchivo);
         salida
     }
+}
+
+/// Variante: misma plantilla de encabezado pero con las dimensiones del
+/// dispositivo, el marco y los milímetros ajustados a la imagen. Sirve para
+/// descartar que AutoCAD recorte el dibujo por un tamaño de dispositivo ajeno.
+pub fn emf_escala(width: u32, height: u32, rgba: &[u8]) -> Vec<u8> {
+    let base = emf_manual(width, height, rgba);
+    if base.len() < TAM_CABECERA {
+        return base;
+    }
+    let ancho = width.max(1);
+    let alto = height.max(1);
+    let mm_ancho = ((ancho as f64) * 0.264_583) as u32;
+    let mm_alto = ((alto as f64) * 0.264_583) as u32;
+    let centi_mm_ancho = ((ancho as f64) * 26.4583) as u32;
+    let centi_mm_alto = ((alto as f64) * 26.4583) as u32;
+    let mut salida = base;
+    let total = salida.len() as u32;
+    salida[40..44].copy_from_slice(b" EMF");
+    let mut poner = |desde: usize, valor: u32| {
+        salida[desde..desde + 4].copy_from_slice(&valor.to_le_bytes());
+    };
+    poner(0, 1);
+    poner(4, TAM_CABECERA as u32);
+    poner(8, 0);
+    poner(12, 0);
+    poner(16, ancho);
+    poner(20, alto);
+    poner(24, 0);
+    poner(28, 0);
+    poner(32, centi_mm_ancho);
+    poner(36, centi_mm_alto);
+    poner(44, 0x0001_0000);
+    poner(48, total);
+    poner(52, 3);
+    poner(56, 0);
+    poner(60, 0);
+    poner(64, 0);
+    poner(68, 0);
+    poner(72, ancho);
+    poner(76, alto);
+    poner(80, mm_ancho);
+    poner(84, mm_alto);
+    poner(88, 0);
+    poner(92, 0);
+    poner(96, 0);
+    poner(100, mm_ancho * 1000);
+    poner(104, mm_alto * 1000);
+    drop(poner);
+    salida
+}
+
+/// Variante "doble": repite el encabezado, como el metarchivo que nanoCAD
+/// escribe y que AutoCAD sí dibuja (dos EMR_HEADER seguidos).
+pub fn emf_doble(width: u32, height: u32, rgba: &[u8]) -> Vec<u8> {
+    let base = emf_from_rgba(width, height, rgba);
+    if base.len() < 8 {
+        return base;
+    }
+    let tam_cabecera = u32::from_le_bytes([base[4], base[5], base[6], base[7]]) as usize;
+    if tam_cabecera == 0 || tam_cabecera + 8 > base.len() {
+        return base;
+    }
+    let mut salida = Vec::with_capacity(base.len() + tam_cabecera);
+    salida.extend_from_slice(&base[..tam_cabecera]); // encabezado #1
+    salida.extend_from_slice(&base[..tam_cabecera]); // encabezado #2 (duplicado)
+    salida.extend_from_slice(&base[tam_cabecera..]); // registros + EOF
+    let total = salida.len() as u32;
+    let registros = 4u32; // los dos encabezados cuentan como registro
+    for inicio in [0usize, tam_cabecera] {
+        salida[inicio + 48..inicio + 52].copy_from_slice(&total.to_le_bytes());
+        salida[inicio + 52..inicio + 56].copy_from_slice(&registros.to_le_bytes());
+    }
+    salida
 }

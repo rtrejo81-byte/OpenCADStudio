@@ -1686,6 +1686,63 @@ pub mod clipboard_dib {
         }
         Some((width, height, pixels))
     }
+    /// Formato del metarchivo vectorial que Excel y Visio dejan en el
+    /// portapapeles. Es preferible al bitmap: los CAD solo dibujan objetos OLE
+    /// cuyo contenido es vectorial, y un EMF del portapapeles ya trae las
+    /// líneas y los textos del recorte original.
+    const CF_ENHMETAFILE: u32 = 14;
+
+    #[link(name = "gdi32")]
+    extern "system" {
+        fn GetEnhMetaFileBits(hemf: *mut c_void, nsize: u32, lpdata: *mut u8) -> u32;
+    }
+
+    /// Devuelve (bytes del EMF, ancho, alto) si el portapapeles trae un
+    /// metarchivo. Las medidas salen del marco del propio metarchivo.
+    pub fn read_enhmetafile() -> Option<(Vec<u8>, u32, u32)> {
+        unsafe {
+            if IsClipboardFormatAvailable(CF_ENHMETAFILE) == 0 {
+                return None;
+            }
+            if OpenClipboard(std::ptr::null_mut()) == 0 {
+                return None;
+            }
+            let handle = GetClipboardData(CF_ENHMETAFILE);
+            if handle.is_null() {
+                CloseClipboard();
+                return None;
+            }
+            let tamano = GetEnhMetaFileBits(handle, 0, std::ptr::null_mut());
+            if tamano == 0 {
+                CloseClipboard();
+                return None;
+            }
+            let mut bytes = vec![0u8; tamano as usize];
+            let escritos = GetEnhMetaFileBits(handle, tamano, bytes.as_mut_ptr());
+            CloseClipboard();
+            if escritos == 0 {
+                return None;
+            }
+            bytes.truncate(escritos as usize);
+            // rclBounds va en los bytes 8..24 del encabezado (left, top, right,
+            // bottom) en unidades de dispositivo.
+            let leer = |desde: usize| -> u32 {
+                if bytes.len() >= desde + 4 {
+                    u32::from_le_bytes([
+                        bytes[desde],
+                        bytes[desde + 1],
+                        bytes[desde + 2],
+                        bytes[desde + 3],
+                    ])
+                } else {
+                    0
+                }
+            };
+            let ancho = leer(16);
+            let alto = leer(20);
+            Some((bytes, ancho.max(1), alto.max(1)))
+        }
+    }
 }
 /// Número de secuencia del portapapeles de Windows. Cambia cada vez que
 /// cualquier aplicación lo reescribe, así que sirve para saber si lo que hay

@@ -110,40 +110,50 @@ pub fn corners_from_placement(origin: Vector3, width: f64, aspect: f64) -> (Vect
 /// Pack `image` into an OLE2FRAME spanning `upper_left` → `lower_right` in
 /// world space. The picture rides in an `\x01Ole10Native` stream as OLE 1.0
 /// native data behind the geometry envelope opencadcodec writes around it.
+pub fn build_embedded_emf(
+    emf: Vec<u8>,
+    upper_left: Vector3,
+    lower_right: Vector3,
+) -> Ole2Frame {
+    // El EMF viene tal cual del portapapeles (vectorial, como los que los CAD
+    // dibujan). Solo se empaqueta en el contenedor OLE.
+    empaquetar_ole(&emf, upper_left, lower_right)
+}
+
 pub fn build_embedded_ole(
     image: &EmbeddedImage,
     upper_left: Vector3,
     lower_right: Vector3,
 ) -> Ole2Frame {
-    // Un OLE que AutoCAD y nanoCAD dibujan es un "Picture (Enhanced Metafile)":
-    // CLSID + \x01Ole + \x01CompObj + CONTENTS, y CONTENTS lleva un EMF (no un
-    // PNG). Ver docs/ole2-hallazgos.md.
-    const CLSID_PICTURE: [u8; 16] = [
-        25, 3, 0, 0, 0, 0, 0, 0, 192, 0, 0, 0, 0, 0, 0, 70,
-    ];
-    /// Marca con la que AutoCAD y nanoCAD abren el envoltorio.
+    // Sin metarchivo vectorial disponible se genera uno desde el raster.
+    let emf = match image::load_from_memory(&image.bytes) {
+        Ok(decodificado) => {
+            let rgba = decodificado.to_rgba8();
+            let (ancho, alto) = rgba.dimensions();
+            match std::env::var("LGB_EMF").ok().as_deref() {
+                Some("manual") => crate::io::emf::emf_manual(ancho, alto, rgba.as_raw()),
+                Some("escala") => crate::io::emf::emf_escala(ancho, alto, rgba.as_raw()),
+                Some("doble") => crate::io::emf::emf_doble(ancho, alto, rgba.as_raw()),
+                _ => crate::io::emf::emf_from_rgba(ancho, alto, rgba.as_raw()),
+            }
+        }
+        Err(_) => Vec::new(),
+    };
+    empaquetar_ole(&emf, upper_left, lower_right)
+}
+
+/// Arma el objeto OLE "Picture (Enhanced Metafile)" con el metarchivo dado:
+/// CLSID + \x01Ole + \x01CompObj + CONTENTS. Ver docs/ole2-hallazgos.md.
+fn empaquetar_ole(emf: &[u8], upper_left: Vector3, lower_right: Vector3) -> Ole2Frame {
+    const CLSID_PICTURE: [u8; 16] = [25, 3, 0, 0, 0, 0, 0, 0, 192, 0, 0, 0, 0, 0, 0, 70];
     const MARCA_AUTOCAD: u16 = 0x5580;
-    /// Registro de 30 bytes del envoltorio, copiado del objeto de nanoCAD.
     const EXTENSION: [u8; 30] = [
         241, 102, 175, 79, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
         214, 7, 0,
     ];
 
-    // 1) El raster se decodifica y se envuelve en un EMF.
-    let emf = match image::load_from_memory(&image.bytes) {
-        Ok(decodificado) => {
-            let rgba = decodificado.to_rgba8();
-            let (ancho, alto) = rgba.dimensions();
-            crate::io::emf::emf_from_rgba(ancho, alto, rgba.as_raw())
-        }
-        Err(_) => Vec::new(),
-    };
-
-    // 2) Flujos del archivo compuesto.
     let ole_header: Vec<u8> = vec![1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    let mut comp_obj: Vec<u8> = vec![
-        1, 0, 254, 255, 3, 10, 0, 0, 255, 255, 255, 255,
-    ];
+    let mut comp_obj: Vec<u8> = vec![1, 0, 254, 255, 3, 10, 0, 0, 255, 255, 255, 255];
     comp_obj.extend_from_slice(&CLSID_PICTURE);
     let nombre = "Picture (Enhanced Metafile)";
     comp_obj.extend_from_slice(&((nombre.len() + 1) as u32).to_le_bytes());
@@ -154,6 +164,16 @@ pub fn build_embedded_ole(
     comp_obj.extend_from_slice(&0u32.to_le_bytes());
     comp_obj.extend_from_slice(&[244, 57, 178, 113]);
     comp_obj.extend_from_slice(&[0u8; 12]);
+
+    // El flujo CONTENTS empieza con el tamaño del encabezado del metarchivo.
+    let cabecera = if emf.len() >= 8 {
+        u32::from_le_bytes([emf[4], emf[5], emf[6], emf[7]])
+    } else {
+        0
+    };
+    let mut contents = Vec::with_capacity(emf.len() + 4);
+    contents.extend_from_slice(&cabecera.to_le_bytes());
+    contents.extend_from_slice(emf);
 
     let flujo = |nombre: &str, datos: &[u8]| {
         CompoundEntry::Stream(CompoundStream {
@@ -179,14 +199,7 @@ pub fn build_embedded_ole(
             entries: vec![
                 flujo("\u{1}Ole", &ole_header),
                 flujo("\u{1}CompObj", &comp_obj),
-                // nanoCAD antepone 4 bytes (el tamaño del encabezado EMF) al
-                // flujo CONTENTS; sin ellos AutoCAD no reproduce la imagen.
-                flujo("CONTENTS", &{
-                    let mut con_prefijo = Vec::with_capacity(emf.len() + 4);
-                    con_prefijo.extend_from_slice(&108u32.to_le_bytes());
-                    con_prefijo.extend_from_slice(&emf);
-                    con_prefijo
-                }),
+                flujo("CONTENTS", &contents),
             ],
         },
     };

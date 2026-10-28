@@ -21,7 +21,6 @@ checksum = "366ffbaa4442f4684d91e2cd7c5ea7c4ed8add41959a31447066e279e432b618"
 [[package]]
 name = "acadrust"
 version = "0.6.4"
-source = "git+https://github.com/HakanSeven12/opencadcodec.git?rev=14fdae5#14fdae51c24ea6cbfdaf2af257079a71ef806351"
 dependencies = [
  "anyhow",
  "bitflags 2.13.2",

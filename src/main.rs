@@ -116,6 +116,32 @@ fn main() -> iced::Result {
             return Ok(());
         }
 
+        // Diagnóstico: DWG con un único objeto OLE incrustado, para aislar si
+        // AutoCAD acepta el objeto sin depender del resto del dibujo.
+        if let Some(paths) = &args.ole_make {
+            let png = std::fs::read(&paths[0]).expect("no se pudo leer el PNG");
+            let imagen = lgbcadstudio::io::ole_embed::EmbeddedImage::from_bytes(
+                "prueba.png".to_string(),
+                png,
+            )
+            .expect("imagen invalida");
+            let mut doc = codec::CadDocument::new();
+            // nanoCAD 5 solo abre hasta R2004: el DWG de prueba se guarda en
+            // AC1018 para poder compararlo con un lector independiente.
+            doc.version = codec::DxfVersion::AC1018;
+            lgbcadstudio::io::ole_embed::add_embedded_image(
+                &mut doc,
+                &imagen,
+                codec::types::Vector3::new(0.0, 0.0, 0.0),
+                10.0,
+            )
+            .expect("no se pudo agregar el objeto");
+            codec::DwgWriter::write_to_file(std::path::Path::new(&paths[1]), &doc)
+                .expect("no se pudo guardar el DWG");
+            println!("ok: {}", paths[1].display());
+            return Ok(());
+        }
+
         if args.sync_mcp_schemas {
             let synced = mcp::sync_agent_tool_schemas();
             if synced {

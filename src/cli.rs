@@ -134,6 +134,11 @@ pub struct Cli {
     /// Internal: dump the OLE2FRAME structure of a DWG (diagnostics).
     #[arg(long, value_names = ["IN"], hide = true)]
     pub ole_dump: Option<std::path::PathBuf>,
+
+    /// Internal: build a DWG that holds only an embedded OLE picture.
+    /// Used to isolate AutoCAD compatibility questions.
+    #[arg(long, value_names = ["PNG", "OUT"], num_args = 2, hide = true)]
+    pub ole_make: Option<Vec<std::path::PathBuf>>,
 }
 
 /// GUI startup configuration, handed from `main` to `app::boot` out-of-band

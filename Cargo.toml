@@ -14,6 +14,7 @@ members = [
     "crates/dwg-thumbnailer",
     "crates/dwg-thumbnailer-win",
 ]
+exclude = ["vendor/acadrust"]
 
 [target.'cfg(windows)'.build-dependencies]
 winresource = "0.1"
@@ -229,3 +230,9 @@ harness = false
 [[test]]
 name = "integration"
 path = "tests/integration.rs"
+
+# El codec vive en `vendor/acadrust` para poder corregir el escritor de
+# OLE2FRAME (orden de campos segun la especificacion DWG). El patch hace que
+# todas las referencias al crate usen esa copia y no queden dos instancias.
+[patch."https://github.com/HakanSeven12/opencadcodec.git"]
+acadrust = { path = "vendor/acadrust" }

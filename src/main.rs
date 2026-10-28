@@ -74,6 +74,48 @@ fn main() -> iced::Result {
             std::process::exit(if ok { 0 } else { 1 });
         }
 
+        // Diagnóstico: volcado del OLE2FRAME de un DWG, para comparar la
+        // estructura que escribe AutoCAD con la que escribe la aplicación.
+        if let Some(ruta) = &args.ole_dump {
+            let bytes = std::fs::read(ruta).expect("no se pudo leer el DWG");
+            let doc = codec::io::dwg::DwgReader::from_stream(std::io::Cursor::new(bytes))
+                .read()
+                .expect("no se pudo abrir el DWG");
+            // next_handle no lo actualiza el lector de DWG: se barre un rango amplio.
+            let limite = doc.next_handle().max(0x0020_0000);
+            for valor in 1..limite {
+                let Some(entity) = doc.get_entity(codec::Handle::new(valor)) else {
+                    continue;
+                };
+                let codec::entities::EntityType::Ole2Frame(frame) = entity else {
+                    continue;
+                };
+                let handle = codec::Handle::new(valor);
+                println!("== OLE2FRAME handle {:X} ==", handle.value());
+                println!("version: {}", frame.version);
+                println!("source_application: {:?}", frame.source_application);
+                println!("ole_object_type: {:?}", frame.ole_object_type);
+                println!("dwg_mode: {} lock_aspect: {}", frame.dwg_mode, frame.lock_aspect);
+                println!("envelope: {:?}", frame.envelope);
+                println!(
+                    "storage: leading={} trailing={} compuesto={}",
+                    frame.storage.leading_records.len(),
+                    frame.storage.trailing_records.len(),
+                    frame.storage.compound_file.is_some()
+                );
+                if let Some(compound) = &frame.storage.compound_file {
+                    let mut texto = format!("{compound:?}");
+                    if texto.len() > 6000 {
+                        texto.truncate(6000);
+                        texto.push('…');
+                    }
+                    println!("--- compuesto ---");
+                    println!("{texto}");
+                }
+            }
+            return Ok(());
+        }
+
         if args.sync_mcp_schemas {
             let synced = mcp::sync_agent_tool_schemas();
             if synced {

@@ -130,6 +130,10 @@ pub struct Cli {
     /// thumbnailer (`<IN> <OUT> <SIZE>`). Handled before the GUI starts.
     #[arg(long, value_names = ["IN", "OUT", "SIZE"], num_args = 3, hide = true)]
     pub dwg_thumbnail: Option<Vec<String>>,
+
+    /// Internal: dump the OLE2FRAME structure of a DWG (diagnostics).
+    #[arg(long, value_names = ["IN"], hide = true)]
+    pub ole_dump: Option<std::path::PathBuf>,
 }
 
 /// GUI startup configuration, handed from `main` to `app::boot` out-of-band

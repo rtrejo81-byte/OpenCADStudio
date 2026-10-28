@@ -146,9 +146,20 @@ pub fn build_embedded_ole(
     ole.source_application = "lgbcadstudio".to_string();
     ole.upper_left_corner = upper_left;
     ole.lower_right_corner = lower_right;
+    // AutoCAD marca el envoltorio con 0x5580 y añade un registro de extensión
+    // de 30 bytes (la presentación del objeto). Comparando su DXF con el
+    // nuestro, ese registro y la marca eran la única diferencia: sin ellos
+    // AutoCAD acepta el objeto pero no lo dibuja.
+    const MARCA_AUTOCAD: u16 = 0x5580;
+    const EXTENSION_AUTOCAD: [u8; 30] = [
+        0x13, 0x69, 0x83, 0x4F, 0x01, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x01, 0x00,
+        0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x24,
+        0x0B, 0x00,
+    ];
+    let _ = GEOMETRY_MARKER;
     ole.envelope = OleFrameEnvelope::Geometry {
-        marker: GEOMETRY_MARKER,
-        extension_records: Vec::new(),
+        marker: MARCA_AUTOCAD,
+        extension_records: codec::compound_file::BinaryRecord::split(&EXTENSION_AUTOCAD, 4096),
     };
     ole.storage = StructuredStoragePayload {
         leading_records: Vec::new(),

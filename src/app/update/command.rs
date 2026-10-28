@@ -2300,88 +2300,44 @@ impl lgbcadstudio {
                 .push_error(crate::tr!("common", "no-drawing-open-use-new-or-open-first").as_ref());
             return Task::none();
         }
-        let bytes = std::sync::Arc::new(bytes);
-        crate::scene::model::image_model::register_source(&name, std::sync::Arc::clone(&bytes));
-        // Referencia para el DWG: si el PNG quedó junto al plano se guarda SOLO
-        // el nombre del archivo. AutoCAD resuelve así la imagen relativa a la
-        // carpeta del dibujo; con una ruta absoluta mostraba el texto de la ruta
-        // cuando el plano se abría en otro equipo o carpeta.
-        let referencia = {
-            let ruta = std::path::Path::new(&name);
-            let junto_al_plano = self.tabs[self.active_tab]
-                .current_path
-                .as_ref()
-                .and_then(|path| path.parent())
-                .zip(ruta.parent())
-                .is_some_and(|(plano, imagen)| plano == imagen);
-            if junto_al_plano {
-                ruta.file_name()
-                    .and_then(|nombre| nombre.to_str())
-                    .unwrap_or(&name)
-                    .to_string()
-            } else {
-                name.clone()
+        // Pegado INCRUSTADO: la imagen viaja DENTRO del DWG como OLE2FRAME, así
+        // AutoCAD la muestra en cualquier equipo sin depender de un archivo
+        // externo. Antes se guardaba un PNG junto al plano y el dibujo apuntaba
+        // a esa ruta: al abrirlo en otra carpeta AutoCAD dibujaba el texto de la
+        // ruta sobre el marco.
+        let embebida = match crate::io::ole_embed::EmbeddedImage::from_bytes(
+            std::path::Path::new(&name)
+                .file_name()
+                .and_then(|nombre| nombre.to_str())
+                .unwrap_or("pasted.png")
+                .to_string(),
+            bytes,
+        ) {
+            Ok(imagen) => imagen,
+            Err(error) => {
+                self.command_line.push_error(
+                    &format!("No se pudo preparar la imagen para incrustarla: {error}"),
+                );
+                return Task::none();
             }
         };
-        if referencia != name {
-            crate::scene::model::image_model::register_source(&referencia, bytes);
-        } else {
-            self.command_line.push_info(
-                "La imagen quedó fuera de la carpeta del plano: AutoCAD necesitará esa misma ruta para verla. Guarda el plano y la imagen en la misma carpeta para que viaje con el DWG.",
-            );
-        }
-        if !std::path::Path::new(&name).exists() {
-            // Ninguna carpeta dejó escribir el PNG; la imagen se dibuja desde
-            // lo registrado en memoria, pero el DWG no tendrá archivo al que
-            // apuntar cuando se vuelva a abrir.
-            self.command_line.push_info(
-                "La imagen no se pudo guardar en disco: se pegó desde memoria. Guárdala como archivo si vas a cerrar y reabrir el plano.",
-            );
-        }
-        let Some(decoded) = crate::scene::model::image_model::resolve_image(&name) else {
-            self.command_line.push_error(
-                crate::tr!("clipboard", "image-unsupported", name = name.clone()).as_ref(),
-            );
-            return Task::none();
-        };
-        let (pixels_w, pixels_h) = (decoded.source_width, decoded.source_height);
-        // Same default footprint as the IMAGE command's Enter placement: one
-        // world unit per 100 px (min 1), height from the true aspect ratio.
-        let width = (pixels_w as f64 / 100.0).max(1.0);
-        let aspect = if pixels_h == 0 {
-            1.0
-        } else {
-            pixels_w as f64 / pixels_h as f64
-        };
-        let height = width / aspect;
         let origin = self.tabs[i].last_cursor_world;
-        let mut image = codec::entities::RasterImage::with_size(
-            &referencia,
+        // Misma huella que el comando IMAGE: una unidad de dibujo por cada 100 px.
+        let width = (embebida.pixel_width as f64 / 100.0).max(1.0);
+        let (upper_left, lower_right) = crate::io::ole_embed::corners_from_placement(
             codec::types::Vector3::new(origin.x, origin.y, origin.z),
-            pixels_w as f64,
-            pixels_h as f64,
             width,
-            height,
+            embebida.aspect(),
         );
-        image.flags = codec::entities::ImageDisplayFlags::SHOW_IMAGE
-            | codec::entities::ImageDisplayFlags::USE_CLIPPING_BOUNDARY;
-        let short = std::path::Path::new(&name)
-            .file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or(&name)
-            .to_string();
+        let marco = crate::io::ole_embed::build_embedded_ole(&embebida, upper_left, lower_right);
         self.command_line.push_output(
-            crate::tr!(
-                "clipboard",
-                "pasted-image",
-                name = short,
-                width = pixels_w,
-                height = pixels_h
-            )
-            .as_ref(),
+            &format!(
+                "Imagen pegada incrustada ({}x{} px). Viaja dentro del DWG: se ve en AutoCAD sin archivos aparte.",
+                embebida.pixel_width, embebida.pixel_height
+            ),
         );
         self.apply_cmd_result(crate::command::CmdResult::CommitAndExit(
-            codec::EntityType::RasterImage(image),
+            codec::EntityType::Ole2Frame(Box::new(marco)),
         ))
     }
 

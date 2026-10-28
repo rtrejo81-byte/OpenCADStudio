@@ -3,6 +3,92 @@ use super::*;
 impl lgbcadstudio {
     pub(super) fn dispatch_display(&mut self, cmd: &str, i: usize) -> Option<Task<Message>> {
         match cmd {
+            // REUNIRIMAGENES: copia junto al plano las imágenes enlazadas que
+            // estén en otra carpeta y deja el DWG apuntando al nombre del
+            // archivo, para que comprimir la carpeta baste para enviarlo.
+            "REUNIRIMAGENES" | "JUNTARIMAGENES" => {
+                let Some(carpeta) = self.tabs[i]
+                    .current_path
+                    .as_ref()
+                    .and_then(|ruta| ruta.parent())
+                    .map(|dir| dir.to_path_buf())
+                else {
+                    self.command_line.push_error(
+                        "REUNIRIMAGENES  Guardá el plano primero: necesito saber su carpeta.",
+                    );
+                    return Some(Task::none());
+                };
+                let mut handles: Vec<codec::Handle> = Vec::new();
+                let limite = self.tabs[i].scene.document.next_handle().max(0x0020_0000);
+                for valor in 1..limite {
+                    let handle = codec::Handle::new(valor);
+                    let Some(codec::EntityType::RasterImage(imagen)) =
+                        self.tabs[i].scene.document.get_entity(handle)
+                    else {
+                        continue;
+                    };
+                    if !imagen.file_path.is_empty() {
+                        handles.push(handle);
+                    }
+                }
+                let mut copiadas = 0usize;
+                let mut ya_estaban = 0usize;
+                let mut faltantes = 0usize;
+                for handle in &handles {
+                    let Some(codec::EntityType::RasterImage(imagen)) =
+                        self.tabs[i].scene.document.get_entity(*handle)
+                    else {
+                        continue;
+                    };
+                    let ruta = std::path::PathBuf::from(&imagen.file_path);
+                    let origen = if ruta.is_absolute() {
+                        ruta.clone()
+                    } else {
+                        carpeta.join(&ruta)
+                    };
+                    if !origen.exists() {
+                        faltantes += 1;
+                        continue;
+                    }
+                    let nombre = origen
+                        .file_name()
+                        .map(|n| n.to_os_string())
+                        .unwrap_or_default();
+                    let destino = carpeta.join(&nombre);
+                    if origen == destino {
+                        ya_estaban += 1;
+                    } else {
+                        match std::fs::copy(&origen, &destino) {
+                            Ok(_) => copiadas += 1,
+                            Err(_) => {
+                                faltantes += 1;
+                                continue;
+                            }
+                        }
+                    }
+                    if let Some(codec::EntityType::RasterImage(imagen)) =
+                        self.tabs[i].scene.document.get_entity_mut(*handle)
+                    {
+                        imagen.file_path = nombre.to_string_lossy().into_owned();
+                    }
+                }
+                if copiadas + ya_estaban > 0 {
+                    self.tabs[i].dirty = true;
+                    self.command_line.push_output(&format!(
+                        "REUNIRIMAGENES  {} imagen(es) junto al plano ({} ya estaban, {} copiadas).",
+                        copiadas + ya_estaban, ya_estaban, copiadas
+                    ));
+                } else if faltantes == 0 {
+                    self.command_line.push_info(
+                        "REUNIRIMAGENES  El plano no tiene imágenes enlazadas.",
+                    );
+                }
+                if faltantes > 0 {
+                    self.command_line.push_error(&format!(
+                        "REUNIRIMAGENES  {faltantes} imagen(es) no se encontraron en disco."
+                    ));
+                }
+            }
             // Interactive pan: left-drag pans the view until Esc. The only pan
             // path when there is no middle mouse button (trackpad / web).
             "PAN" => {

@@ -76,6 +76,29 @@ fn main() -> iced::Result {
 
         // Diagnóstico: volcado del OLE2FRAME de un DWG, para comparar la
         // estructura que escribe AutoCAD con la que escribe la aplicación.
+        // Spike OLE: Windows crea el objeto del archivo por COM y lo dibuja como
+        // metarchivo vectorial; el DWG resultante es autocontenido.
+        if let Some(paths) = &args.ole_spike {
+            let origen = paths[0].to_string_lossy().into_owned();
+            match lgbcadstudio::io::ole_spike::emf_from_ole_file(&origen, 1200, 900) {
+                Ok(emf) => {
+                    eprintln!("[ole-spike] metarchivo: {} bytes", emf.len());
+                    let marco = lgbcadstudio::io::ole_embed::build_embedded_emf(
+                        emf,
+                        codec::types::Vector3::new(0.0, 100.0, 0.0),
+                        codec::types::Vector3::new(150.0, 0.0, 0.0),
+                    );
+                    let mut doc = codec::CadDocument::new();
+                    doc.version = codec::DxfVersion::AC1018;
+                    let _ = doc.add_entity(codec::EntityType::Ole2Frame(Box::new(marco)));
+                    codec::DwgWriter::write_to_file(std::path::Path::new(&paths[1]), &doc)
+                        .expect("no se pudo guardar el DWG");
+                }
+                Err(error) => eprintln!("[ole-spike] error: {error}"),
+            }
+            return Ok(());
+        }
+
         // Diagnóstico: cambiar el flujo CONTENTS de un OLE2FRAME conservando el
         // resto del objeto. Sirve para cruzar contenedor y metarchivo entre un
         // archivo que AutoCAD dibuja y el nuestro.

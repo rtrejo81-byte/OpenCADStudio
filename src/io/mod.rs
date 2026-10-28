@@ -1,3 +1,4 @@
+pub mod ole_spike;
 pub mod emf;
 // I/O module — open, save, and export CAD documents.
 //

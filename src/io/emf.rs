@@ -22,6 +22,7 @@ const PLANTILLA: [u8; TAM_CABECERA] = [
 ];
 
 /// Convierte píxeles RGBA en un EMF que los dibuja a width × height píxeles.
+#[cfg(not(target_os = "windows"))]
 pub fn emf_from_rgba(width: u32, height: u32, rgba: &[u8]) -> Vec<u8> {
     let ancho = width.max(1);
     let alto = height.max(1);
@@ -99,4 +100,94 @@ pub fn emf_from_rgba(width: u32, height: u32, rgba: &[u8]) -> Vec<u8> {
     salida.extend_from_slice(&dib);
     salida.extend_from_slice(&eof);
     salida
+}
+
+/// En Windows el EMF lo genera **GDI**, que es lo que hacen AutoCAD y nanoCAD:
+/// un metarchivo grabado por el propio sistema siempre lo reproduce su servidor
+/// OLE. El generador manual queda como respaldo en otras plataformas.
+#[cfg(target_os = "windows")]
+pub fn emf_from_rgba(width: u32, height: u32, rgba: &[u8]) -> Vec<u8> {
+    use windows_sys::Win32::Foundation::RECT;
+    use windows_sys::Win32::Graphics::Gdi::{
+        CloseEnhMetaFile, CreateCompatibleDC, CreateEnhMetaFileW, DeleteDC, DeleteEnhMetaFile,
+        GetEnhMetaFileBits, StretchDIBits, BITMAPINFO, BITMAPINFOHEADER, DIB_RGB_COLORS, SRCCOPY,
+    };
+
+    let ancho = width.max(1);
+    let alto = height.max(1);
+    // Bits en B,G,R,X de abajo hacia arriba.
+    let mut bits = Vec::with_capacity((ancho * alto * 4) as usize);
+    for y in 0..alto {
+        let fila = alto - 1 - y;
+        for x in 0..ancho {
+            let i = (((fila * ancho) + x) * 4) as usize;
+            let (r, g, b) = if i + 3 < rgba.len() {
+                (rgba[i], rgba[i + 1], rgba[i + 2])
+            } else {
+                (255, 255, 255)
+            };
+            bits.extend_from_slice(&[b, g, r, 0]);
+        }
+    }
+
+    unsafe {
+        let referencia = CreateCompatibleDC(std::ptr::null_mut());
+        let marco = RECT {
+            left: 0,
+            top: 0,
+            right: (ancho as f64 * 26.4583) as i32,
+            bottom: (alto as f64 * 26.4583) as i32,
+        };
+        let descripcion: Vec<u16> = "lgbcadstudio\0".encode_utf16().collect();
+        let hdc = CreateEnhMetaFileW(referencia, std::ptr::null(), &marco, descripcion.as_ptr());
+        if hdc.is_null() {
+            if !referencia.is_null() {
+                DeleteDC(referencia);
+            }
+            return Vec::new();
+        }
+        let info = BITMAPINFO {
+            bmiHeader: BITMAPINFOHEADER {
+                biSize: std::mem::size_of::<BITMAPINFOHEADER>() as u32,
+                biWidth: ancho as i32,
+                biHeight: alto as i32,
+                biPlanes: 1,
+                biBitCount: 32,
+                biCompression: 0,
+                biSizeImage: ancho * alto * 4,
+                biXPelsPerMeter: 0,
+                biYPelsPerMeter: 0,
+                biClrUsed: 0,
+                biClrImportant: 0,
+            },
+            bmiColors: [Default::default(); 1],
+        };
+        StretchDIBits(
+            hdc,
+            0,
+            0,
+            ancho as i32,
+            alto as i32,
+            0,
+            0,
+            ancho as i32,
+            alto as i32,
+            bits.as_ptr() as *const core::ffi::c_void,
+            &info,
+            DIB_RGB_COLORS,
+            SRCCOPY,
+        );
+        let metarchivo = CloseEnhMetaFile(hdc);
+        if !referencia.is_null() {
+            DeleteDC(referencia);
+        }
+        if metarchivo.is_null() {
+            return Vec::new();
+        }
+        let tamano = GetEnhMetaFileBits(metarchivo, 0, std::ptr::null_mut());
+        let mut salida = vec![0u8; tamano as usize];
+        GetEnhMetaFileBits(metarchivo, tamano, salida.as_mut_ptr());
+        DeleteEnhMetaFile(metarchivo);
+        salida
+    }
 }

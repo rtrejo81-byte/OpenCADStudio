@@ -179,7 +179,14 @@ pub fn build_embedded_ole(
             entries: vec![
                 flujo("\u{1}Ole", &ole_header),
                 flujo("\u{1}CompObj", &comp_obj),
-                flujo("CONTENTS", &emf),
+                // nanoCAD antepone 4 bytes (el tamaño del encabezado EMF) al
+                // flujo CONTENTS; sin ellos AutoCAD no reproduce la imagen.
+                flujo("CONTENTS", &{
+                    let mut con_prefijo = Vec::with_capacity(emf.len() + 4);
+                    con_prefijo.extend_from_slice(&108u32.to_le_bytes());
+                    con_prefijo.extend_from_slice(&emf);
+                    con_prefijo
+                }),
             ],
         },
     };

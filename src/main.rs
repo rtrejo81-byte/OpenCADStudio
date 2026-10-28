@@ -76,6 +76,46 @@ fn main() -> iced::Result {
 
         // Diagnóstico: volcado del OLE2FRAME de un DWG, para comparar la
         // estructura que escribe AutoCAD con la que escribe la aplicación.
+        // Diagnóstico: cambiar el flujo CONTENTS de un OLE2FRAME conservando el
+        // resto del objeto. Sirve para cruzar contenedor y metarchivo entre un
+        // archivo que AutoCAD dibuja y el nuestro.
+        if let Some(paths) = &args.ole_replace {
+            let contenido = std::fs::read(&paths[1]).expect("no se pudo leer el contenido");
+            let bytes = std::fs::read(&paths[0]).expect("no se pudo leer el DWG");
+            let mut doc = codec::io::dwg::DwgReader::from_stream(std::io::Cursor::new(bytes))
+                .read()
+                .expect("no se pudo abrir el DWG");
+            let limite = doc.next_handle().max(0x0020_0000);
+            let mut cambiado = false;
+            for valor in 1..limite {
+                let Some(entity) = doc.get_entity_mut(codec::Handle::new(valor)) else {
+                    continue;
+                };
+                let codec::entities::EntityType::Ole2Frame(frame) = entity else {
+                    continue;
+                };
+                if let Some(compound) = &mut frame.storage.compound_file {
+                    for entry in &mut compound.root.entries {
+                        if let codec::compound_file::CompoundEntry::Stream(stream) = entry {
+                            if stream.name.eq_ignore_ascii_case("CONTENTS") {
+                                stream.content =
+                                    codec::compound_file::CompoundStreamContent::Binary(
+                                        codec::compound_file::BinaryRecord::split(&contenido, 4096),
+                                    );
+                                cambiado = true;
+                            }
+                        }
+                    }
+                }
+            }
+            if cambiado {
+                doc.version = codec::DxfVersion::AC1018;
+                codec::DwgWriter::write_to_file(std::path::Path::new(&paths[2]), &doc)
+                    .expect("no se pudo guardar el DWG");
+            }
+            return Ok(());
+        }
+
         // Diagnóstico: extraer el flujo CONTENTS (la imagen OLE) a un archivo,
         // para comparar el EMF que genera AutoCAD/nanoCAD con el nuestro.
         if let Some(paths) = &args.ole_extract {

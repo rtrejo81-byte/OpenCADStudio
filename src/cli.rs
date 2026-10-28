@@ -135,6 +135,10 @@ pub struct Cli {
     #[arg(long, value_names = ["IN"], hide = true)]
     pub ole_dump: Option<std::path::PathBuf>,
 
+    /// Internal: swap the CONTENTS stream of a DWG's OLE frame.
+    #[arg(long, value_names = ["DWG", "CONTENT", "OUT"], num_args = 3, hide = true)]
+    pub ole_replace: Option<Vec<std::path::PathBuf>>,
+
     /// Internal: extract the CONTENTS stream of a DWG's OLE frame.
     #[arg(long, value_names = ["DWG", "OUT"], num_args = 2, hide = true)]
     pub ole_extract: Option<Vec<std::path::PathBuf>>,

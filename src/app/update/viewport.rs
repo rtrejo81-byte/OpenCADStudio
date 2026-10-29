@@ -7407,7 +7407,12 @@ properties={:.1}ms picked={}",
         let deferred_command = self.tabs[i].active_cmd.as_ref().is_some_and(|command| {
             command.needs_entity_pick() && command.entity_pick_deferred_hover()
         });
-        let navigating = self.tabs[i].scene.selection.borrow().input.middle_down;
+        // Durante un zoom o un desplazamiento el cursor no está eligiendo nada:
+        // la consulta de hover cuesta decenas de milisegundos en planos densos
+        // y su resultado se descarta en el siguiente movimiento. Se salta igual
+        // que ya se saltaba con el botón central apretado.
+        let middle_down = self.tabs[i].scene.selection.borrow().input.middle_down;
+        let navigating = middle_down || self.tabs[i].scene.navigating_lod();
         if (self.tabs[i].active_cmd.is_some() && !deferred_command) || navigating {
             self.clear_navigation_hover(i);
             return Task::none();
